@@ -1,0 +1,63 @@
+import { StaticImageData } from "next/image";
+import { JSX } from "react";
+
+export type ProductSectionProps = {
+  title: string;
+  variant: "flash-sale" | "new-arrival" | "best-selling";
+  products: Product[];
+};
+
+
+export type ProductSectionVariant =
+  | "promotion"
+  | "recency"
+  | "popularity";
+
+
+  declare interface AddProductOrderProps {
+    image: StaticImageData
+    name?: string
+    brand?: string
+    inventory?: number
+    price?: number
+    sales?: number
+    status?: 'Active' | 'Completed' | 'Pending' | 'Delivered' | 'Cancelled'
+    action?: JSX.Element
+    orderId?: number,
+    customer?: string,
+    created_At?: string
+    total?: string
+    title?: string
+  }
+
+  declare interface CustomerProps {
+    image: StaticImageData,
+    name: string,
+    email: string,
+    orders: number
+    spend: string
+    joined: string
+    location: string
+    action: JSX.Element
+  }
+  
+  declare type Product = {
+    id: number;
+    title?: string;
+    description?: string;
+    image: StaticImageData | string;
+    date?: number;
+    category?: string;
+    author?: string;
+    price?: number;
+  };
+
+  declare interface CardComponentProps {
+    // item: {
+    //   image: string | StaticImageData;
+    //   author: string;
+    // };
+    item: Product
+    index: number;
+    quantity?: number;
+  }
