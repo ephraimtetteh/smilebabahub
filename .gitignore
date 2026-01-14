@@ -39,3 +39,85 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+// Assuming your horizontal-scrolling div has an ID like 'scrollContainer'
+const scrollContainer = document.getElementById('scrollContainer');
+
+scrollContainer.addEventListener('touchstart', (e) => {
+  // Prevent default if it's a horizontal swipe
+  if (Math.abs(e.touches[0].clientX - e.touches[0].clientX) > Math.abs(e.touches[0].clientY - e.touches[0].clientY)) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+scrollContainer.addEventListener('wheel', (e) => {
+  // Prevent vertical scrolling on mouse wheel if horizontal scroll is intended
+  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+import { useEffect, useRef } from 'react';
+
+function HorizontalScrollContainer({ children }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e) => {
+      // Similar logic as above
+      const touch = e.touches[0];
+      const startX = touch.clientX;
+      const startY = touch.clientY;
+
+      const handleTouchMove = (e) => {
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - startX);
+        const deltaY = Math.abs(touch.clientY - startY);
+        if (deltaX > deltaY) {
+          e.preventDefault();
+        }
+      };
+
+      container.addEventListener('touchmove', handleTouchMove, { passive: false });
+      container.addEventListener('touchend', () => {
+        container.removeEventListener('touchmove', handleTouchMove);
+      }, { once: true });
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2 mt-5" style={{ maxWidth: '100%' }}>
+      {children}
+    </div>
+  );
+}
+
+
+npm install @use-gesture/react
+
+
+import { useDrag } from '@use-gesture/react';
+
+function HorizontalScrollContainer({ children }) {
+  const bind = useDrag(({ movement: [mx, my], event }) => {
+    if (Math.abs(mx) > Math.abs(my)) {
+      event.preventDefault(); // Prevent vertical scroll
+    }
+  });
+
+  return (
+    <div {...bind()} className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2 mt-5" style={{ maxWidth: '100%' }}>
+      {children}
+    </div>
+  );
+}
