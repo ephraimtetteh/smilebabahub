@@ -9,7 +9,7 @@ import Promo from './Promo';
 
 const SideBar = () => {
   return (
-    <div className="flex items-start justify-between px-6 md:px-16 lg:px-24 xl:px-32 text-black py-10 gap-4">
+    <div className="w-full flex items-start justify-between px-6 md:px-16 lg:px-24 xl:px-32 text-black py-10 gap-4">
       <aside className=" rounded pb-4 w-[30%]">
         <h3 className="text-2xl pb-4">Our Categories</h3>
         <div className="bg-white shadow-2xl">
@@ -63,7 +63,7 @@ const SideBar = () => {
         </div>
       </aside>
 
-      <main className="w-full items-center justify-center ">
+      <main className="w-[70%] items-center justify-center ">
         <div className=" bg-black/20 text-white mb-4 rounded">
           <h1 className="items-center justify-center font-bold text-5xl text-center py-60">
             Video goes here

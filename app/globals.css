@@ -8,8 +8,3 @@ scrollbar-hide::--webkit-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
-html, body {
-  overflow: hidden; /* Prevents all scrolling on the page */
-  height: 100vh; /* Ensures full viewport height */
-}
