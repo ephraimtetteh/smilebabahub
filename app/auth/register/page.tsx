@@ -1,3 +1,5 @@
+
+
 import { assets } from '@/assets/assets'
 import Button from '@/components/Button';
 import Image from 'next/image'
@@ -65,7 +67,7 @@ const page = () => {
               name="password"
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />
-            <Link href={"/vendor"}>
+            <Link href={"/subscription"}>
               <Button
                 text="Submit"
                 className="flex-1 w-full bg-[#ccc] font-bold text-white rounded-full py-5 mt-3 cursor-pointer"
