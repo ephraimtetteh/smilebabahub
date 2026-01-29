@@ -1,21 +1,31 @@
 "use client";
 
-import { assets, Products } from "@/assets/assets";
+import { assets } from "@/assets/assets";
 import Image from "next/image";
-import React, { useState } from "react";
-import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
+import { Categories } from '@/constants/sellFormData'
+import { Category, FormProps } from "@/types/types";
 
 
-type FormProps = {
-  onNext: () => void;
-};
+
 
 const Form1 = ({ onNext }: FormProps) => {
-  const [image, setImage] = useState<File | null >(null);
+
+  const [categories, setCategories] = useState< Category[]> ([])
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [childId, setChildId] = useState("");
+  const [image, setImage] = useState<File | null >(null)
   const [data, setData] = useState({
     title: "",
     category: {},
   });
+
+  const selectedCategory = Categories.find((category: Category) => category.id === categoryId) || null;
+  const selectedChild = selectedCategory?.children?.find((child) => child.id === childId) || null;
+
+  useEffect(() => {
+    setCategories(Categories)
+  }, [])
 
 
   const onChangeHandler = (
@@ -28,6 +38,7 @@ const Form1 = ({ onNext }: FormProps) => {
   };
 
   const handleNext = async () => {};
+  
 
   return (
     <div className="absolute right-0 left-0 flex flex-col flex-1 items-center justify-start bg-amber-50 h-screen">
@@ -41,33 +52,82 @@ const Form1 = ({ onNext }: FormProps) => {
             type="text"
             placeholder="title"
             required
-            className="border-gray-300 border px-4 py-3 w-full sm:w-[500px] rounded placeholder:text-[20px] mb-4 outline-none"
+            className="border-gray-300 border px-4 py-3 w-full sm:w-125 rounded placeholder:text-[20px] mb-4 outline-none"
           />
-          <select
-            name="Category"
+          {/* <select
+            name="category"
             required
-            className="border-gray-300 w-full sm:w-[500px] border p-4 rounded placeholder:text-[20px] mb-4 outline-none"
+            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
+            onChange={(e) => setCategoryId(e.target.value)}
           >
-            {Products.map((item) => (
-              <div key={item.id}>
-                <option value="">{item.category}</option>
-              </div>
+            <option value="">Select Category</option>
+
+            {categories.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select> */}
+
+          <select
+            value={categoryId}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setChildId(""); // reset lower level
+            }}
+            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
+          >
+            <option value="">Select Category</option>
+            {Categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+
+          {/* <select
+            name="categoryType"
+            required
+            disabled={!selectedCategory}
+            className="border-gray-300 w-full sm:w-125 border px-4 py-3 rounded mb-4 outline-none"
+          >
+            <option value="">Select Category Type</option>
+
+            {selectedCategory?.children?.map((child) => (
+              <option key={child.id} value={child.id}>
+                {child.name}
+              </option>
+            ))}
+          </select> */}
+
+          <select
+            value={childId}
+            onChange={(e) => setChildId(e.target.value)}
+            disabled={!selectedCategory}
+            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
+          >
+            <option value="">Select Sub-Category</option>
+
+            {selectedCategory?.children?.map((child) => (
+              <option key={child.id} value={child.id}>
+                {child.name}
+              </option>
             ))}
           </select>
 
           <select
-            name="Select Location"
-            required
-            className="border-gray-300 w-full sm:w-[500px] border px-4 py-3 rounded placeholder:text-[20px] mb-4 outline-none"
+            disabled={!selectedChild}
+            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
           >
-            {Products.map((item) => (
-              <div key={item.id}>
-                <option value="" className="px-4">
-                  {item.category}
-                </option>
-              </div>
+            <option value="">Select Location</option>
+
+            {selectedChild?.children?.map((grandChild) => (
+              <option key={grandChild} value={grandChild}>
+                {grandChild}
+              </option>
             ))}
           </select>
+
           <p className="text-xl">Add Photo</p>
           <p className="text-gray-500 py-2">
             First picture - is the title picture. You can change the order of

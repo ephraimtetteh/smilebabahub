@@ -1,65 +1,5 @@
-const Info = [
-  {
-    category: [
-      {
-        'electronics': [],
-        'fashion': [],
-        'cosmetics': [],
-        'technology': [],
-        'furniture': [],
-      }
-    ],
-    country: [
-      {
-        'ghana': [
-          {
-            'greater-accra': [],
-            'ashanti': [],
-            'central': [],
-            'volta': [],
-            'ahafo': [],
-            'eastern': [],
-            'western': [],
-            'bono': [],
-            'upper-west': [],
-            'upper-east': [],
-            'oti': []
-            
-          }
-        ],
-        'nigeria': [],
-        'general': [
-          ghana, nigeria
-        ]
-      }
-    ]
-  }
-]
 
-
-{
-  "jijiGhana": {
-    "categories": [
-      "Vehicles",
-      "Property",
-      "Mobile Phones & Tablets",
-      "Electronics",
-      "Home, Furniture & Appliances",
-      "Fashion",
-      "Beauty & Personal Care",
-      "Services",
-      "Repair & Construction",
-      "Commercial Equipment & Tools",
-      "Leisure & Activities",
-      "Babies & Kids",
-      "Food, Agriculture & Farming",
-      "Animals & Pets",
-      "Jobs",
-      "Seeking Work - CVs"
-    ]
-  }
-
-  "ghanaRegions" [
+  export const Regions =[
     {
       "name": "Greater Accra",
       "capital": "Accra",
@@ -141,11 +81,10 @@ const Info = [
       "majorCitiesOrSuburbs": ["Wa", "Jirapa", "Lambussie"]
     }
   ]
-}
 
 
-{
-  "jijiGhanaCategories" [
+
+  export const Categories = [
     {
       "id": "vehicles",
       "name": "Vehicles",
@@ -470,4 +409,4 @@ const Info = [
       ]
     }
   ]
-}
+

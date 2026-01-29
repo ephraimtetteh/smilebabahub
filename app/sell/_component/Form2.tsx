@@ -1,6 +1,7 @@
 import { Products } from '@/assets/assets';
 import Button from '@/components/Button';
-import React from 'react'
+import { Regions } from '@/constants/sellFormData';
+import React, { useEffect, useState } from 'react'
 
 type Form2Props = {
   onNext: () => void;
@@ -8,58 +9,65 @@ type Form2Props = {
 };
 
 const Form2 = ({ onBack, onNext}: Form2Props) => {
+  const [region, setRegion] = useState([])
+  const [regionId, setRegionId] = useState<string>('')
+  const [city, setCity] = useState<string>('')
+
+  const selectedRegion = Regions.find((region) => region.capital === regionId )
+
+  useEffect(() => {
+    setCity('')
+  }, [])
+
   return (
-    <div className="mt-20 flex flex-col items-center justify-center">
+    <div className="mt-20 flex flex-col items-center justify-center py-10">
       <form className="bg-[#efede9] w-[60%] flex flex-col flex-1 items-center justify-center py-8 px-16 mx-auto shadow rounded">
         {/* inputs */}
         <div className="grid grid-cols-2 gap-x-4 mx-auto w-full">
           <div className="flex flex-1 ">
             <select
-              name=""
-              id=""
+              name="region"
+              id="region"
+              value={regionId}
+              onChange={(e) => {
+                setRegionId(e.target.value);
+              }}
               className="border-gray-300 sm:w-125 border p-4 rounded placeholder:text-[20px] mb-4 outline-none w-full"
             >
-              {Products.map((item) => (
-                <div key={item.id}>
-                  <option value="" className="px-4">
-                    {item.category}
+              {Regions.map((region) => (
+                <div key={region.name}>
+                  <option value={region.name} className="px-4">
+                    {region.capital}
                   </option>
                 </div>
               ))}
             </select>
           </div>
 
-          <div className="flex flex-1 ">
-            <select
-              name=""
-              id=""
-              className="border-gray-300 sm:w-125 border p-4 rounded placeholder:text-[20px] mb-4 outline-none w-full"
-            >
-              {Products.map((item) => (
-                <div key={item.id}>
-                  <option value="" className="px-4">
-                    {item.category}
-                  </option>
-                </div>
-              ))}
-            </select>
-          </div>
+          <select
+            name="city"
+            id="city"
+            value={city}
+            onChange={(e) => {
+              setCity(e.target.value);
+            }}
+            disabled={!selectedRegion}
+            className="border-gray-300 sm:w-125 border p-4 rounded placeholder:text-[20px] mb-4 outline-none w-full"
+          >
+            <option value="">Select City</option>
 
-          <div className="flex flex-1 ">
-            <select
-              name=""
-              id=""
-              className="border-gray-300 sm:w-125 border p-4 rounded placeholder:text-[20px] mb-4 outline-none w-full"
-            >
-              {Products.map((item) => (
-                <div key={item.id}>
-                  <option value="" className="px-4">
-                    {item.category}
+            <div className="flex flex-1 ">
+              {selectedRegion?.majorCitiesOrSuburbs?.length ? (
+                selectedRegion.majorCitiesOrSuburbs.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
                   </option>
-                </div>
-              ))}
-            </select>
-          </div>
+                ))
+              ) : (
+                <option disabled>No cities available</option>
+              )}
+            </div>
+          </select>
         </div>
 
         <textarea
@@ -114,7 +122,7 @@ const Form2 = ({ onBack, onNext}: Form2Props) => {
           <div className="flex flex-1 ">
             <input
               type="text"
-              placeholder="Name"
+              placeholder="phone"
               className="border-gray-300 sm:w-125 border p-4 rounded placeholder:text-[20px] mb-4 outline-none w-full"
             />
           </div>

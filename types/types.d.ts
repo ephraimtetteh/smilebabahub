@@ -61,3 +61,25 @@ export type ProductSectionVariant =
     index: number;
     quantity?: number;
   }
+
+  declare type Category = {
+    id: string;
+    name: string;
+    children: {
+      id: string;
+      name: string;
+      children: string[];
+    }[];
+  };
+
+  declare type FormProps = {
+    onNext: () => void;
+  };
+
+  type CategoryNode = {
+    id: string;
+    name: string;
+    children?: CategoryNode[];
+  };
+  
+  
