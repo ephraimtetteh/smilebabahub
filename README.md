@@ -138,3 +138,25 @@ export default Page;
 ===== ffc10529
 # smilebabaMarketPlace
 smileBabaMarketPlace
+
+
+
+dispatch(addToCart(product));
+dispatch(calculateTotals());
+
+
+dispatch(increaseCartItem(productId));
+dispatch(decreaseCartItem(productId));
+dispatch(calculateTotals());
+
+
+dispatch(setLogoutState());
+dispatch(clearCart());
+
+
+export const selectUser = (state) => state.auth.user;
+export const selectToken = (state) => state.auth.token;
+
+export const selectCartItems = (state) => state.cart.cartItems;
+export const selectCartTotal = (state) => state.cart.total;
+export const selectCartAmount = (state) => state.cart.amount;

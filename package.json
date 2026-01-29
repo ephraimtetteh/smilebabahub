@@ -10,12 +10,14 @@
   },
   "dependencies": {
     "@recharts/devtools": "^0.0.5",
+    "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.2",
     "hls.js": "^1.6.15",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-icons": "^5.5.0",
+    "react-redux": "^9.2.0",
     "react-toastify": "^11.0.5",
     "recharts": "^3.6.0"
   },
