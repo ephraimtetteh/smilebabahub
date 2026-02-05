@@ -45,6 +45,10 @@ const Navbar = ({className}: NavbarProps) => {
     }, [pathname]);
 
 
+
+    
+
+
     return (
       <nav
         className={`${className} fixed top-0 left-0 w-full flex flex-1 items-center justify-between px-4 md:px-16 lg:px-24 xl:px-32 transition-all duration-500 z-50 ${
