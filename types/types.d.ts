@@ -118,10 +118,22 @@ export type ProductSectionVariant =
     onClick?: () => void;
   }
   
-  interface SubscriptionPlanProps {
+  declare interface SubscriptionPlanProps {
     selectedPlanId?: string;
     onPlanSelect?: (planId: string) => void;
     linkToRegister?: boolean;
   }
+
+
+  declare interface InputProps {
+    type?: string;
+    placeholder?: string;
+    value?: string;
+    className?: string;
+    name?: string;
+    id?: string;
+    onChange: () => void;
+  }
   
+
   
