@@ -65,13 +65,18 @@ const AddProductComponent = ({ showAddProduct, setShowAddProduct}) => {
               id="image"
               hidden
               required
+              onChange={(e) => setImage(e.target.files?.[0] || null)}
             />
           </label>
         </div>
 
-        <div className='flex gap-3'>
-          <Button text='Add' />
-          <Button text='close' onClick={() => setShowAddProduct(!showAddProduct)} className='bg-red-500 text-white' />
+        <div className="flex gap-3">
+          <Button text="Add" />
+          <Button
+            text="close"
+            onClick={() => setShowAddProduct(!showAddProduct)}
+            className="bg-red-500 text-white"
+          />
         </div>
       </div>
     </div>

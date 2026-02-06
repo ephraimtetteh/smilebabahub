@@ -18,9 +18,11 @@ const Subscription = ({
   selectedPlanId,
   onPlanSelect,
 }: SubscriptionPlanProps) => {
-  const [plan, setPlan] = useState<"monthly" | "yearly">("monthly");
-
   const router = useRouter()
+
+  const [plan, setPlan] = useState<"monthly" | "yearly">("monthly");
+  const [showSubscriptionSummary, setShowSubscriptionSummary] = useState(false)
+
   const [selectedPackage, setSelectedPackage] = useState(
     selectedPlanId ?? packages.find((pkg) => pkg.popular)?.id ?? packages[0].id,
   );
@@ -73,9 +75,52 @@ const Subscription = ({
         })}
       </div>
 
-      <div className="flex items-center justify-center">
-        {activePlanId && <Button text="Next" className="w-full" onClick={() => router.push('/subscription/register')} />}
-      </div>
+      {!showSubscriptionSummary && <div className="flex items-center justify-center">
+        {activePlanId && (
+          <Button
+            text="Next"
+            className="w-full"
+            onClick={() => setShowSubscriptionSummary((prev) => !prev)}
+          />
+        )}
+      </div>}
+
+      {showSubscriptionSummary && (
+        <div className="flex flex-col items-center justify-center absolute w-100 z-50 bg-black shadow-2xl shadow-neutral-400 mx-auto bottom-120 right-35 p-10 rounded-2xl">
+          <div>
+            <h1 className="text-2xl text-amber-300">Your Summary</h1>
+          </div>
+
+          <div className="mt-5 flex flex-1 flex-col gap-3 w-full">
+            <div className="flex flex-1 flex-col items-center justify-between gap-3 ">
+              <p className="text-white">Selected Package: {activePlanId}</p>
+              {packages
+                .filter((pkg) => pkg.id === activePlanId)
+                .map((pkg) =>
+                  pkg.prices.map((price) => (
+                    <div key={`${pkg.id}-${price.plan}`} className="flex gap-3 ">
+                      <p></p>
+
+                      {plan && activePlanId && <p className="capitalize text-gray-500">{price.duration}</p>}
+                      {plan && activePlanId && <p className="capitalize text-gray-500">{price.price}</p>}
+                    </div>
+                  )),
+                )}
+            </div>
+
+            <div className="flex gap-3 items-center justify-center">
+              <Button text="Pay Now" />
+              <Button
+                text="close"
+                onClick={() =>
+                  setShowSubscriptionSummary(!showSubscriptionSummary)
+                }
+                className="bg-red-500 text-white"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
