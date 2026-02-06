@@ -81,5 +81,45 @@ export type ProductSectionVariant =
     name: string;
     children?: CategoryNode[];
   };
+
+  type BillingPlan = "monthly" | "yearly";
+
+  interface SubscriptionComponentProps extends Subscriptions {
+    plan: BillingPlan;
+    isActive: boolean;
+    isPopular: boolean
+    onClick: () => void;
+  }
+
+
+  export interface Price {
+    plan: "month" | "year";
+    duration: "monthly" | "yearly";
+    price: number;
+  }
+
+  export interface IncludeItem {
+    package: string;
+    icon: JSX.Element;
+    status: "yes" | "no";
+  }
+
+  export interface Subscriptions {
+    id: string;
+    popular?: boolean;
+    packageName?: string;
+    text?: string;
+    prices: Price[];
+    className?: string;
+    tile?: string;
+    includes: IncludeItem[];
+    onClick?: () => void;
+  }
+  
+  interface SubscriptionPlanProps {
+    selectedPlanId?: string;
+    onPlanSelect?: (planId: string) => void;
+    linkToRegister?: boolean;
+  }
   
   
