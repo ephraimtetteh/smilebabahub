@@ -31,7 +31,7 @@ export default function RootLayout({
       <Head>
         <link rel="icon" href="/logo1.png" />
       </Head>
-      <body className={`relative min-h-screen ${outfit.className}`}>
+      <body className={`min-h-screen ${outfit.className}`}>
         <ToastContainer />
         <LayoutShell>{children}</LayoutShell>
       </body>

@@ -31,7 +31,7 @@ const EditProduct = () => {
 
         <div className='mt-5 flex gap-3'>
           <Button text='Edit' className='bg-green-500 cursor-pointer' />
-          <Button text='close' className='bg-red-500 text-white cursor-pointer' onClick={() => setClose(!close)} />
+          <Button text='close' className='bg-red-500 text-white cursor-pointer' onClick={() => setClose((prev) => !prev)} />
         </div>
   </div>
   </div>

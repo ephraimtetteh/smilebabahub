@@ -112,7 +112,7 @@ const Navbar = ({className}: NavbarProps) => {
             />
           </Link>
 
-          <Link href={"/auth/register"}>
+          <Link href={"/cart"}>
             <button
               className={`px-4 py-2 rounded ml-4 transition-all duration-500 cursor-pointer border ${
                 isScrolled
@@ -123,7 +123,7 @@ const Navbar = ({className}: NavbarProps) => {
               <IoCartOutline size={16} />
             </button>
           </Link>
-          <Link href={"/auth/register"}>
+          <Link href={"/auth/user/register"}>
             <button
               className={`px-4 py-2 rounded ml-4 transition-all duration-500 cursor-pointer border ${
                 isScrolled
