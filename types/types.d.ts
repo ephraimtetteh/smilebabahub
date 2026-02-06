@@ -21,7 +21,7 @@ export type ProductSectionVariant =
     inventory?: number
     price?: number
     sales?: number
-    status?: 'Active' | 'Completed' | 'Pending' | 'Delivered' | 'Cancelled'
+    status?: 'Active'| 'Finish' | 'Completed' | 'Pending' | 'Delivered' | 'Cancelled'
     action?: JSX.Element
     orderId?: number,
     customer?: string,
@@ -40,6 +40,8 @@ export type ProductSectionVariant =
     location: string
     action: JSX.Element
   }
+
+  
   
   declare type Product = {
     id: number;
