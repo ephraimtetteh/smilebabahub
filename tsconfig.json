@@ -31,6 +31,6 @@
     ".next/dev/types/**/*.ts",
     "types/**/*.d.ts",
     "**/*.mts"
-  ],
+, "lib/store.ts", "lib/hooks.ts"  ],
   "exclude": ["node_modules"]
 }

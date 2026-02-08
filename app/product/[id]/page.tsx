@@ -53,14 +53,14 @@ const page = ({params}: {params: Promise<{id: string}> }) => {
 
   
   return (
-    <div className="mt-20 flex flex-col flex-1 items-center justify-between bg-amber-50 pt-20">
-      <div className="flex flex-row items-start justify-center px-4 md:px-16 lg:px-24 xl:px-32 gap-3">
+    <div className=" py-10 flex flex-col flex-1 items-center justify-center lg:justify-between bg-white pt-30">
+      <div className="lg:flex lg:flex-row items-start justify-center px-4 md:px-16 lg:px-14 xl:px-22 gap-3">
         {/* main card items details */}
-        <div className="w-[80%]">
-          <h1 className="text-2xl font-bold py-2 pb-6 capitalize">
+        <div className="lg:w-[80%]">
+          <h1 className="lg:text-2xl font-bold py-2 pb-6 capitalize">
             {product?.title ?? "Product image"}
           </h1>
-          <div className="rounded">
+          <div className="rounded items-center justify-center w-full">
             {product?.image && (
               <Image
                 src={product.image}
@@ -130,7 +130,7 @@ const page = ({params}: {params: Promise<{id: string}> }) => {
         </div>
 
         {/* side bar */}
-        <aside className="w-[30%]">
+        <aside className="">
           {/* price card */}
           <article className="bg-white shadow p-3 mb-4">
             <h1 className="font-semibold text-2xl py-2">GH 185,00.00</h1>
@@ -233,7 +233,7 @@ const page = ({params}: {params: Promise<{id: string}> }) => {
         </aside>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 w-full">
         <FeaturedProducts />
         <RelatedAds />
       </div>

@@ -5,8 +5,8 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div className="mt-30 flex px-4 md:px-16 lg:px-24 xl:px-32 pb-10 bg-amber-50 py-10">
-      <div className='w-[20%]'>
+    <div className="w-full lg:flex px-4 md:px-6 lg:px-14 xl:px-22 pb-10 bg-amber-50 py-30">
+      <div className='w-[30%]'>
         <Profile />
       </div>
       <div className='w-full'>

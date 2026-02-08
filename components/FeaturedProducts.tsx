@@ -19,15 +19,15 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
   };
 
   return (
-    <div className={`${className} flex flex-col text-black items-center px-6 md:px-16 lg:px-24 py-6 bg-[#d6c8c5] bg-no-repeat bg-cover bg-center`}>
+    <div className={`${className} flex flex-col text-black items-center px-6 md:px-16 lg:px-14 py-6 bg-[#d6c8c5] bg-no-repeat bg-cover bg-center`}>
    
       <Title
         title={"Posted Ads"}
         
       />
 
-      <div className="flex overflow-scroll items-center justify-center gap-5 mt-5">
-        {Products.slice(0, 6).map((item, index) => (
+      <div className="w-full flex overflow-x-scroll items-center justify-center gap-5 mt-5 ">
+        {Products.map((item, index) => (
           <FeaturedCard key={index} item={item} index={index} />
         ))}
       </div>

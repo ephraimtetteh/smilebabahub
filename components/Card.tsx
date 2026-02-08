@@ -22,7 +22,7 @@ const Card = () => {
       <div className="flex flex-row overflow-x-scroll">
         {Products.slice(0, 7).map((item) => (
           <article key={item.id} className="border border-[#ccc] rounded shadow-2xs items-center justify-center mr-2">
-            <Image src={item.image} alt={item.title} className='text-[16px] text-[#ffc105] text-center justify-center w-50 h-25' />
+            <Image src={item.image} alt={item.title} className='text-[16px] text-[#ffc105] text-center justify-center lg:w-50 lg:h-25' />
             
             <div className='text-[14px] p-2 text-black'>
               {item.author}

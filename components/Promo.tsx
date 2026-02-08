@@ -20,7 +20,7 @@ const Promo = ({className}: FeaturedProps) => {
 
   return (
     <div
-      className={`${className} flex flex-col text-black items-center px-6 md:px-16 lg:px-24 py-6 bg-no-repeat bg-cover bg-center`}
+      className={`${className} w-full flex flex-col text-black items-center px-3 py-6 bg-no-repeat bg-cover bg-center`}
     >
       <Title title={"Featured Promo"} />
 

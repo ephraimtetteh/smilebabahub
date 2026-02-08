@@ -8,7 +8,7 @@ import { IoRadioSharp } from "react-icons/io5";
 
 const Hero = () => {
   return (
-    <div className="relative h-[10vh]">
+    <div className="relative py-10">
       <Image
         src={assets.bgImage}
         alt="Background"

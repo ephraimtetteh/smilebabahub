@@ -125,6 +125,10 @@ export type ProductSectionVariant =
   }
 
 
+ 
+  
+
+
   declare interface InputProps {
     type?: string;
     placeholder?: string;
@@ -133,6 +137,30 @@ export type ProductSectionVariant =
     name?: string;
     id?: string;
     onChange: () => void;
+  }
+
+  interface CartItem {
+    _id: string;
+    name: string;
+    price: number;
+    amount: number;
+    image: StaticImageData
+  }
+  
+
+  declare interface UserProps { 
+    cartItems: CartItem[]; 
+    total: number; 
+    amount: number; 
+    isLoading: boolean; 
+    token: null; 
+    name: string; 
+    _id: string; 
+    email: string; 
+  }
+
+  interface InitialState {
+    user: UserProps;
   }
   
 

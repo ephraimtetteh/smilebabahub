@@ -1,6 +1,7 @@
+import { InitialState } from "@/types/types";
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
+const initialState: InitialState = {
   user: {
     cartItems: [],
     total: 0,
@@ -73,20 +74,20 @@ export const authSlice = createSlice({
       state.user.total = total;
     },
   },
-  extraReducers: (builder) => {
-    builder
-      .addCase(getCartItems.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(getCartItems.fulfilled, (state, action) => {
-        console.log(action);
-        state.isLoading = false;
-        state.cartItems = action.payload;
-      })
-      .addCase(getCartItems.rejected, (state) => {
-        state.isLoading = false;
-      });
-  },
+  // extraReducers: (builder) => {
+  //   builder
+  //     .addCase(getCartItems.pending, (state) => {
+  //       state.isLoading = true;
+  //     })
+  //     .addCase(getCartItems.fulfilled, (state, action) => {
+  //       console.log(action);
+  //       state.isLoading = false;
+  //       state.cartItems = action.payload;
+  //     })
+  //     .addCase(getCartItems.rejected, (state) => {
+  //       state.isLoading = false;
+  //     });
+  // },
 })
 
 export const {
