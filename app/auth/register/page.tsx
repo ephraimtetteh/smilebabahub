@@ -7,11 +7,42 @@ import Link from 'next/link';
 import React, { useState } from 'react'
 import { MdPersonOutline } from "react-icons/md";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
+import { useRegisterUserMutation } from '@/lib/api/api';
+import { useRouter } from 'next/navigation';
 
 const AuthRegister
  = () => {
 
+  const [registerUser, { isLoading }] = useRegisterUserMutation();
+
+  const [user, setUser] = useState({
+    email: '',
+    password: '',
+    phone: '',
+    name: ''
+
+  })
+  const [error, setError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter()
+
+  const handleUserChange = (e) => {
+    setUser({...user, [e.target.name]: e.target.value})
+  }
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    try {
+      const payload = await registerUser(user).unwrap();
+      console.log("fulfilled", payload);
+
+      router.push("/auth/login");
+      
+    } catch (err) {
+      setError(err?.data?.message || "Something went wrong");
+    }
+  };
 
   return (
     <div className="relative lg:h-200 h-[80vh] max-sm:w-[90vw] md:w-150 lg:w-350 mx-auto mt-15 flex flex-col flex-1">
@@ -21,7 +52,7 @@ const AuthRegister
         fill
         priority
         className="object-cover rounded-2xl"
-        />
+      />
       <div className="absolute inset-0 items-center grid lg:grid-cols-2 lg:px-20 px-4 py-2 lg:py-6">
         <div>
           <Link href={"/"}>
@@ -31,9 +62,9 @@ const AuthRegister
               width={80}
               height={80}
               className="rounded-2xl py-4 max-sm:px-3 max-sm:mx-3"
-              />
+            />
           </Link>
-            <h1>Register</h1>
+          <h1>Register</h1>
           <h1 className="lg:text-6xl max-sm:hidden max-sm:py-2 text-white font-bold lg:leading-22">
             SmileBaba is a trusted online marketplace to buy and sell products
             easily
@@ -44,47 +75,66 @@ const AuthRegister
           </p>
         </div>
         <div className=" grid lg:flex lg:flex-col items-center justify-center text-black bg-white m-auto lg:w-[80%] rounded-2xl">
-          <form className=" grid lg:flex-1 lg:w-[80%] md:w-full lg:py-20 py-6 px-2 md:px-4">
+          <form
+            onSubmit={handleRegister}
+            className=" grid lg:flex-1 lg:w-[80%] md:w-full lg:py-20 py-6 px-2 md:px-4"
+          >
             <h1 className="lg:text-2xl md:text-xl md:px-2 max-sm:px-4 py-4 font-semibold">
-              Discover Great Deals connect with customers
+              {isLoading
+                ? "REGISTERING"
+                : "Discover Great Deals connect with customers"}
             </h1>
+            {/* <button disabled={isLoading}>
+              {isLoading ? "Registering..." : "Register"}
+            </button> */}
+            {error && <p>{error}</p>}
             <input
               type="email"
               placeholder="Email Address"
               name="email"
-              value={''}
+              value={user.email}
+              onChange={handleUserChange}
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />
             <input
               type="name"
               placeholder="Name"
               name="name"
-              value={''}
+              value={user.name}
+              onChange={handleUserChange}
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />
             <input
-              type="email"
+              type="text"
               placeholder="Phone"
               name="phone"
-              value={''}
+              value={user.phone}
+              onChange={handleUserChange}
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />
-             <div>
-                <input
-                  type={showPassword? '' : "password" }
-                  placeholder="Password"
-                  name="password"
-                  className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
-                />
-                <span onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-            <Link href={"/subscription"}>
-              <Button
-                text="Submit"
-                className="flex-1 w-full bg-[#ccc] font-bold text-white rounded-full py-5 mt-3 cursor-pointer"
+            <div className="flex items-center justify-between border border-gray-300 rounded outline-[#ffc10522] w-full">
+              <input
+                type={showPassword ? "" : "password"}
+                placeholder="Password"
+                name="password"
+                value={user.password}
+                onChange={handleUserChange}
+                className="flex-1 lg:w-full p-4 outline-none text-[14px]"
               />
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                className="pr-4"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
+            <Link href={""}>
+              <button
+                type="submit"
+                className="flex-1 w-full bg-[#fcce23]  font-bold text-white rounded-full py-5 mt-3 cursor-pointer"
+              >
+                Submit
+              </button>
             </Link>
             <p className="text-center py-4 text-[#5a5858] text-[14px]">
               By creating an account, I accept the{" "}

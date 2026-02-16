@@ -18,6 +18,11 @@ export const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    setRegisterState: (state, action) => {
+      if (!action.payload) return;
+      state.user = { ...state.user, ...action.payload };
+    },
+
     setLoginState: (state, action) => {
       state.user = {
         ...state.user,
@@ -91,6 +96,7 @@ export const authSlice = createSlice({
 })
 
 export const {
+  setRegisterState,
   setLoginState,
   setLogoutState,
   clearCart,
@@ -98,7 +104,8 @@ export const {
   increaseCartItem,
   decreaseCartItem,
   calculateTotals,
-} = authSlice.actions;
 
-export default authSlice.reducer;
+} = authSlice.actions;
+const authReducer = authSlice.reducer
+export default authReducer;
 

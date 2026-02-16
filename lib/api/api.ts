@@ -1,24 +1,24 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const api = createApi({
   reducerPath: "api",
   tagTypes: ["RegisterUser", "LoginUser", "RegisterVenor", "LoginVendor"],
-  baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.BASE_URL }),
+  baseQuery: fetchBaseQuery({ baseUrl: process.env.NEXT_PUBLIC_API_URL }),
 
   endpoints: (build) => ({
     registerUser: build.mutation({
-      query: ({ name, email, password }) => ({
-        url: "auth/register",
-        method: POST,
-        body: { name, email, password },
+      query: ({ name, email, password, phone }) => ({
+        url: "smilebababa/auth/register",
+        method: "POST",
+        body: { name, email, password, phone },
       }),
       invalidatesTags: ["RegisterUser"],
     }),
 
     loginUser: build.mutation({
       query: ({ email, password }) => ({
-        url: "auth/login",
-        method: POST,
+        url: "smilebaba/auth/login",
+        method: "POST",
         body: { email, password },
       }),
       invalidatesTags: ["LoginUser"],
@@ -26,8 +26,8 @@ export const api = createApi({
 
     registerVendor: build.mutation({
       query: ({ name, email, password, country, profile, companyName }) => ({
-        url: "auth/vendor/register",
-        method: POST,
+        url: "smilebaba/auth/register",
+        method: "POST",
         body: { name, email, password, country, profile, companyName },
       }),
       invalidatesTags: ["RegisterUser"],
@@ -35,8 +35,8 @@ export const api = createApi({
 
     loginVendor: build.mutation({
       query: ({ email, password }) => ({
-        url: "auth/vendor/login",
-        method: POST,
+        url: "smilebaba/auth/login",
+        method: "POST",
         body: { email, password },
       }),
       invalidatesTags: ["LoginUser"],
@@ -44,4 +44,4 @@ export const api = createApi({
   }),
 });
 
-export const { useRegisterUserMutation, userLoginUserMutation, useRegisterVendorMutation, userLoginVendorMutation } = api
+export const { useRegisterUserMutation, useLoginUserMutation, useRegisterVendorMutation, useLoginVendorMutation } = api

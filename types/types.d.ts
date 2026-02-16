@@ -162,6 +162,21 @@ export type ProductSectionVariant =
   interface InitialState {
     user: UserProps;
   }
+
+  type RegisterPayload = UserProps | null;
+
+  declare type StoreProviderProps = {
+    children: React.ReactNode;
+    user: UserProps | null;
+  };
   
+
+  declare type CTAProps = {
+    text?: string,
+    title?: string,
+    desc?: string,
+    image: StaticImageData
+    className?: string
+  }
 
   

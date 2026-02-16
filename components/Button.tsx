@@ -4,7 +4,7 @@ interface ButtonProps {
   text: string;
   className?: string;
   onClick?: () => void;
-  icon?: JSX.Element
+  icon?: JSX.Element,
 }
 
 const Button = ({text, className, onClick, icon}: ButtonProps) => {

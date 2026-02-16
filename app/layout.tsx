@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Head from "next/head";
 import { ToastContainer } from "react-toastify";
+import StoreProvider from "./StoreProvider";
 
 
 const outfit = Outfit({
@@ -31,9 +32,13 @@ export default function RootLayout({
       <Head>
         <link rel="icon" href="/logo1.png" />
       </Head>
-      <body className={`min-h-screen ${outfit.className}`}>
+      <body className={`relative min-h-screen ${outfit.className}`}>
         <ToastContainer />
-        <LayoutShell>{children}</LayoutShell>
+        <LayoutShell>
+          <StoreProvider user={null}>
+            {children}
+          </StoreProvider>
+        </LayoutShell>
       </body>
     </html>
   );
