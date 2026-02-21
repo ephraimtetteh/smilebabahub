@@ -140,24 +140,28 @@ export const hubs = [
     title: "All",
     image: images.burgerOne,
     color: "#D33B0D",
+    link: '/'
   },
   {
     id: 2,
     title: "Food",
     image: images.burgerTwo,
     color: "#DF5A0C",
+    link: '/'
   },
   {
     id: 3,
     title: "Real Estate",
     image: images.japan,
     color: "#084137",
+    link:'/restate'
   },
   {
     id: 4,
     title: "Market Place",
     image: images.buritto,
     color: "#EB920C",
+    link:'/marketPlace'
   },
 ];
 

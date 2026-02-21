@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { assets } from '@/assets/assets';
 import { Categories } from '@/constants/sellFormData';
 import CTA from './CardCTA';
+import Link from 'next/link';
 
 const Hub = () => {
   const [active, setActive] = useState('')
@@ -17,7 +18,7 @@ const Hub = () => {
     <div className="flex flex-col pb-4 items-center justify-center max-w-full ">
       <div className="w-full lg:flex lg:flex-row flex-1 gap-3 relative">
         {hubs.map((hub, index) => (
-          <div
+          <Link href={hub.link}
             key={index}
             className={`cn(
               "w-full h-48 my-3 rounded-xl overflow-hidden shadow-lg flex items-center gap-5",
@@ -40,7 +41,7 @@ const Hub = () => {
               </h3>
               {/* <Image src={assets.arrow} alt="" className="size-5 bg-contain" /> */}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
