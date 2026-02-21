@@ -1,6 +1,5 @@
-import { Subscriptions, SubscriptionComponentProps } from "@/types/types";
-import Link from "next/link";
-import React, { useState } from "react";
+import { SubscriptionComponentProps } from "@/types/types";
+import React from "react";
 
 const SubscriptionComponent = ({
   packageName,
@@ -12,10 +11,10 @@ const SubscriptionComponent = ({
   isPopular,
   onClick,
 }: SubscriptionComponentProps) => {
-  const selectedPrice = prices.find(
+  const selectedPrice = prices?.find(
     (item) =>
-      (plan === "monthly" && item.plan === "month") ||
-      (plan === "yearly" && item.plan === "year"),
+      (plan === "monthly" && item.plan === "monthly") ||
+      (plan === "yearly" && item.plan === "yearly"),
   );
 
   return (

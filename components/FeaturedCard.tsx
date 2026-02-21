@@ -14,7 +14,7 @@ const FeaturedCard = ({ item, index }: CardComponentProps) => {
       key={item.id}
       className="relative max-w-70 w-full rounded-xl shrink-0 bg-transparent border-white/20 border text-white shadow-xl"
     >
-      <Image src={item.image} alt="" className="" />
+      <Image src={item.image} alt="" className="" width={280} height={280} />
 
       {index % 2 === 0 && (
         <p className="px-3 py-1 absolute top-3 left-3 text-xs bg-white text-gray-800 font-medium rounded-full">

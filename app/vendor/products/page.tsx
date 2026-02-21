@@ -2,11 +2,6 @@
 import { Products } from '@/assets/assets'
 import AddProduct from '@/components/VendorComponents/AddProduct'
 import React, { useState } from 'react'
-import {
-  MdKeyboardArrowLeft,
-  MdKeyboardArrowRight,
-  MdSearch,
-} from "react-icons/md";
 import { FaPlus } from "react-icons/fa6";
 import Button from "@/components/Button";
 import InputSearch from "@/components/InputSearch";
@@ -14,7 +9,7 @@ import Limit from '@/components/VendorComponents/Limit';
 import AddProductComponent from '@/components/AddProductComponent';
 
 
-const page = () => {
+const Productpage = () => {
   const [showAddProduct, setShowAddProduct] = useState(false)
 
   return (
@@ -44,4 +39,4 @@ const page = () => {
   );
 }
 
-export default page
+export default Productpage

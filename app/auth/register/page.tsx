@@ -1,11 +1,9 @@
 'use client'
 
 import { assets } from '@/assets/assets'
-import Button from '@/components/Button';
 import Image from 'next/image'
 import Link from 'next/link';
 import React, { useState } from 'react'
-import { MdPersonOutline } from "react-icons/md";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
 import { useRegisterUserMutation } from '@/lib/api/api';
 import { useRouter } from 'next/navigation';
@@ -26,22 +24,23 @@ const AuthRegister
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
-  const handleUserChange = (e) => {
+  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({...user, [e.target.name]: e.target.value})
   }
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    try {
-      const payload = await registerUser(user).unwrap();
-      console.log("fulfilled", payload);
+    // try {
+    //   const payload = await registerUser(user).unwrap();
+    //   console.log("fulfilled", payload);
 
-      router.push("/auth/login");
+    //   router.push("/auth/login");
       
-    } catch (err) {
-      setError(err?.data?.message || "Something went wrong");
-    }
+    // } catch (err) {
+
+    //   setError(error.response?.data?.message || "Something went wrong");
+    // }
   };
 
   return (

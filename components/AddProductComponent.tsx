@@ -2,9 +2,9 @@ import { assets } from '@/assets/assets';
 import Image from 'next/image';
 import React, { useState } from 'react'
 import Button from './Button';
-import InputCompontent from './InputCompontent';
+import { ShowProductProps } from '@/types/types';
 
-const AddProductComponent = ({ showAddProduct, setShowAddProduct}) => {
+const AddProductComponent = ({ showAddProduct, setShowAddProduct }: ShowProductProps) => {
   const [image, setImage] = useState<File | null >(null)
 
   return (

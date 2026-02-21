@@ -31,6 +31,6 @@
     ".next/dev/types/**/*.ts",
     "types/**/*.d.ts",
     "**/*.mts"
-, "lib/store.ts", "lib/hooks.ts"  ],
+, "lib/store.ts", "lib/hooks.ts", "constants/subscription.js"  ],
   "exclude": ["node_modules"]
 }

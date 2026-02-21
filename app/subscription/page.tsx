@@ -8,10 +8,10 @@ import { SubscriptionPlanProps } from "@/types/types";
 import { useRouter } from "next/navigation";
 
 
-type Form2Props = {
-  onNext: () => void;
-  onBack: () => void;
-};
+// type Form2Props = {
+//   onNext: () => void;
+//   onBack: () => void;
+// };
 
 
 const Subscription = ({

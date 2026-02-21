@@ -231,7 +231,7 @@ export const assets = {
         price: 48,
       },
       {
-        id: 14,
+        id: 141,
         title: "Balance & Bliss: Navigating Life's Journey with Style",
         description:
           "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the..",
@@ -243,7 +243,7 @@ export const assets = {
         price: 48,
       },
       {
-        id: 15,
+        id: 151,
         title: "Exploring the Evolution of social networking in the Future",
         description:
           "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the..",
@@ -255,7 +255,7 @@ export const assets = {
         price: 48,
       },
       {
-        id: 16,
+        id: 162,
         title: "Shaping the Future of statup ecosystem in the world",
         description:
           "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the..",
@@ -267,7 +267,7 @@ export const assets = {
         price: 48,
       },
       {
-        id: 7,
+        id: 70,
         title: "Technology for Career advancement in development",
         description:
           "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the..",
@@ -279,7 +279,7 @@ export const assets = {
         price: 48,
       },
       {
-        id: 11,
+        id: 111,
         title: "Unveiling the Secrets of Successful Startups in Technolgy",
         description:
           "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the..",

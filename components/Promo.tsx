@@ -5,6 +5,7 @@ import { Products } from "../assets/assets";
 import Title from '@/components/Title'
 import FeaturedCard from "./FeaturedCard";
 import { usePathname, useRouter } from 'next/navigation.js';
+import { realEstate } from "@/constants/data";
 
 interface FeaturedProps {
   className?: string
@@ -22,13 +23,13 @@ const Promo = ({className}: FeaturedProps) => {
     <div
       className={`${className} w-full flex flex-col text-black items-center px-3 py-6 bg-no-repeat bg-cover bg-center`}
     >
-      <Title title={"Featured Promo"} />
+      <Title title={"Real Estate Near You"} className="text-start" />
 
       <div
         className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2 mt-5"
         style={{ maxWidth: "100%" }}
       >
-        {Products.slice(0, 8).map((item, index) => (
+        {realEstate.slice(0, 8).map((item, index) => (
           <FeaturedCard key={item.id} item={item} index={index} />
         ))}
       </div>

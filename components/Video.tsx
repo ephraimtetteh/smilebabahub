@@ -24,7 +24,7 @@ const Video = () => {
   }, []);
 
   return (
-    <div className="flex flex-row flex-1 gap-4 w-full items-start justify-center">
+    <div className="lg:flex lg:flex-row flex-1 gap-4 lg:w-full items-start justify-center">
       {/* <video
         className="w-full h-[65vh] max-w-full rounded-base rounded-xl"
         controls
@@ -34,7 +34,7 @@ const Video = () => {
           type="video/mp4"
         />
       </video> */}
-      <video ref={videoRef} controls className="w-full h-[65vh] max-w-full rounded-xl" />
+      <video ref={videoRef} controls className="lg:w-full lg:h-[65vh] max-w-full rounded-xl" />
       <div>
         <Card className="overflow-y-scroll" />
       </div>

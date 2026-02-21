@@ -1,15 +1,17 @@
 import BestSelling from '@/components/BestSelling';
 import FeaturedProducts from '@/components/FeaturedProducts';
 import Hero from '@/components/Hero';
+import NewLayout from '@/components/NewLayout';
 import PostedAds from '@/components/PostedAds';
 import SideBar from '@/components/SideBar';
 import React from 'react'
 
 const MarketPlace = () => {
   return (
-    <div>
+    <div className="w-full flex flex-col flex-1 items-center px-4 md:px-16 lg:px-14 xl:px-12 justify-center pt-10">
       <Hero />
-      <div>
+      <div className="w-full flex flex-col">
+      <NewLayout />
         <FeaturedProducts className="bg-white" />
         <SideBar />
         <FeaturedProducts />

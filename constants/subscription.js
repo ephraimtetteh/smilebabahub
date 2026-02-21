@@ -3,18 +3,18 @@ import { AiOutlineExclamationCircle } from "react-icons/ai";
 
 export const packages = [
   {
-    id: 'Basic',
+    id: "Basic",
     packageName: "smile",
     text: "perfect for small business just getting started",
     popular: false,
     prices: [
       {
-        plan: "month",
+        plan: "monthly",
         duration: "monthly",
         price: 0.0,
       },
       {
-        plan: "year",
+        plan: "yearly",
         duration: "yearly",
         price: 0.0,
       },
@@ -23,33 +23,37 @@ export const packages = [
     includes: [
       {
         package: "1 Listing",
-        icon:IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "duration: 3 days",
-        icon:IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "dashboard partial access",
-        icon:IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "statics partial access",
-        icon:IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "radio ads",
-        icon: AiOutlineExclamationCircle,
+        icon: <AiOutlineExclamationCircle />,
         status: "no",
       },
-      { package: "TV ads", icon: AiOutlineExclamationCircle, status: "no" },
+      {
+        package: "TV ads",
+        icon: <AiOutlineExclamationCircle />,
+        status: "no",
+      },
       {
         package: "social media ads",
-        icon: AiOutlineExclamationCircle,
+        icon: <AiOutlineExclamationCircle />,
         status: "no",
       },
     ],
@@ -75,35 +79,37 @@ export const packages = [
     includes: [
       {
         package: "5 Listing",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
+        status: "yes",
       },
       {
         package: "duration: 3 days",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
+        status: "yes",
       },
       {
         package: "dashboard partial access",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "statics partial access",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "radio ads",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "TV ads",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "social media ads",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
     ],
@@ -129,37 +135,37 @@ export const packages = [
     includes: [
       {
         package: "10 Listing",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "duration: 30 days",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "dashboard partial access",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "statics partial access",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "radio ads",
-        icon: IoCheckmarkCircleOutline,
-        status: "yes"
+        icon: <IoCheckmarkCircleOutline />,
+        status: "yes",
       },
       {
         package: "TV ads",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "social media ads",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
     ],
@@ -185,37 +191,37 @@ export const packages = [
     includes: [
       {
         package: "10 Listing",
-        icon: IoCheckmarkCircleOutline ,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "duration: 30 days",
-        icon: IoCheckmarkCircleOutline ,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "dashboard partial access",
-        icon: IoCheckmarkCircleOutline ,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "statics partial access",
-        icon: IoCheckmarkCircleOutline ,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "radio ads",
-        icon: IoCheckmarkCircleOutline,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "TV ads",
-        icon: IoCheckmarkCircleOutline ,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
       {
         package: "social media ads",
-        icon: IoCheckmarkCircleOutline ,
+        icon: <IoCheckmarkCircleOutline />,
         status: "yes",
       },
     ],
