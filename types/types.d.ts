@@ -44,7 +44,7 @@ export type ProductSectionVariant =
   
   
   declare type Product = {
-    id: number;
+    id: number ;
     title?: string;
     description?: string;
     image: StaticImageData | string;

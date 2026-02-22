@@ -1,10 +1,10 @@
 'use client'
 
 import React from "react";
-import { Products } from "../assets/assets";
 import Title from '@/components/Title'
 import FeaturedCard from "./FeaturedCard";
-import { usePathname, useRouter } from 'next/navigation.js';
+import { useRouter } from 'next/navigation.js';
+import { food_list } from "@/constants/data";
 
 interface FeaturedProps {
   className?: string
@@ -12,23 +12,18 @@ interface FeaturedProps {
 
 
 const RelatedAds = ({className}: FeaturedProps) => {
-  const router = useRouter()
-
-  const navigate = ( path:string) => {
-    router.push(path)
-  };
 
   return (
     <div
-      className={`${className} flex flex-col text-black items-center px-6 py-6 bg-[#d6c8c5] bg-no-repeat bg-cover bg-center`}
+      className={`${className} flex flex-col text-black items-center justify-center bg-amber-50 px-6 py-6 bg-no-repeat bg-cover bg-center`}
     >
-      <Title title={"Related Ads"} />
+      <Title title={"Food for you"} />
 
       <div
-        className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2 mt-5"
+        className="flex flex-1 overflow-x-scroll items-center justify-center py-4 gap-x-2 mt-5"
         style={{ maxWidth: "100%" }}
       >
-        {Products.map((item, index) => (
+        {food_list.map((item, index) => (
           <FeaturedCard key={item.id} item={item} index={index} />
         ))}
       </div>
