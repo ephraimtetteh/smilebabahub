@@ -23,10 +23,10 @@ const Promo = ({className}: FeaturedProps) => {
     <div
       className={`${className} w-full flex flex-col text-black items-center px-3 py-6 bg-no-repeat bg-cover bg-center`}
     >
-      <Title title={"Real Estate Near You"} className="text-start" />
+      <Title title={"Popular Apartments"} className="text-start" />
 
       <div
-        className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2 mt-5"
+        className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2"
         style={{ maxWidth: "100%" }}
       >
         {realEstate.slice(0, 8).map((item, index) => (

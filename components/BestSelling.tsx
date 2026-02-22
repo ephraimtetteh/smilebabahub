@@ -26,7 +26,7 @@ const BestSelling = ({className}: FeaturedProps) => {
         
       />
 
-      <div className="flex flex-1 overflow-x-scroll items-center justify-center gap-5 mt-5" style={{ maxWidth: '100%'}}>
+      <div className="flex flex-1 overflow-x-scroll items-center justify-center gap-5" style={{ maxWidth: '100%'}}>
         {Products.map((item, index) => (
           <FeaturedCard key={item.id} item={item} index={index} />
         ))}
