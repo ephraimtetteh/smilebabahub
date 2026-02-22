@@ -24,7 +24,7 @@ const PostedAds = ({ className }: FeaturedProps) => {
       <Title title={"Posted Ads"} className="text-[20px]" />
 
       <div
-        className="flex flex-1 p-4 overflow-x-scroll items-center justify-center gap-x-2"
+        className="flex flex-1 px-4 overflow-x-scroll items-center justify-center gap-x-2"
         style={{ maxWidth: "100%" }}
       >
         {Products.map((item, index) => (
