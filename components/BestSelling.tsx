@@ -19,7 +19,7 @@ const BestSelling = ({className}: FeaturedProps) => {
   };
 
   return (
-    <div className={`${className} flex flex-col text-black items-center px-6 md:px-16 lg:px-24 py-6 bg-[#d6c8c5] bg-no-repeat bg-cover bg-center`}>
+    <div className={`${className} flex flex-col text-black items-center px-6 py-3 bg-no-repeat bg-cover bg-center`}>
    
       <Title
         title={"Best Selling Ads"}

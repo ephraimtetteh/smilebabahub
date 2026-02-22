@@ -20,7 +20,7 @@ const RelatedAds = ({className}: FeaturedProps) => {
 
   return (
     <div
-      className={`${className} flex flex-col text-black items-center px-6 py-3 bg-[#d6c8c5] bg-no-repeat bg-cover bg-center`}
+      className={`${className} flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}
     >
       <Title title={"Browse Market Place"} />
 
