@@ -1,17 +1,21 @@
+import BestSelling from '@/components/BestSelling';
+import Hero from '@/components/Hero';
 import Hub from '@/components/Hub';
 import PostedAds from '@/components/PostedAds';
 import Promo from '@/components/Promo';
+import RelatedAds from '@/components/RelatedAds';
 import Video from '@/components/Video'
 import React from 'react'
 
 const page = () => {
   return (
-    <div className="w-full flex flex-col flex-1 items-center px-4 md:px-16 lg:px-14 xl:px-12 justify-center pt-30">
-      <Video />
-      <Hub />
-      <div className='w-full flex flex-col'>
-        <PostedAds />
+    <div className="w-full flex flex-col flex-1 items-center justify-center pt-20">
+      <Hero />
+      <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
         <Promo />
+        <RelatedAds />
+        <PostedAds />
+        <BestSelling />
       </div>
     </div>
   );

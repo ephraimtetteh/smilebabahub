@@ -15,12 +15,12 @@ const RelatedAds = ({className}: FeaturedProps) => {
 
   return (
     <div
-      className={`${className} flex flex-col text-black items-center justify-center bg-amber-50 px-6 py-6 bg-no-repeat bg-cover bg-center`}
+      className={`${className} flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}
     >
-      <Title title={"Food for you"} />
+      <Title title={"Browse Market Place"} />
 
       <div
-        className="flex flex-1 overflow-x-scroll items-center justify-center py-4 gap-x-2 mt-5"
+        className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2"
         style={{ maxWidth: "100%" }}
       >
         {food_list.map((item, index) => (
