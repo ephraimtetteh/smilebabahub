@@ -22,7 +22,7 @@ const SearchBar = () => {
         <InputCompontent
           type="text"
           placeholder="Search your favorite food"
-          value=""
+          
           onChange={() => ""}
           className="border-none w-full rounded-full focus:ring-amber-300 focus:ring outline-none mx-2"
         />

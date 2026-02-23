@@ -2,9 +2,9 @@
 
 import Hub from "@/components/Hub";
 import PostedAds from "@/components/PostedAds";
-import RelatedAds from "@/components/RelatedAds";
 import SearchBar from "@/components/SearchBar";
 import React from "react";
+import FoodAds from "@/components/FoodComponent";
 
 const FoodPage = () => {
   return (
@@ -12,7 +12,7 @@ const FoodPage = () => {
       <Hub />
       <SearchBar />
       <div className="w-full">
-        <RelatedAds />
+        <FoodAds />
         <PostedAds />
       </div>
     </div>

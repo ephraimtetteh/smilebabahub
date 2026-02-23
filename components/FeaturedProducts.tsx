@@ -22,7 +22,7 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
     <div className={`${className} flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}>
    
       <Title
-        title={"Posted Ads"}
+        title={"Browse our market place"}
         
       />
 

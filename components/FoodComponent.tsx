@@ -11,13 +11,13 @@ interface FeaturedProps {
 }
 
 
-const RelatedAds = ({className}: FeaturedProps) => {
+const FoodAds = ({className}: FeaturedProps) => {
 
   return (
     <div
       className={`${className} flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}
     >
-      <Title title={"Browse Market Place"} />
+      <Title title={"Trending Food Spots"} />
 
       <div
         className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2"
@@ -41,4 +41,4 @@ const RelatedAds = ({className}: FeaturedProps) => {
   );
 };
 
-export default RelatedAds;
+export default FoodAds;

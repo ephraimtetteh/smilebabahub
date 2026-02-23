@@ -1,5 +1,6 @@
 import BestSelling from '@/components/BestSelling';
 import FeaturedProducts from '@/components/FeaturedProducts';
+import FoodAds from '@/components/FoodComponent';
 import Hero from '@/components/Hero';
 import Hub from '@/components/Hub';
 import PostedAds from '@/components/PostedAds';
@@ -14,6 +15,7 @@ const MarketPlace = () => {
       <Hub />
         <FeaturedProducts className="bg-white" />
         <SideBar />
+        <FoodAds />
         <FeaturedProducts />
         <BestSelling />
         <PostedAds />

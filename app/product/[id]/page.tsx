@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import { Products } from '@/assets/assets'
-import Button from '@/components/Button'
-import FeaturedProducts from '@/components/FeaturedProducts'
-import Image from 'next/image'
-import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import { Products } from "@/assets/assets";
+import Button from "@/components/Button";
+import FeaturedProducts from "@/components/FeaturedProducts";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
 import {
   IoCallOutline,
   IoChatboxEllipsesOutline,
@@ -16,42 +16,32 @@ import {
   FaAngleRight,
   FaRegWindowRestore,
 } from "react-icons/fa6";
-import AsideCard from '@/components/AsideCard'
-import Card from '@/components/Card'
-import { safetyTips } from '@/constants/safetyTips'
-import Socials from '@/components/Socials'
+import AsideCard from "@/components/AsideCard";
+import Card from "@/components/Card";
+import { safetyTips } from "@/constants/safetyTips";
+import Socials from "@/components/Socials";
 import { MdOutlineLocalOffer } from "react-icons/md";
-import RelatedAds from '@/components/RelatedAds'
-import ChatRoom from '@/components/ChatRoom'
-import Offer from '@/components/Offer'
-import Profile from '@/components/Profile'
-import { Product } from '@/types/types'
+import RelatedAds from "@/components/FoodComponent";
+import ChatRoom from "@/components/ChatRoom";
+import Offer from "@/components/Offer";
+import Profile from "@/components/Profile";
+import { Product } from "@/types/types";
 
-
-
-
-
-
-const page = ({params}: {params: Promise<{id: string}> }) => {
-  const { id } = React.use(params)
+const page = ({ params }: { params: Promise<{ id: string }> }) => {
+  const { id } = React.use(params);
 
   const [product, setProduct] = useState<Product>();
-  const [callRequest, setCallRequest] = useState(false)
-  const [phone, setPhone] = useState(false)
-  const [chatRoom, setChatRoom] =useState(false)
-  const [isOpen, setIsOpen] = useState(false)
+  const [callRequest, setCallRequest] = useState(false);
+  const [phone, setPhone] = useState(false);
+  const [chatRoom, setChatRoom] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const foundProduct =Products.find((product) => product.id === Number(id))
+    const foundProduct = Products.find((product) => product.id === Number(id));
     console.log(foundProduct);
-    setProduct(foundProduct)
+    setProduct(foundProduct);
+  }, [id]);
 
-  }, [id])
-
-
-
-
-  
   return (
     <div className=" py-10 flex flex-col flex-1 items-center justify-center lg:justify-between bg-white pt-30">
       <div className="lg:flex lg:flex-row items-start justify-center px-4 md:px-16 lg:px-14 xl:px-22 gap-3">
@@ -67,7 +57,7 @@ const page = ({params}: {params: Promise<{id: string}> }) => {
                 alt={product.title ?? "Product image"}
                 width={400}
                 height={400}
-                className='w-full'
+                className="w-full"
               />
             )}
             <Card />
@@ -239,6 +229,6 @@ const page = ({params}: {params: Promise<{id: string}> }) => {
       </div>
     </div>
   );
-}
+};
 
-export default page
+export default page;

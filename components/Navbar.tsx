@@ -74,7 +74,7 @@ const Navbar = ({className}: NavbarProps) => {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-4 lg:gap-8 w-[60%]">
+        <div className="hidden md:flex items-center gap-4 lg:gap-8 max-w-fit">
           <label className="flex-1 border border-white/30 bg-black/10 rounded text-[#ffc107] gap-2 flex items-center justify-start pl-2">
             <Image
               src={assets.searchIcon}
@@ -89,6 +89,18 @@ const Navbar = ({className}: NavbarProps) => {
               className=" outline-none py-2 lg:w-full rounded p-2 "
             />
           </label>
+        </div>
+
+        <div className='w-full items-center'>
+          <Link href={'/food'}>
+            Food
+          </Link>
+          <Link href={'/restate'}>
+            Apartments
+          </Link>
+          <Link href={'/Marketplace'}>
+            Food
+          </Link>
         </div>
 
         {/* Desktop Right */}
