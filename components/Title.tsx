@@ -8,17 +8,13 @@ interface TitleProps {
   className?: string
 }
 
-const Title = ({ title, subTitle, align, font, className }: TitleProps) => {
+const Title = ({ title, subTitle, className }: TitleProps) => {
   return (
     <div
-      className={`flex flex-col items-center  ${
-        align === "left" && "md:items-start md:text-left"
-      }`}
+      className={`flex flex-col items-center  md:items-start md:text-left`}
     >
       <h1
-        className={`${className}  text-xl text-[#25100d] md:text-[24px] ${
-          font || "font-playfair"
-        }`}
+        className={`${className}  text-xl text-[#25100d] md:text-[24px]`}
       >
         {title}
       </h1>

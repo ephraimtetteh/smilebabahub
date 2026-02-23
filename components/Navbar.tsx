@@ -51,7 +51,7 @@ const Navbar = ({className}: NavbarProps) => {
 
     return (
       <nav
-        className={`${className} fixed top-0 left-0 w-full flex flex-1 items-center justify-center px-4 md:px-16 lg:px-14 xl:px-12 transition-all duration-500 z-50 bg-amber-950  ${
+        className={`${className} fixed top-0 left-0 w-full flex flex-1 items-center lg:justify-between px-4 md:px-16 lg:px-14 xl:px-12 transition-all duration-500 z-50 bg-amber-950  ${
           isScrolled
             ? "bg-black shadow-md text-white/80 backdrop-blur-lg py-3 md:py-4"
             : "py-4 md:py-6"
@@ -59,98 +59,98 @@ const Navbar = ({className}: NavbarProps) => {
         style={{ backgroundImage: `url(${assets.bgImage})` }}
       >
         {/* Logo */}
-        <Link
-          href={"/"}
-          onClick={() => scrollTo(0, 0)}
-          className="mr-2 cursor-pointer"
-        >
-          <h1
-            className={`${
-              isScrolled && "text-black opacity-80"
-            } text-4xl font-bold text-white items-center text-center`}
+        <div className='flex items-center justify-center gap-12'>
+          <Link
+            href={"/"}
+            onClick={() => scrollTo(0, 0)}
+            className="mr-2 cursor-pointer"
           >
-            Smile<span className="text-[#ffc105]">Baba</span>
-          </h1>
-        </Link>
-
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-4 lg:gap-8 max-w-fit">
-          <label className="flex-1 border border-white/30 bg-black/10 rounded text-[#ffc107] gap-2 flex items-center justify-start pl-2">
-            <Image
-              src={assets.searchIcon}
-              alt="search"
+            <h1
               className={`${
-                isScrolled && "text-white"
-              } h-7 transition-all duration-500 `}
-            />
-            <input
-              type="text"
-              placeholder="search"
-              className=" outline-none py-2 lg:w-full rounded p-2 "
-            />
-          </label>
+                isScrolled && "text-black opacity-80"
+              } text-4xl font-bold text-white items-center text-center`}
+            >
+              Smile<span className="text-[#ffc105]">Baba</span>
+            </h1>
+          </Link>
+          {/* Desktop Nav */}
+          <div className='w-full items-center text-white gap-4 flex flex-1 text-[20px]'>
+            <Link href={'/food'} className='hover:text-amber-300' >
+              Food
+            </Link>
+            <Link href={'/restate'}>
+              Apartments
+            </Link>
+            <Link href={'/Marketplace'}>
+              Marketplace
+            </Link>
+          </div>
         </div>
 
-        <div className='w-full items-center'>
-          <Link href={'/food'}>
-            Food
-          </Link>
-          <Link href={'/restate'}>
-            Apartments
-          </Link>
-          <Link href={'/Marketplace'}>
-            Food
-          </Link>
-        </div>
-
-        {/* Desktop Right */}
-        <div className="hidden md:flex items-center w-full flex-1">
-          <Link
-            href={"/auth/register"}
-            onClick={() => scrollTo(0, 0)}
-            className="cursor-pointer"
-          >
-            <Button
-              className={`px-8 py-2 rounded ml-4 transition-all duration-500  ${
-                isScrolled ? "text-white bg-black" : "bg-[#ffc107] text-black"
-              }`}
-              text={"Register"}
-            />
-          </Link>
-
-          <Link
-            href={"/sell"}
-            className="cursor-pointer ml-2 w-full"
-            onClick={() => scrollTo(0, 0)}
-          >
-            <Button
-              text="PostAds"
-              className="bg-black/10 border-white/10 border text-white text-[14px] font-semibold "
-            />
-          </Link>
-
-          <Link href={"/cart"} className="lg:block hidden">
-            <button
-              className={`px-4 py-2 rounded ml-4 transition-all duration-500 cursor-pointer border ${
-                isScrolled
-                  ? "text-white bg-black"
-                  : "border-[#ffc107] text-white"
-              }`}
+        <div className='flex items-center justify-center'>
+          <div className="hidden md:flex items-center gap-4 lg:gap-8 max-w-fit">
+            <label className="flex-1 border border-white/30 bg-black/10 rounded text-[#ffc107] gap-2 flex items-center justify-start pl-2">
+              <Image
+                src={assets.searchIcon}
+                alt="search"
+                className={`${
+                  isScrolled && "text-white"
+                } h-7 transition-all duration-500 `}
+              />
+              <input
+                type="text"
+                placeholder="search"
+                className=" outline-none py-2 lg:w-full rounded p-2 "
+              />
+            </label>
+          </div>
+          {/* Desktop Right */}
+          <div className="hidden md:flex items-center w-full flex-1">
+            <Link
+              href={"/auth/register"}
+              onClick={() => scrollTo(0, 0)}
+              className="cursor-pointer"
             >
-              <IoCartOutline size={16} />
-            </button>
-          </Link>
-          <Link href={"/auth/user/register"} className="hidden lg:block">
-            <button
-              className={`px-4 py-2 rounded ml-4 transition-all duration-500 cursor-pointer border ${
-                isScrolled
-                  ? "text-white bg-black"
-                  : "border-[#ffc107] text-white"
-              }`}
+              <Button
+                className={`px-8 py-2 rounded ml-4 transition-all duration-500  ${
+                  isScrolled ? "text-white bg-black" : "bg-[#ffc107] text-black"
+                }`}
+                text={"Register"}
+              />
+            </Link>
+            <Link
+              href={"/sell"}
+              className="cursor-pointer ml-2 w-full"
+              onClick={() => scrollTo(0, 0)}
             >
-              <IoPersonOutline size={16} />
-            </button>
-          </Link>
+              <Button
+                text="PostAds"
+                className="bg-black/10 border-white/10 border text-white text-[14px] font-semibold "
+              />
+            </Link>
+            <Link href={"/cart"} className="lg:block hidden">
+              <button
+                className={`px-4 py-2 rounded ml-4 transition-all duration-500 cursor-pointer border ${
+                  isScrolled
+                    ? "text-white bg-black"
+                    : "border-[#ffc107] text-white"
+                }`}
+              >
+                <IoCartOutline size={16} />
+              </button>
+            </Link>
+            <Link href={"/auth/user/register"} className="hidden lg:block">
+              <button
+                className={`px-4 py-2 rounded ml-4 transition-all duration-500 cursor-pointer border ${
+                  isScrolled
+                    ? "text-white bg-black"
+                    : "border-[#ffc107] text-white"
+                }`}
+              >
+                <IoPersonOutline size={16} />
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* Mobile Menu */}

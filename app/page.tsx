@@ -6,6 +6,9 @@ import Promo from "@/components/Promo";
 import FoodAds from "@/components/FoodComponent";
 import Video from "@/components/Video";
 import React from "react";
+import AppDownload from "@/components/App";
+import Radio from "@/components/Radio";
+
 
 const page = () => {
   return (
@@ -14,8 +17,16 @@ const page = () => {
       <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
         <FoodAds />
         <Promo />
-        <PostedAds />
+        <div className="flex items-center w-full gap-8">
+        <div className="w-[75%]">
+          <PostedAds />
+        </div>
+        <div className="w-[25%] bg-white shadow-2xl shadow-neutral-200 rounded-2xl py-4 max-w-full">
+          <Radio />
+        </div>
+        </div>
         {/* <BestSelling /> */}
+        <AppDownload />
       </div>
     </div>
   );

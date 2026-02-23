@@ -33,6 +33,9 @@ import closeIcon from './closeIcon.svg'
 import starIconFilled from './starIconFilled.svg'
 import locationIcon from './locationIcon.svg'
 
+import playStore from '@/assets/images/play_store.png'
+import appStore from '@/assets/images/app_store.png'
+
 export const cities = [
     "Dubai",
     "Singapore",
@@ -41,25 +44,27 @@ export const cities = [
 ];
 
 export const assets = {
-    facebook_icon,
-    googleplus_icon,
-    starIconFilled,
-    locationIcon,
-    twitter_icon,
-    profile_icon,
-    bgImage,
-    logo,
-    closeIcon,
-    logo1,
-    calender,
-    searchIcon,
-    arrow,
-    logo_light,
-    blog_icon,
-    add_icon,
-    email_icon,
-    upload_area
-    }
+  facebook_icon,
+  googleplus_icon,
+  starIconFilled,
+  locationIcon,
+  twitter_icon,
+  profile_icon,
+  bgImage,
+  logo,
+  closeIcon,
+  logo1,
+  calender,
+  searchIcon,
+  arrow,
+  logo_light,
+  blog_icon,
+  add_icon,
+  email_icon,
+  upload_area,
+  playStore,
+  appStore
+  }
 
     export const Products = [
       {
