@@ -25,19 +25,19 @@ const Video = () => {
 
   return (
     <div className="lg:flex lg:flex-row flex-1 gap-4 lg:w-full items-start justify-center">
-      {/* <video
-        className="w-full h-[65vh] max-w-full rounded-base rounded-xl"
+      <video
+        className="w-full h-auto max-w-full rounded-base rounded-xl"
         controls
+        autoPlay
+        loop
+        muted
       >
         <source
-          src="https://media2.streambrothers.com:2000/public/8056"
-          type="video/mp4"
+          src="https://media2.streambrothers.com:1936/8056/8056/playlist.m3u8"
+          type=""
         />
-      </video> */}
-      <video ref={videoRef} controls className="lg:w-full lg:h-[65vh] max-w-full rounded-xl" />
-      <div>
-        <Card className="overflow-y-scroll" />
-      </div>
+      </video>
+      {/* <video ref={videoRef} controls className="lg:w-full lg:h-[65vh] max-w-full rounded-xl" /> */}
     </div>
   );
 }

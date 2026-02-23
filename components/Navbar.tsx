@@ -81,7 +81,7 @@ const Navbar = ({className}: NavbarProps) => {
             <Link href={'/restate'}>
               Apartments
             </Link>
-            <Link href={'/Marketplace'}>
+            <Link href={'/marketPlace'}>
               Marketplace
             </Link>
           </div>

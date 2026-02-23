@@ -3,6 +3,7 @@ import React from 'react'
 import { FaChevronRight } from "react-icons/fa6";
 import Card from './Card';
 import Promo from './Promo';
+import Video from './Video';
 
 
 const SideBar = () => {
@@ -33,9 +34,10 @@ const SideBar = () => {
         </aside>
         <main className=" w-full max-sm:h-[30%] lg:w-[70%] items-center justify-center ">
           <div className=" bg-black/20 text-white mb-4 rounded">
-            <h1 className="items-center justify-center font-bold text-5xl text-center py-60">
+            {/* <h1 className="items-center justify-center font-bold text-5xl text-center py-60">
               Video goes here
-            </h1>
+            </h1> */}
+            <Video />
           </div>
           <Card />
           <div className="grid lg:flex gap-4">
