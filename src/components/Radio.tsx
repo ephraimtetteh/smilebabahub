@@ -6,7 +6,7 @@ const Radio = () => {
   return (
     <div className="px-4 md:px-16 lg:px-14 xl:px-12">
       <div className="bg-amber-950 border-3 border-[#d8a304] rounded-2xl flex flex-col flex-1 p-2 text-white mt-2">
-          <IoRadioOutline size={28} fill="#ffc105" className="text-[#ffc105]" />
+        <IoRadioOutline size={28} fill="#ffc105" className="text-[#ffc105]" />
         <div className="flex flex-1 items-center justify-between">
           <div className="text-center">
             <h3 className="text-2xl font-semibold">
@@ -25,7 +25,7 @@ const Radio = () => {
           <audio
             controls
             preload="none"
-            src="http://197.251.202.99:8000/s24radio"
+            src="https://video2.getstreamhosting.com:2020/public/8244"
             className=""
           ></audio>
         </div>
