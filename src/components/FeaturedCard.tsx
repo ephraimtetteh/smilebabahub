@@ -12,9 +12,9 @@ const FeaturedCard = ({ item, index }: CardComponentProps) => {
       href={`/product/${item.id}`}
       onClick={() => scrollTo(0, 0)}
       key={item.id}
-      className="relative max-w-70 w-full rounded-xl shrink-0 bg-transparent border-white/20 border text-white shadow"
+      className="relative lg:max-w-70 max-w-55 w-full rounded-xl shrink-0 bg-transparent border-white/20 border text-white shadow"
     >
-      <Image src={item.image} alt="" className="rounded-xl" width={280} height={220} />
+      <Image src={item.image} alt="" className="rounded-xl lg:w-280 w-220 " width={280} height={220} />
 
       {index % 2 === 0 && (
         <p className="px-3 py-1 absolute top-3 left-3 text-xs bg-white text-gray-800 font-medium rounded-full">

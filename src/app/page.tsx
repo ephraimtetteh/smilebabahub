@@ -20,24 +20,24 @@ const page = () => {
         <FoodAds />
         <PostedAds />
       </div>
-      <div className="lg:flex lg:flex-row items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 ">
-        <div className="lg:w-[60%]">
-          <h1 className="text-2xl font-bold pb-4">
+      <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
+        <div className="w-full">
+          <h1 className="lg:text-4xl font-bold pb-12 capitalize text-center ">
             Promote your products Live TV
           </h1>
           <Video />
         </div>
-        <div className=" lg:max-w-[50%] bg-amber-950 text-white shadow-2xl shadow-neutral-200 rounded-2xl py-20 px-15 mt-10 items-center justify-center text-center">
-          <h1 className="text-6xl font-bold py-2">
+        {/* <div className=" w-full lg:max-w-[50%] bg-amber-950 text-white shadow-2xl shadow-neutral-200 rounded-2xl lg:py-20 py-5 lg:px-15 mt-10 items-center justify-center text-center">
+          <h1 className="lg:text-6xl font-bold py-2">
             Advertise your business on smilebabahub
           </h1>
-          <p className="font-semibold text-[20px]">
+          <p className="font-semibold lg:text-[20px]">
             Reach thousands of buyers daily
           </p>
           <div className="py-2">
             <Button text="Advertise Now" onClick={() => "/sell"} />
           </div>
-        </div>
+        </div> */}
       </div>
       <AppDownload />
       <div className=" fixed right-5 bottom-5 z-40 shadow-2xl rounded-2xl">

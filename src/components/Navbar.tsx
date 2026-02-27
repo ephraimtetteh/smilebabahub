@@ -39,7 +39,7 @@ const Navbar = ({className}: NavbarProps) => {
 
     return (
       <nav
-        className={`${className} fixed top-0 left-0 w-full flex flex-1 items-center lg:justify-between px-4 md:px-16 lg:px-14 xl:px-12 transition-all duration-500 z-50 bg-amber-950  ${
+        className={`${className} fixed top-0 left-0 w-full flex flex-1 items-center lg:justify-between px-4 md:px-16 lg:px-14 xl:px-12 transition-all duration-500 z-50 bg-amber-950 overflow-hidden  ${
           isScrolled
             ? "bg-black shadow-md text-white/80 backdrop-blur-lg py-3 md:py-4"
             : "py-4 md:py-6"
@@ -56,18 +56,18 @@ const Navbar = ({className}: NavbarProps) => {
             <h1
               className={`${
                 isScrolled && "text-black opacity-80"
-              } text-4xl font-bold text-white items-center text-center`}
+              } lg:text-4xl font-bold text-white items-center text-center`}
             >
-              Smile<span className="text-[#ffc105]">Baba</span>
+              Smile<span className="text-[#ffc105]">BabaHub</span>
             </h1>
           </Link>
           {/* Desktop Nav */}
-          <div className='w-full items-center text-white gap-4 flex flex-1 text-[20px]'>
+          <div className='hidden lg:w-full items-center text-white gap-4 lg:flex flex-1 text-[20px]'>
             <Link href={'/food'} className='hover:text-amber-300' >
               Food
             </Link>
             <Link href={'/restate'}>
-              Apartments
+              Re-estate
             </Link>
             <Link href={'/marketPlace'}>
               Marketplace

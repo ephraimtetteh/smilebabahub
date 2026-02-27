@@ -7,7 +7,7 @@ import SearchBar from './SearchBar';
 
 const Hero = () => {
   return (
-    <div className="relative h-[30vh] w-full py-10">
+    <div className="relative lg:h-[30vh] h-[15vh] w-full py-10 overflow-hidden">
       <Image
         src={assets.bgImage}
         alt="Background"

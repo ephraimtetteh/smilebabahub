@@ -171,4 +171,7 @@ export type ProductSectionVariant =
     setShowAddProduct: React.Dispatch<React.SetStateAction<boolean>>;
   };
 
-  
+  declare interface NavbarLinkPorps {
+    href: string;
+    label: string;
+  }

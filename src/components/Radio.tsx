@@ -9,7 +9,7 @@ const Radio = () => {
         <IoRadioOutline size={28} fill="#ffc105" className="text-[#ffc105]" />
         <div className="flex flex-1 items-center justify-between">
           <div className="text-center">
-            <h3 className="text-2xl font-semibold">
+            <h3 className="hidden lg:block lg:text-2xl font-semibold">
               smileBaba <span className="text-[#ffc105]">Radio</span>
             </h3>
             <p className="text-[16px]">Live MarketPlace Vibes</p>
@@ -18,7 +18,7 @@ const Radio = () => {
             <small className="bg-rose-800 px-1 font-bold text-[18px] rounded">
               Live
             </small>
-            <FaHeart fill="red" />
+            <FaHeart fill="red" className='hidden lg:block' />
           </div>
         </div>
         <div className="flex flex-1 flex-row py-2">
