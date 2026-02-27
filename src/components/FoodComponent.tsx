@@ -13,36 +13,32 @@ interface FeaturedProps {
 
 
 const FoodAds = ({className}: FeaturedProps) => {
+  const router = useRouter()
+  const navigate = (path: string) => {
+    router.push(path);
+  };
 
   return (
     <div
       className={`${className} flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}
     >
-      <div className="flex flex-1 items-center justify-between pt-10 gap-12">
-        <div className="items-center justify-between flex flex-1">
-          <div>
-            <Title title={"Trending Food Spots"} className="text-start" />
+    
+        <div className=" flex items-center justify-between relative gap-12">
+          <div className="">
+            <Title title={"Trending Food Spots"} />
           </div>
-          {/* <div>
-          <button
-            onClick={() => {
-              navigate("/pages/ads");
-              scrollTo(0, 0);
-            }}
-            className="my-16 px-4 py-2 text-sm font-medium border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all cursor-pointer"
-          >
-            View all Apartments{" "}
-          </button>
-        </div> */}
+          <div>
+            <button
+              onClick={() => {
+                navigate("/food");
+                scrollTo(0, 0);
+              }}
+              className="my-16 px-4 py-2 text-sm font-medium border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all cursor-pointer"
+            >
+              View all Apartments{" "}
+            </button>
+          </div>
         </div>
-        <div>
-          <Button
-            text="View All"
-            onClick={() => "/food"}
-            className="cursor-pointer"
-          />
-        </div>
-      </div>
 
       <div
         className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2"

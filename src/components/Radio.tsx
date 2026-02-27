@@ -25,7 +25,10 @@ const Radio = () => {
           <audio
             controls
             preload="none"
-            src="https://video2.getstreamhosting.com:2020/public/8244"
+            // src="http://197.251.202.99:8000/s24radio"
+            src={
+              "https://video2.getstreamhosting.com:2020/AudioPlayer/8244?mount=/stream&"
+            }
             className=""
           ></audio>
         </div>

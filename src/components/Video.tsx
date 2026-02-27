@@ -26,9 +26,8 @@ const Video = () => {
   return (
     <div className="lg:flex lg:flex-row flex-1 gap-4 lg:w-full items-start justify-center">
       <video
-        className="w-full h-auto max-w-full rounded-base rounded-xl"
+        className="w-full max-w-full rounded-base rounded-xl"
         controls
-        autoPlay
         loop
         muted
       >

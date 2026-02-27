@@ -10,7 +10,7 @@ interface FeaturedProps {
   className?: string;
 }
 
-const PostedAds = ({ className }: FeaturedProps) => {
+  const PostedAds = ({ className }: FeaturedProps) => {
   const router = useRouter();
 
   const navigate = (path: string) => {
@@ -21,7 +21,22 @@ const PostedAds = ({ className }: FeaturedProps) => {
     <div
       className={`${className} flex flex-col text-black items-center  bg-no-repeat bg-cover bg-center`}
     >
-      <Title title={"Posted Ads"} className="text-[20px]" />
+      <div className=" flex items-center justify-between relative gap-12">
+        <div className="">
+          <Title title={"Posted Ads"} />
+        </div>
+        <div>
+          <button
+            onClick={() => {
+              navigate("/restate");
+              scrollTo(0, 0);
+            }}
+            className="my-16 px-4 py-2 text-sm font-medium border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all cursor-pointer"
+          >
+            View All
+          </button>
+        </div>
+      </div>
 
       <div
         className="flex flex-1 px-4 overflow-x-scroll items-center justify-center gap-x-2"
@@ -32,15 +47,6 @@ const PostedAds = ({ className }: FeaturedProps) => {
         ))}
       </div>
 
-      {/* <button
-        onClick={() => {
-          navigate("/");
-          scrollTo(0, 0);
-        }}
-        className="my-16 px-4 text-sm font-medium border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all cursor-pointer"
-      >
-        View all Destination{" "}
-      </button> */}
     </div>
   );
 };

@@ -11,7 +11,7 @@ interface TitleProps {
 const Title = ({ title, subTitle, className }: TitleProps) => {
   return (
     <div
-      className={`flex flex-col items-center  md:items-start md:text-left`}
+      className={`flex flex-col items-start text-left`}
     >
       <h1
         className={`${className}  text-xl text-[#25100d] md:text-[24px]`}

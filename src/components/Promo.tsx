@@ -23,21 +23,21 @@ const Promo = ({className}: FeaturedProps) => {
     <div
       className={`${className} w-full flex flex-col text-black items-center px-3 py-6 bg-no-repeat bg-cover bg-center`}
     >
-      <div className="items-center justify-between flex flex-1">
-        <div>
-          <Title title={"Popular Apartments"} className="text-start" />
+      <div className=" flex items-center justify-between relative gap-12">
+        <div className="">
+          <Title title={"Popular Apartments"} />
         </div>
-        {/* <div>
+        <div>
           <button
             onClick={() => {
-              navigate("/pages/ads");
+              navigate("/restate");
               scrollTo(0, 0);
             }}
             className="my-16 px-4 py-2 text-sm font-medium border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all cursor-pointer"
           >
             View all Apartments{" "}
           </button>
-        </div> */}
+        </div>
       </div>
 
       <div
