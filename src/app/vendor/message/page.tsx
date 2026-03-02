@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { IoChatboxEllipsesOutline, IoCloseOutline } from "react-icons/io5";
 
-const page = () => {
+const MessagePage = () => {
 
   const [openChat, setOpenChat] = useState(true)
   const [messageRead, setMessageRead] = useState(false)
@@ -75,4 +75,4 @@ const page = () => {
   );
 }
 
-export default page
+export default MessagePage

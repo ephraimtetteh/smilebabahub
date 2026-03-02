@@ -24,7 +24,7 @@ const Form1 = ({ onNext }: FormProps) => {
   const selectedChild = selectedCategory?.children?.find((child) => child.id === childId) || null;
 
   useEffect(() => {
-    setCategories(Categories)
+    setCategories(categories)
   }, [])
 
 
@@ -73,7 +73,7 @@ const Form1 = ({ onNext }: FormProps) => {
             value={categoryId}
             onChange={(e) => {
               setCategoryId(e.target.value);
-              setChildId(""); // reset lower level
+              setChildId(""); 
             }}
             className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
           >
