@@ -63,12 +63,8 @@ export type ProductSectionVariant =
   declare type Category = {
     id: string;
     name: string;
-    children: {
-      id: string;
-      name: string;
-      children: string[];
-    }[];
-  };
+    children: Category[] | string[];
+  }
 
   declare type FormProps = {
     onNext: () => void;

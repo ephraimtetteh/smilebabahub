@@ -121,8 +121,8 @@ const Form1 = ({ onNext }: FormProps) => {
           >
             <option value="">Select Location</option>
 
-            {selectedChild?.children?.map((grandChild) => (
-              <option key={grandChild} value={grandChild}>
+            {selectedChild?.children?.map((grandChild, index) => (
+              <option key={index} value={grandChild}>
                 {grandChild}
               </option>
             ))}

@@ -19,12 +19,25 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
   };
 
   return (
-    <div className={`${className} flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}>
-   
-      <Title
-        title={"Browse our market place"}
-        
-      />
+    <div
+      className={`${className} flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}
+    >
+      <div className=" flex items-center justify-between relative gap-12">
+        <div className="">
+          <Title title={"Browse our market place"} />
+        </div>
+        <div>
+          <button
+            onClick={() => {
+              navigate("/food");
+              scrollTo(0, 0);
+            }}
+            className="my-16 px-4 py-2 text-sm font-medium border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all cursor-pointer"
+          >
+            View all Foods{" "}
+          </button>
+        </div>
+      </div>
 
       <div className="w-full flex overflow-x-scroll items-center justify-center gap-5 ">
         {Products.map((item, index) => (

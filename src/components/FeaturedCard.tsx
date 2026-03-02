@@ -14,7 +14,7 @@ const FeaturedCard = ({ item, index }: CardComponentProps) => {
       key={item.id}
       className="relative lg:max-w-70 max-w-55 w-full rounded-xl shrink-0 bg-transparent border-white/20 border text-white shadow"
     >
-      <Image src={item.image} alt="" className="rounded-xl lg:w-280 w-220 " width={280} height={220} />
+      <Image src={item.image} alt="" className="rounded lg:w-280 w-220 " width={280} height={220} />
 
       {index % 2 === 0 && (
         <p className="px-3 py-1 absolute top-3 left-3 text-xs bg-white text-gray-800 font-medium rounded-full">
@@ -22,9 +22,9 @@ const FeaturedCard = ({ item, index }: CardComponentProps) => {
         </p>
       )}
 
-      <div className="p-4 pt-5">
+      <div className="p-2 pt-3">
         <div className="flex items-center justify-between">
-          <p className="font-playfair text-lg font-medium text-black">
+          <p className="font-playfair lg:text-lg text-[14px] lg:font-medium text-black">
             {item.author}
           </p>
           <div className="flex items-center gap-1">

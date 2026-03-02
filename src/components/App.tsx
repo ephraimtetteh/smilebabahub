@@ -9,7 +9,7 @@ const AppDownload = () => {
         <h3 className='font-bold lg:text-6xl text-2xl'>Get the smileBabaHub App</h3>
         <p className='py-3 text-gray-600 lg:text-[20px]'>Buy food, find apartments, hoth marketplace, and stream live radio and TV</p>
       </div>
-      <div className='lg:flex gap-4 items-center justify-center'>
+      <div className='flex gap-4 items-center justify-center'>
         <Image src={assets.appStore} alt='' />
         <Image src={assets.playStore} alt='' />
       </div>

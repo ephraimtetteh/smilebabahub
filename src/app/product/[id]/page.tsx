@@ -47,7 +47,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
       <div className="lg:flex lg:flex-row items-start justify-center px-4 md:px-16 lg:px-14 xl:px-22 gap-3">
         {/* main card items details */}
         <div className="lg:w-[80%]">
-          <h1 className="lg:text-2xl font-bold py-2 pb-6 capitalize">
+          <h1 className="lg:text-3xl font-semibold py-2 pb-6 capitalize">
             {product?.title ?? "Product image"}
           </h1>
           <div className="rounded items-center justify-center w-full">
@@ -57,13 +57,13 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                 alt={product.title ?? "Product image"}
                 width={400}
                 height={400}
-                className="w-full"
+                className="w-full rounded-2xl"
               />
             )}
             <Card />
           </div>
           {/* ====== product description */}
-          <div className="grid gap-3 bg-white p-10 mb-4">
+          <div className="grid gap-3 bg-white py-10 mb-4">
             <h4 className="text-2xl">Product Description</h4>
             <p className="py-1">
               Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero
@@ -79,7 +79,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             </p>
           </div>
           {/* ====== store details */}
-          <div className="grid gap-3 bg-white p-10">
+          <div className="grid gap-3 bg-white py-10">
             <div className="flex items-center justify-between">
               <div className="flex gap-2 items-center">
                 <FaRegWindowRestore fill="#ffc105" />
@@ -104,7 +104,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             </small>
 
             <Socials />
-            <div>
+            <div className="flex items-center gap-4">
               {!isOpen ? (
                 <Button
                   text="Make an offer"
@@ -115,6 +115,8 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
               ) : (
                 <Offer onClose={() => setIsOpen((prev) => !prev)} />
               )}
+
+              <Button text="Buy" />
             </div>
           </div>
         </div>

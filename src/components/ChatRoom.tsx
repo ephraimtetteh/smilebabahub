@@ -10,13 +10,15 @@ type ChatRoomProps = {
 
 const ChatRoom = ({setChatRoom, icon, onClose}: ChatRoomProps) => {
   return (
-    <div className="bg-[#ffc1051a] shadow-2xl w-90 min-h-130 absolute top-90 right-35 rounded-xl py-6">
+      <div className='bg-black/50 w-2xl rounded-xl relative items-center justify-center mx-auto flex'>
+    <div className="backdrop-blur-3xl text-white inset-0 shadow-2xl w-xl min-h-130 absolute right-35 rounded-xl items-center justify-center mx-auto py-6">
+
       <div className="flex flex-1 items-center justify-between px-4">
         <h2> Chat Room</h2>
         <button
           onClick={onClose}
           className="bg-gray-600 text-xl rounded-full text-white"
-        >
+          >
           {icon}
         </button>
       </div>
@@ -36,6 +38,7 @@ const ChatRoom = ({setChatRoom, icon, onClose}: ChatRoomProps) => {
         <Button text='send' />
       </div>
       </div>
+    </div>
     </div>
   );
 }

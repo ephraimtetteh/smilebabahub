@@ -47,7 +47,7 @@ const Navbar = ({className}: NavbarProps) => {
         style={{ backgroundImage: `url(${assets.bgImage})` }}
       >
         {/* Logo */}
-        <div className='flex items-center justify-center gap-12'>
+        <div className="flex items-center justify-center gap-12">
           <Link
             href={"/"}
             onClick={() => scrollTo(0, 0)}
@@ -58,24 +58,20 @@ const Navbar = ({className}: NavbarProps) => {
                 isScrolled && "text-black opacity-80"
               } lg:text-4xl font-bold text-white items-center text-center`}
             >
-              Smile<span className="text-[#ffc105]">BabaHub</span>
+              Smile<span className="text-[#ffc105]">Baba</span>Hub
             </h1>
           </Link>
           {/* Desktop Nav */}
-          <div className='hidden lg:w-full items-center text-white gap-4 lg:flex flex-1 text-[20px]'>
-            <Link href={'/food'} className='hover:text-amber-300' >
+          <div className="hidden lg:w-full items-center text-white gap-4 lg:flex flex-1 text-[20px]">
+            <Link href={"/food"} className="hover:text-amber-300">
               Food
             </Link>
-            <Link href={'/restate'}>
-              Re-estate
-            </Link>
-            <Link href={'/marketPlace'}>
-              Marketplace
-            </Link>
+            <Link href={"/restate"}>Appartments</Link>
+            <Link href={"/marketPlace"}>Marketplace</Link>
           </div>
         </div>
 
-        <div className='flex items-center justify-center'>
+        <div className="flex items-center justify-center">
           <div className="hidden md:flex items-center gap-4 lg:gap-8 max-w-fit">
             <label className="flex-1 border border-white/30 bg-black/10 rounded text-[#ffc107] gap-2 flex items-center justify-start pl-2">
               <Image
@@ -100,20 +96,26 @@ const Navbar = ({className}: NavbarProps) => {
               className="cursor-pointer"
             >
               <Button
-                className={`px-8 py-2 rounded ml-4 transition-all duration-500  ${
-                  isScrolled ? "text-white bg-black" : "bg-[#ffc107] text-black"
+                className={`px-8 py-2 rounded ml-4 transition-all duration-500 cursor-pointer  ${
+                  isScrolled
+                    ? "text-white bg-black border border-white"
+                    : "bg-[#ffc107] text-black "
                 }`}
                 text={"Register"}
               />
             </Link>
             <Link
               href={"/sell"}
-              className="cursor-pointer ml-2 w-full"
+              className={`cursor-pointer ml-2 w-full rounded ${
+                isScrolled
+                  ? "text-black bg-[#ffc107]"
+                  : "bg-[#ffc107] text-black"
+              }`}
               onClick={() => scrollTo(0, 0)}
             >
               <Button
                 text="PostAds"
-                className="bg-black/10 border-white/10 border text-white text-[14px] font-semibold "
+                className="bg-black/10 border-white/10 border text-[14px] font-semibold "
               />
             </Link>
             <Link href={"/cart"} className="lg:block hidden">
@@ -129,7 +131,7 @@ const Navbar = ({className}: NavbarProps) => {
             </Link>
             <Link href={"/auth/user/register"} className="hidden lg:block">
               <button
-                className={`px-4 py-2 rounded ml-4 transition-all duration-500 cursor-pointer border ${
+                className={`px-4 py-2 rounded ml-2 transition-all duration-500 cursor-pointer border ${
                   isScrolled
                     ? "text-white bg-black"
                     : "border-[#ffc107] text-white"
@@ -138,6 +140,17 @@ const Navbar = ({className}: NavbarProps) => {
                 <IoPersonOutline size={16} />
               </button>
             </Link>
+
+            {/* country */}
+            <select
+              name=""
+              id=""
+              className="border-yellow-500 border rounded p-1 text-white ml-2 outline-none"
+            >
+              <option value="">GH</option>
+              <option value="">NGN</option>
+              <option value="">GLO</option>
+            </select>
           </div>
         </div>
 

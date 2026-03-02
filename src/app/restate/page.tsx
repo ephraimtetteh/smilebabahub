@@ -1,6 +1,8 @@
 'use client'
 
 import BestSelling from '@/src/components/BestSelling';
+import FeaturedProducts from '@/src/components/FeaturedProducts';
+import FoodAds from '@/src/components/FoodComponent';
 import Hub from '@/src/components/Hub';
 import NewLayout from '@/src/components/NewLayout';
 import PostedAds from '@/src/components/PostedAds';
@@ -16,7 +18,9 @@ const RestatePage = () => {
       <div className='w-full'>
         <Promo />
         <PostedAds />
-        <BestSelling />
+        <FoodAds />
+        {/* <BestSelling /> */}
+        <FeaturedProducts />
       </div>
     </div>
   );

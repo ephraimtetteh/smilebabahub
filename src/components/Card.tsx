@@ -15,7 +15,7 @@ const Card = ({className}: VideoProps) => {
         <Title title='Recently Aired' className='text-text-black text-[14px] p4-8' />
       </div>
 
-      <div className={`${className}flex flex-row overflow-x-scroll`}>
+      <div className={`${className} flex flex-row overflow-x-scroll`}>
         {Products.slice(0, 4).map((item) => (
           <article key={item.id} className="border border-[#ccc] mb-3 rounded shadow-2xs items-center justify-center mr-2">
             <Image src={item.image} alt={item.title} className='text-[16px] text-[#ffc105] text-center justify-center lg:w-50 lg:h-25' />
