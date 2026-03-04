@@ -5,6 +5,7 @@ import React from "react";
 import StoreProvider from "../app/redux";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
+import Script from "next/script";
 
 const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const pathName = usePathname();
@@ -45,6 +46,10 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
       <StoreProvider>
         <LayoutShell>
           {children}
+          <Script
+            src="https://video2.getstreamhosting.com:2020/dist/widgets.js"
+            strategy="afterInteractive"
+          />
         </LayoutShell>
       </StoreProvider>
     </>

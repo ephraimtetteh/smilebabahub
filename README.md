@@ -160,3 +160,131 @@ export const selectToken = (state) => state.auth.token;
 export const selectCartItems = (state) => state.cart.cartItems;
 export const selectCartTotal = (state) => state.cart.total;
 export const selectCartAmount = (state) => state.cart.amount;
+
+
+
+https://video2.getstreamhosting.com:2020/controller/Widgets/495
+
+const Radios = ()  => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+
+    if (playing) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+
+    setPlaying(!playing);
+  };
+
+  return (
+    <div className="p-6 bg-amber-950 rounded-xl text-white">
+      <h2 className="text-xl mb-4">
+        SmileBaba <span className="text-yellow-400">Radio</span>
+      </h2>
+
+      <button
+        onClick={togglePlay}
+        className="bg-yellow-500 text-black px-4 py-2 rounded-lg"
+      >
+        {playing ? "Stop Listening" : "Start Listening"}
+      </button>
+
+      <audio ref={audioRef} preload="none">
+        <source
+          src="https://video2.getstreamhosting.com:2020/stream"
+          type="audio/mpeg"
+        />
+      </audio>
+    </div>
+  );
+}
+
+const RadioComponent = () => {
+  const [error, setError] = useState()
+  useEffect(() => {
+    // If the widget needs manual initialization,
+    // you can call it here after script loads.
+  }, []);
+
+  return (
+    <div className="px-4 md:px-16 lg:px-14 xl:px-12">
+      {/* Load GetStreamHosting widget */}
+      <Script
+        src="https://video2.getstreamhosting.com:2020/dist/widgets.js"
+        strategy="afterInteractive"
+      />
+
+      <div className="bg-amber-950 border-2 border-[#d8a304] rounded-2xl p-4 text-white mt-4">
+        <h3 className="text-center text-2xl font-semibold">
+          SmileBaba <span className="text-[#ffc105]">Radio</span>
+        </h3>
+
+        {/* This div is IMPORTANT */}
+        <div
+          id="gshoutcast-widget"
+          data-type="audio"
+          data-public-url="https://video2.getstreamhosting.com:2020/AudioPlayer/8244?mount=/stream&"
+        />
+      </div>
+
+      <div className="p-6 bg-amber-950 rounded-xl text-white">
+        <h2 className="text-xl mb-4">
+          SmileBaba <span className="text-yellow-400">Radio</span>
+        </h2>
+
+        <audio
+          controls
+          preload="none"
+          className="w-full"
+          onError={() => setError(true)}
+        >
+          <source
+            src="https://video2.getstreamhosting.com:2020/AudioPlayer/8244?mount=/stream&"
+            type="audio/mpeg"
+          />
+        </audio>
+
+        {error && <p className="text-red-400 mt-2">Stream failed to load.</p>}
+      </div>
+    </div>
+  );
+}
+
+
+  {/* <select
+            name="category"
+            required
+            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <option value="">Select Category</option>
+
+            {categories.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select> */}
+
+
+
+
+          {/* <select
+            name="categoryType"
+            required
+            disabled={!selectedCategory}
+            className="border-gray-300 w-full sm:w-125 border px-4 py-3 rounded mb-4 outline-none"
+          >
+            <option value="">Select Category Type</option>
+
+            {selectedCategory?.children?.map((child) => (
+              <option key={child.id} value={child.id}>
+                {child.name}
+              </option>
+            ))}
+          </select> */}

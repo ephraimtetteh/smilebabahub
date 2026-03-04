@@ -5,42 +5,39 @@ import Image from 'next/image'
 import Link from 'next/link';
 import React, { useState } from 'react'
 import { FaEyeSlash, FaEye } from "react-icons/fa";
-import { useRegisterUserMutation } from '@/src/lib/api/api';
-import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { useAppSelector } from '../../redux';
 
 const AuthRegister
  = () => {
-
-  const [registerUser, { isLoading }] = useRegisterUserMutation();
-
+  const { isLoading } = useAppSelector((state) => state.auth)
   const [user, setUser] = useState({
     email: '',
     password: '',
     phone: '',
     name: ''
-
   })
   const [error, setError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const router = useRouter()
 
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({...user, [e.target.name]: e.target.value})
   }
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
 
-    // try {
-    //   const payload = await registerUser(user).unwrap();
-    //   console.log("fulfilled", payload);
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/smilebaba/auth/register`, user)
+      console.log(response)
 
-    //   router.push("/auth/login");
-      
-    // } catch (err) {
+      if(response?.status === 200){
 
-    //   setError(error.response?.data?.message || "Something went wrong");
-    // }
+      }
+    } catch (error) {
+      console.log(error)
+    }
+
+    
   };
 
   return (

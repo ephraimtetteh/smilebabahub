@@ -1,58 +1,61 @@
-import { InitialState } from "@/src/types/types";
 import { createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
 
-const initialState: InitialState = {
-  user: {
-    isLoading: true,
-    token: null,
-    name: "",
-    _id: "",
-    email: "",
-  },
+
+interface Message {
+  type: string,
+  message: string
+}
+declare interface authState {
+  isAuthenticated: boolean;
+  isAuthenticating: boolean;
+  accessToken: null | string;
+  user: object
+  message: Message
+  isLoading: boolean
+ }
+
+const initialState: authState = {
+ isAuthenticated: false,
+ isAuthenticating: true,
+ accessToken: null,
+ user: {},
+ message: {
+  type: '',
+  message: ''
+ },
+ isLoading: true
 };
 
 export const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setRegisterState: (state, action) => {
-      if (!action.payload) return;
-      state.user = { ...state.user, ...action.payload };
+    setIsAuthenticated: (state, action: PayloadAction<boolean>) => {
+      state.isAuthenticated = action.payload;
     },
 
-    setLoginState: (state, action) => {
-      state.user = {
-        ...state.user,
-        ...action.payload.user,
-        token: action.payload.token,
-      };
+    setIsAuthenticating: (state, action: PayloadAction<boolean>) => {
+      state.isAuthenticating = action.payload
     },
 
-    setLogoutState: (state) => {
-      state.user = initialState.user;
+    setAccessToken: (state, action: PayloadAction<null | string>) => {
+      state.accessToken = action.payload
     },
+
+    setUser: (state, action: PayloadAction<object>) => {
+      state.user = action.payload
+    },
+    setMessage: (state, action: PayloadAction<Message>) => {
+      state.message = action.payload
+    }
   },
-  // extraReducers: (builder) => {
-  //   builder
-  //     .addCase(getCartItems.pending, (state) => {
-  //       state.isLoading = true;
-  //     })
-  //     .addCase(getCartItems.fulfilled, (state, action) => {
-  //       console.log(action);
-  //       state.isLoading = false;
-  //       state.cartItems = action.payload;
-  //     })
-  //     .addCase(getCartItems.rejected, (state) => {
-  //       state.isLoading = false;
-  //     });
-  // },
 })
 
 export const {
-  setRegisterState,
-  setLoginState,
-  setLogoutState,
+  setIsAuthenticated, setIsAuthenticating, setAccessToken, setUser, setMessage
 } = authSlice.actions;
+
 const authReducer = authSlice.reducer
 export default authReducer;
 

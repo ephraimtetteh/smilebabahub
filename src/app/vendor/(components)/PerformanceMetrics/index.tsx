@@ -14,6 +14,7 @@ import {
   Legend,
 } from "recharts";
 import { RechartsDevtools } from "@recharts/devtools";
+import { Activity, TrendingUp } from 'lucide-react';
 
 // #region Sample data
 const data = [
@@ -199,7 +200,10 @@ const index = () => {
     <div className="flex flex-row flex-1 items-center gap-3 py-3 w-full">
       <div className="bg-white shadow shadow-neutral-400 p-12 flex flex-col w-full rounded-2xl">
         <div className="flex items-center justify-between pb-4 mb-10 border-b border-gray-200">
-          <h3 className="text-xl gap-2">Sales Trend</h3>
+          <h3 className=" flex text-xl gap-2 items-center">
+            <TrendingUp className='text-blue-500' />
+            Sales Trend
+          </h3>
           <div className="flex flex-col">
             <h3>$00.00</h3>
             <h4 className="text-[14px] text-green-500">0.00%</h4>
@@ -210,7 +214,10 @@ const index = () => {
 
       <div className="bg-white shadow shadow-neutral-400 p-12 flex flex-col w-full rounded-2xl">
         <div className="flex items-center justify-between pb-4 mb-10 border-b border-gray-200">
-          <h3 className="text-xl gap-2">Performance Metrics</h3>
+          <h3 className=" flex text-xl gap-2 items-center ">
+            <Activity className='text-purple-500' />
+            Performance Metrics
+          </h3>
           <div className="flex flex-col">
             <h3>$00.00</h3>
             <h4 className="text-[14px] text-green-500">0.00%</h4>

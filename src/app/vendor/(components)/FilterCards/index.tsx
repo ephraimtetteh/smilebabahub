@@ -1,4 +1,4 @@
-import { CircleDollarSign, LucideIcon } from 'lucide-react';
+import { Activity, BadgeCheck, CircleDollarSign, LucideIcon, ShoppingBasket } from 'lucide-react';
 import React, { JSX, ReactNode } from 'react'
 
 interface FilterCardProps {
@@ -45,7 +45,7 @@ const index = () => {
         title='Total Sales'
         text='$00.00'
         percentage='0.0'
-        icon={<CircleDollarSign />}
+        icon={<Activity />}
       />
 
       <FilterCards 
@@ -59,14 +59,14 @@ const index = () => {
         title='Total Earnings'
         text='$00.00'
         percentage='0.0'
-        icon={<CircleDollarSign />}
+        icon={<BadgeCheck />}
       />
 
       <FilterCards 
         title='Pending Orders'
         text='$00.00'
         percentage='0.0'
-        icon={<CircleDollarSign />}
+        icon={<ShoppingBasket />}
       />
     </div>
   );

@@ -35,6 +35,7 @@ import locationIcon from './locationIcon.svg'
 
 import playStore from '@/src/assets/images/play_store.png'
 import appStore from '@/src/assets/images/app_store.png'
+import heroImage from '@/src/assets/images/heroImage.jpeg'
 
 export const cities = [
     "Dubai",
@@ -63,7 +64,8 @@ export const assets = {
   email_icon,
   upload_area,
   playStore,
-  appStore
+  appStore,
+  heroImage
   }
 
     export const Products = [

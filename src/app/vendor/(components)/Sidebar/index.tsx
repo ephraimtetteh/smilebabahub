@@ -2,6 +2,7 @@
 
 import {
   Archive,
+  Bell,
   CircleDollarSign,
   Clipboard,
   Layout,
@@ -15,6 +16,8 @@ import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { setIsSidebarCollapsed } from "@/src/lib";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { assets } from "@/src/assets/assets";
+import Image from "next/image";
 
 interface SidebarLinkPorps {
   href: string;
@@ -67,11 +70,11 @@ const Sidebar = () => {
       <div
         className={`flex gap-3 justify-between md:justify-normal items-center pt-8 ${isSidebarCollapsed ? "px-5 " : "px-8"}`}
       >
-        <div>logo</div>
+        <Image src={assets.logo} alt="" />
         <h1
-          className={`font-extrabold text-2xl ${isSidebarCollapsed ? "hidden" : "block"}`}
+          className={`font-extrabold text-2xl text-yellow-500 ${isSidebarCollapsed ? "hidden" : "block"}`}
         >
-          ephraim
+          SBH
         </h1>
         <button
           className="md:hidden px-3 py-3 bg-gray-100 rounded-full hover:bg-blue-100 "
@@ -84,45 +87,45 @@ const Sidebar = () => {
       {/* links */}
       <div className="grow mt-8">
         <SidebarLink
-          href="/"
+          href="/vendor"
           icon={Layout}
           label="Dashboard"
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink
-          href="/orders"
+          href="/vendor/orders"
           icon={Archive}
           label="Orders"
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink
-          href="/products"
+          href="/vendor/products"
           icon={Clipboard}
           label="Products"
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink
-          href="/users"
+          href="/vendor/customers"
           icon={User}
-          label="Users"
+          label="Customers"
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink
-          href="/settings"
-          icon={Settings}
-          label="Settings"
+          href="/vendor/message"
+          icon={Bell}
+          label="Message"
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink
-          href="/earnings"
+          href="/vendor/earnings"
           icon={CircleDollarSign}
           label="Expenses"
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink
-          href="/message"
-          icon={CircleDollarSign}
-          label="Message"
+          href="/vendor/settings"
+          icon={Settings}
+          label="Settings"
           isCollapsed={isSidebarCollapsed}
         />
       </div>

@@ -134,17 +134,7 @@ export type ProductSectionVariant =
   }
   
 
-  declare interface UserProps { 
-    isLoading: boolean; 
-    token: null; 
-    name: string; 
-    _id: string; 
-    email: string; 
-  }
-
-  interface InitialState {
-    user: UserProps;
-  }
+ 
 
   type RegisterPayload = UserProps | null;
 

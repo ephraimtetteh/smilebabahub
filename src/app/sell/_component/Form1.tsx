@@ -54,26 +54,12 @@ const Form1 = ({ onNext }: FormProps) => {
             required
             className="border-gray-300 border px-4 py-3 w-full sm:w-125 rounded placeholder:text-[20px] mb-4 outline-none"
           />
-          {/* <select
-            name="category"
-            required
-            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
-            <option value="">Select Category</option>
-
-            {categories.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select> */}
 
           <select
             value={categoryId}
             onChange={(e) => {
               setCategoryId(e.target.value);
-              setChildId(""); 
+              setChildId("");
             }}
             className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
           >
@@ -84,21 +70,6 @@ const Form1 = ({ onNext }: FormProps) => {
               </option>
             ))}
           </select>
-
-          {/* <select
-            name="categoryType"
-            required
-            disabled={!selectedCategory}
-            className="border-gray-300 w-full sm:w-125 border px-4 py-3 rounded mb-4 outline-none"
-          >
-            <option value="">Select Category Type</option>
-
-            {selectedCategory?.children?.map((child) => (
-              <option key={child.id} value={child.id}>
-                {child.name}
-              </option>
-            ))}
-          </select> */}
 
           <select
             value={childId}
@@ -121,11 +92,21 @@ const Form1 = ({ onNext }: FormProps) => {
           >
             <option value="">Select Location</option>
 
-            {selectedChild?.children?.map((grandChild, index) => (
-              <option key={index} value={grandChild}>
-                {grandChild}
-              </option>
-            ))}
+            {selectedChild?.children?.map((grandChild, index) => {
+              if (typeof grandChild === "string") {
+                return (
+                  <option key={index} value={grandChild}>
+                    {grandChild}
+                  </option>
+                );
+              }
+
+              return (
+                <option key={grandChild.id} value={grandChild.id}>
+                  {grandChild.name}
+                </option>
+              );
+            })}
           </select>
 
           <p className="text-xl">Add Photo</p>
