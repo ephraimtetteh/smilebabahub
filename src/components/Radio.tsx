@@ -35,7 +35,7 @@ const Radio = () => {
           {isLoading && <p>Loading stream…</p>}
           {hasError && <p>Error loading stream. Try again later.</p>}
           <ReactHowler
-            src="https://video2.getstreamhosting.com:2020/AudioPlayer/8244?mount=/stream&"
+            src="https://video2.getstreamhosting.com:2020/stream/8244"
             format={["mp3"]}
             playing={true}
             html5={true}
@@ -43,7 +43,6 @@ const Radio = () => {
             onLoadError={() => setHasError(true)}
           />
         </div>
-       
       </div>
     </div>
   );

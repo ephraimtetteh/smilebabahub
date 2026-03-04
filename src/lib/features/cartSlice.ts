@@ -1,6 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { StaticImageData } from "next/image";
+import type { PayloadAction } from "@reduxjs/toolkit";
 
-const initialState = {
+type CartItem = {
+  _id: string;
+  amount: number;
+  image: StaticImageData
+  price: number
+};
+
+interface cartState {
+  cartItems: CartItem[];
+  total: number;
+  amount: number;
+}
+
+const initialState: cartState = {
   cartItems: [],
   total: 0,
   amount: 0,
@@ -10,14 +25,13 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    addToCart: (state, action) => {
-      const item = action.payload;
-      const existingItem = state.cartItems.find((i) => i._id === item._id);
+    addToCart: (state, action:PayloadAction<CartItem>) => {
+      const existingItem = state.cartItems.find((item) => item?._id === action.payload._id);
 
       if (existingItem) {
         existingItem.amount += 1;
       } else {
-        state.cartItems.push({ ...item, amount: 1 });
+        state.cartItems.push({ ...action.payload, amount: 1 });
       }
     },
 
