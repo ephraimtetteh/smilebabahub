@@ -16,7 +16,7 @@ import {
 import { PersistGate } from "redux-persist/integration/react";
 import createWebStorage from "redux-persist/lib/storage/createWebStorage";
 import { useRef } from "react";
-import authReducer from "@/src/lib/features/userSlice";
+import authReducer from "@/src/lib/features/auth/authSlice";
 import globalReducer from '@/src/lib'
 import { api } from "../lib/api/api";
 

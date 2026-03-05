@@ -5,39 +5,31 @@ import Image from 'next/image'
 import Link from 'next/link';
 import React, { useState } from 'react'
 import { FaEyeSlash, FaEye } from "react-icons/fa";
-import axios from 'axios';
-import { useAppSelector } from '../../redux';
+import { useAppDispatch } from '../../redux';
+import { register } from '@/src/lib/features/auth/authActions';
+import { useRouter } from "next/navigation";
 
 const AuthRegister
  = () => {
-  const { isLoading } = useAppSelector((state) => state.auth)
+  const dispatch = useAppDispatch()
   const [user, setUser] = useState({
     email: '',
     password: '',
     phone: '',
-    name: ''
+    username: ''
   })
   const [error, setError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter()
 
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({...user, [e.target.name]: e.target.value})
   }
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-
-    try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/smilebaba/auth/register`, user)
-      console.log(response)
-
-      if(response?.status === 200){
-
-      }
-    } catch (error) {
-      console.log(error)
-    }
-
-    
+    e.preventDefault()
+    await dispatch(register(user))
+    router.push('/auth/login')
   };
 
   return (
@@ -76,13 +68,8 @@ const AuthRegister
             className=" grid lg:flex-1 lg:w-[80%] md:w-full lg:py-20 py-6 px-2 md:px-4"
           >
             <h1 className="lg:text-2xl md:text-xl md:px-2 max-sm:px-4 py-4 font-semibold">
-              {isLoading
-                ? "REGISTERING"
-                : "Discover Great Deals connect with customers"}
+                Discover Great Deals connect with customer
             </h1>
-            {/* <button disabled={isLoading}>
-              {isLoading ? "Registering..." : "Register"}
-            </button> */}
             {error && <p>{error}</p>}
             <input
               type="email"
@@ -95,8 +82,8 @@ const AuthRegister
             <input
               type="name"
               placeholder="Name"
-              name="name"
-              value={user.name}
+              name="username"
+              value={user.username}
               onChange={handleUserChange}
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />

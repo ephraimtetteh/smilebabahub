@@ -288,3 +288,116 @@ const RadioComponent = () => {
               </option>
             ))}
           </select> */}
+
+
+
+
+
+
+
+ User Login
+     ↓
+Next.js → /auth/login
+     ↓
+Backend sets HttpOnly cookies
+     ↓
+Browser stores cookies
+     ↓
+Axios automatically sends cookies
+     ↓
+Backend authenticates user
+     ↓
+Middleware protects routes
+     ↓
+Axios refreshes tokens automatically
+
+GET /auth/me
+
+
+Backend returns logged user.
+
+Example response:
+
+{
+  user: {
+    id: 1,
+    name: "Smile Baba",
+    role: "admin"
+  }
+}
+
+auth: {
+   user: {},
+   role: "admin",
+   isAuthenticated: true,
+   isAuthenticating: false
+}
+
+
+export const selectUser = (state:any) => state.auth.user
+export const selectRole = (state:any) => state.auth.user.role
+
+
+export const hasRole = (
+  userRole:string,
+  roles:string[]
+) => {
+  return roles.includes(userRole);
+};
+
+
+if (!hasRole(user.role, ["admin"])) {
+   router.push("/");
+}
+
+
+
+if(role === "admin"){
+   menu = adminMenu
+}
+
+if(role === "vendor"){
+   menu = vendorMenu
+}
+
+Admin
+
+Users
+
+Vendors
+
+Apartments
+
+Analytics
+
+Ads
+
+Radio
+
+TV
+
+
+
+Vendor
+
+Products
+
+Orders
+
+Sales
+
+Agent
+
+Apartments
+
+Bookings
+
+
+
+User
+
+Orders
+
+Bookings
+
+Profile

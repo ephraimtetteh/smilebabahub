@@ -6,7 +6,44 @@ import Script from "next/script";
 
 
 
+const Radios = () => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
 
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+
+    if (playing) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+
+    setPlaying(!playing);
+  };
+
+  return (
+    <div className="p-6 bg-amber-950 rounded-xl text-white">
+      <h2 className="text-xl mb-4">
+        SmileBaba <span className="text-yellow-400">Radio</span>
+      </h2>
+
+      <button
+        onClick={togglePlay}
+        className="bg-yellow-500 text-black px-4 py-2 rounded-lg"
+      >
+        {playing ? "Stop Listening" : "Start Listening"}
+      </button>
+
+      <audio ref={audioRef} preload="none">
+        <source
+          src="https://video2.getstreamhosting.com:2020/stream/8244"
+          type="audio/mpeg"
+        />
+      </audio>
+    </div>
+  );
+};
 
 const Radio = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +80,7 @@ const Radio = () => {
             onLoadError={() => setHasError(true)}
           />
         </div>
+        <Radios />
       </div>
     </div>
   );
