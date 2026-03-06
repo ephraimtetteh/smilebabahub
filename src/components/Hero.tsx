@@ -2,10 +2,21 @@
 
 import { assets } from '@/src/assets/assets';
 import Image from 'next/image';
-import React from 'react'
+import React, { useEffect } from 'react'
 import SearchBar from './SearchBar';
+import { usePathname } from 'next/navigation';
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 const Hero = () => {
+
+  useEffect(() => {
+    AOS.init({
+      once: true,
+      duration: 800,
+    });
+  }, []);
+
   return (
     <div className="relative lg:h-[50vh] h-[30vh] w-full lg:py-10 overflow-hidden">
       <Image
@@ -15,15 +26,15 @@ const Hero = () => {
         priority
         className="object-cover w-full"
       />
-      <div className="absolute inset-0 bg-black/20"></div>
-      <div className="absolute top-0 left-0 p-12 w-full ">
-        <div className="max-w-xl py-12">
-          <h3 className="text-3xl font-semibold text-black max-w-full uppercase">
+      <div className="absolute inset-0"></div>
+      <div className="absolute top-0 left-0 p-12 w-full " data-aos='slide-up'>
+        <div className="max-w-3xl py-12 items-center justify-center mx-auto">
+          <h3 className="text-5xl font-semibold text-black/80 max-w-full capitalize  text-center">
             find food, homes <br /> & Everything you need - <br /> All in one Place
           </h3>
         </div>
         <div className="hidden lg:block lg:w-full">
-          <SearchBar />
+         <SearchBar />
         </div>
       </div>
     </div>

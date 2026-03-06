@@ -1,5 +1,5 @@
 import { StaticImageData } from "next/image";
-import { JSX, ReactNode } from "react";
+import { JSX, ReactNode, ChangeEvent } from "react";
 
 export type ProductSectionProps = {
   title: string;
@@ -116,7 +116,7 @@ export type ProductSectionVariant =
     className?: string;
     name?: string;
     id?: string;
-    onChange: () => void;
+    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   }
 
   interface CartItem {

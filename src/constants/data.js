@@ -208,6 +208,20 @@ export const hubs = [
   },
 ];
 
+export const appartmentCategories = [
+  'all',
+  'villa',
+  'flat',
+  'house',
+  'condors',
+  'suits',
+  'Duplex',
+  'studios',
+  'Apartments',
+  'townhouses',
+  'others'
+]
+
 export const menu_list = [
   {
       menu_name: "Salad",

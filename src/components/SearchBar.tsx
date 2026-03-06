@@ -1,44 +1,62 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useState } from 'react'
 import InputCompontent from './InputCompontent';
-import { usePathname } from 'next/navigation';
+import { Products } from '../assets/assets';
+
 
 const SearchBar = () => {
-  const pathname = usePathname()
+  const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState<typeof Products>([]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        const filtered = Products.filter((product) =>
+          product.title.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+
+        setResults(filtered);
+      } else {
+        setResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   return (
-    <div className="w-[70%] items-center justify-between grid grid-cols-3 shadow-2xl  mb-20 px-6 py-2 rounded bg-white text-black border border-gray-100 gap-2">
-      <div className="mr-2">
-        <p className="px-4">Apartments</p>
+    <div className="w-full">
+      {/* Search input */}
+
+      <div className="max-w-5xl w-full flex-1 shadow-lg bg-white/30 backdrop-blur-3xl items-center justify-center mx-auto rounded-full">
         <InputCompontent
           type="text"
-          placeholder="Search for your destination"
-          value=""
-          onChange={() => ""}
-          className="border-none w-full rounded-full focus:ring-amber-300 focus:ring outline-none mx-2"
+          placeholder="Search Apartments, Food, Marketplace..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="border-none w-full rounded-full focus:ring-amber-300 focus:ring outline-none p-6"
         />
       </div>
 
-      <div className="border-gray-300 border-l mr-2">
-        <p className="px-4">Food</p>
-        <InputCompontent
-          type="text"
-          placeholder="Search your favorite food"
-          
-          onChange={() => ""}
-          className="border-none w-full rounded-full focus:ring-amber-300 focus:ring outline-none mx-2"
-        />
-      </div>
-      <div className="border-gray-300 border-l">
-        <p className="px-4">Market Place</p>
-        <InputCompontent
-          type="text"
-          placeholder="Browse the marketplace"
-          value=""
-          onChange={() => ""}
-          className="border-none w-full rounded-full focus:ring-amber-300 focus:ring outline-none mx-2"
-        />
-      </div>
+      {/* Search Results */}
+
+      {results.length > 0 && (
+        <div className="max-w-5xl mx-auto mt-4 bg-white shadow-lg rounded-xl p-4">
+          {results.map((product) => (
+            <div
+              key={product.id}
+              className="border-b py-2 cursor-pointer hover:bg-gray-100 px-2"
+            >
+              {product.title}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
-}
+};
+
+
 
 export default SearchBar

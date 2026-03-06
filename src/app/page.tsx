@@ -5,14 +5,22 @@ import PostedAds from "@/src/components/PostedAds";
 import Promo from "@/src/components/Promo";
 import FoodAds from "@/src/components/FoodComponent";
 import Video from "@/src/components/Video";
-import React from "react";
+import React, { useEffect } from "react";
 import AppDownload from "@/src/components/App";
 import Radio from "@/src/components/Radio";
 import Button from "../components/Button";
 import FeaturedProducts from "../components/FeaturedProducts";
+import AOS from "aos";
 
 
-const page = () => {
+const HomePage = () => {
+  useEffect(() => {
+      AOS.init({
+        once: true,
+        duration: 800,
+      });
+    }, []);
+
   return (
     <div className="w-full flex flex-col flex-1 items-center justify-center pt-20 relative">
       <Hero />
@@ -30,11 +38,16 @@ const page = () => {
         </div>
       </div>
       <AppDownload />
-      <div className=" fixed right-5 bottom-5 z-40 rounded-2xl">
+      <div
+        className=" fixed right-5 bottom-5 z-40 rounded-2xl"
+        data-aos="fade-up"
+        data-aos-anchor-placement="bottom-bottom"
+        data-aos-delay='300'
+      >
         <Radio />
       </div>
     </div>
   );
 };
 
-export default page;
+export default HomePage;

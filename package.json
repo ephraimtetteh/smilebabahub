@@ -11,6 +11,7 @@
   "dependencies": {
     "@recharts/devtools": "^0.0.5",
     "@reduxjs/toolkit": "^2.11.2",
+    "aos": "^2.3.4",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "hls.js": "^1.6.15",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/aos": "^3.0.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
