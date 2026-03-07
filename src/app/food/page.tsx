@@ -9,6 +9,7 @@ import Title from "@/src/components/Title";
 import { useRouter } from "next/navigation";
 import Radio from "@/src/components/Radio";
 import AOS from "aos";
+import SearchBar from "@/src/components/SearchBar";
 
 const FoodPage = () => {
 
@@ -27,14 +28,15 @@ useEffect(() => {
   return (
     <div className="w-full flex flex-col flex-1 items-center px-2 justify-center pt-30">
       <NewLayout />
-      <div className=" max-w-5xl w-full flex-1 shadow-lg shadow-neutral-100 bg-white/30 backdrop-blur-3xl items-center justify-center mx-auto rounded-full">
-        <InputCompontent
+      <div className=" max-w-5xl w-full flex-1 shadow-lg shadow-neutral-100 bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
+        {/* <InputCompontent
           type="text"
           placeholder="Food, restaurants ......"
           value=""
           onChange={() => ""}
           className="border-none w-full rounded-full focus:ring-amber-300 focus:ring outline-none px-4 py-4"
-        />
+        /> */}
+        <SearchBar />
       </div>
       <div
         className={`flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}

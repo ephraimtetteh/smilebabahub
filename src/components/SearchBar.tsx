@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import InputCompontent from './InputCompontent';
 import { Products } from '../assets/assets';
+import FeaturedCard from './FeaturedCard';
+import Image from 'next/image';
 
 
 const SearchBar = () => {
@@ -41,21 +43,60 @@ const SearchBar = () => {
 
       {/* Search Results */}
 
-      {results.length > 0 && (
+      {/* {results.length > 0 && (
         <div className="max-w-5xl mx-auto mt-4 bg-white shadow-lg rounded-xl p-4">
-          {results.map((product) => (
+          {results.map((product, index) => (
             <div
               key={product.id}
               className="border-b py-2 cursor-pointer hover:bg-gray-100 px-2"
             >
               {product.title}
+              <FeaturedCard item={product} index={index} />
             </div>
           ))}
         </div>
-      )}
+      )} */}
+
+{results.length > 0 && (
+        <div className="absolute w-[50%] flex-1 items-center justify-center mx-auto z-50 bg-white/30 backdrop-blur-3xl shadow-lg rounded-xl mt-2">
+
+          {results.map((product)=>(
+            <div
+              key={product.id}
+              className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer"
+            >
+
+              <Image
+                src={product.image}
+                alt={product.title}
+                width={75}
+                height={75}
+                className="rounded-md"
+              />
+
+              <div className="flex flex-col flex-1">
+
+                <span className="font-semibold">
+                  {product.title}
+                </span>
+
+                <span className="text-sm text-gray-500">
+                  {product.category}
+                </span>
+
+              </div>
+
+              <span className="text-green-600 font-bold">
+                ₵{product.price}
+              </span>
+
+            </div>
+          ))}
     </div>
-  );
-};
+  )
+}
+</div>
+  )}
 
 
 
