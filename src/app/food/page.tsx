@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import Radio from "@/src/components/Radio";
 import AOS from "aos";
 import SearchBar from "@/src/components/SearchBar";
+import Video from "@/src/components/Video";
 
 const FoodPage = () => {
 
@@ -43,7 +44,7 @@ useEffect(() => {
       >
         <div className=" flex items-center justify-between relative gap-12">
           <div className="">
-            <Title title={"Trending Food Spots"} />
+            <Title title={"Food & Restaurants"} />
           </div>
           <div>
             <button
@@ -75,6 +76,14 @@ useEffect(() => {
         data-aos-delay="300"
       >
         <Radio />
+      </div>
+      <div
+        className=" fixed top-25 left-5 z-40 rounded-2xl"
+        data-aos="fade-up"
+        data-aos-anchor-placement="bottom-bottom"
+        data-aos-delay="300"
+      >
+        <Video />
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "SmileBaba | Buy & Sell Online with Ease",
+  title: "SmileBaba | Everything you need",
   description:
     "SmileBaba is a trusted online marketplace to buy and sell products easily. Discover great deals, connect with sellers, and shop smarter every day.",
 };

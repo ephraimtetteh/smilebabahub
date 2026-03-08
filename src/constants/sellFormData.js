@@ -92,13 +92,43 @@
       name: "foods",
       children: [
         {
-          id: "rice",
+          id: "Rolls",
           name: "rice",
           children: ["plain rice ", "fried rice", "jollof rice"],
         },
         {
-          id: "noodles",
-          name: "rice",
+          id: "Noodles",
+          name: "Noodles",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Salads",
+          name: "Salads",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Deserts",
+          name: "Deserts",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Sandwich",
+          name: "Sandwich",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Cake",
+          name: "Cake",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Pure Veg",
+          name: "Pure Veg",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Pasta",
+          name: "Pasta",
           children: ["plain rice ", "fried rice", "jollof rice"],
         },
       ],
@@ -109,12 +139,52 @@
       children: [
         {
           id: "suits",
-          name: "rice",
+          name: "Suits",
           children: ["plain rice ", "fried rice", "jollof rice"],
         },
         {
           id: "condos",
-          name: "rice",
+          name: "Condos",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Villas",
+          name: "Villas",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Flat",
+          name: "Flat",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "House",
+          name: "House",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Duplex",
+          name: "Duplex",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Studios",
+          name: "Studios",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Apartments",
+          name: "Apartments",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Townhouse",
+          name: "Townhouse",
+          children: ["plain rice ", "fried rice", "jollof rice"],
+        },
+        {
+          id: "Others",
+          name: "Others",
           children: ["plain rice ", "fried rice", "jollof rice"],
         },
       ],

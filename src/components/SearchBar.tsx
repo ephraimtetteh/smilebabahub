@@ -31,13 +31,13 @@ const SearchBar = () => {
     <div className="w-full">
       {/* Search input */}
 
-      <div className="max-w-5xl w-full flex-1 shadow-lg bg-white/30 backdrop-blur-3xl items-center justify-center mx-auto rounded-full">
+      <div className="max-w-5xl w-full flex-1 shadow-lg backdrop-blur-3xl items-center justify-center mx-auto rounded-full">
         <InputCompontent
           type="text"
           placeholder="Search Apartments, Food, Marketplace..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="border-none w-full rounded-full focus:ring-amber-300 focus:ring outline-none p-6"
+          className="border-none w-full rounded-full focus:ring-black/10 focus:ring outline-none p-6"
         />
       </div>
 

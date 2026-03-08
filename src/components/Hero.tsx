@@ -29,13 +29,13 @@ const Hero = () => {
       <div className="absolute inset-0"></div>
       <div className="absolute top-0 left-0 p-12 w-full " data-aos="slide-up">
         <div className="max-w-3xl py-12 items-center justify-center mx-auto">
-          <h3 className="text-5xl font-semibold text-black/80 max-w-full capitalize  text-center">
+          <h3 className="lg:text-5xl text-lg font-semibold text-black/80 max-w-full capitalize  text-center">
             find food, homes <br /> & Everything you need - <br /> All in one
             Place
           </h3>
         </div>
-        <div className="hidden lg:block lg:w-full">
-          <div className=" max-w-5xl w-full flex-1 shadow-lg shadow-neutral-100 bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
+        <div className="lg:block lg:w-full">
+          <div className=" max-w-5xl w-full flex-1 shadow-lg bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
             <SearchBar />
           </div>
         </div>

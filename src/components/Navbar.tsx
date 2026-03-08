@@ -10,6 +10,7 @@ import { IoSearch } from "react-icons/io5";
 import { assets } from "../assets/assets.js";
 import { usePathname, useRouter } from 'next/navigation.js';
 import Button from './Button';
+import { Menu, X } from "lucide-react";
 
 interface NavbarProps {
   className?: string
@@ -39,7 +40,7 @@ const Navbar = ({className}: NavbarProps) => {
 
     return (
       <nav
-        className={`${className} fixed top-0 left-0 w-full flex flex-1 items-center lg:justify-between px-4 md:px-16 lg:px-14 xl:px-12 transition-all duration-500 z-50 bg-amber-950 overflow-hidden  ${
+        className={`${className} fixed top-0 left-0 w-full flex flex-1 items-center lg:justify-between px-4 md:px-16 lg:px-14 xl:px-12 transition-all duration-500 z-50 bg-amber-950  ${
           isScrolled
             ? "bg-black shadow-md text-white/80 backdrop-blur-lg py-3 md:py-4"
             : "py-4 md:py-6"
@@ -66,7 +67,7 @@ const Navbar = ({className}: NavbarProps) => {
             <Link href={"/food"} className="hover:text-amber-300">
               Food
             </Link>
-            <Link href={"/restate"}>Appartments</Link>
+            <Link href={"/restate"}>Apartments</Link>
             <Link href={"/marketPlace"}>Marketplace</Link>
           </div>
         </div>
@@ -151,6 +152,15 @@ const Navbar = ({className}: NavbarProps) => {
               <option value="">NGN</option>
               <option value="">GLO</option>
             </select>
+
+            <div className=" items-center justify-center text-center md:hidden">
+              <div
+                onClick={() => setIsMenuOpen(prev => !prev)}
+                className="h-10 w-10 rounded-lg text-white items-center justify-center text-center mx-auto "
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </div>
+            </div>
           </div>
         </div>
 
