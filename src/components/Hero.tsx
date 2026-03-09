@@ -3,8 +3,6 @@
 import { assets } from '@/src/assets/assets';
 import Image from 'next/image';
 import React, { useEffect } from 'react'
-import SearchBar from './SearchBar';
-import { usePathname } from 'next/navigation';
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -34,11 +32,11 @@ const Hero = () => {
             Place
           </h3>
         </div>
-        <div className="lg:block lg:w-full">
+        {/* <div className="lg:block lg:w-full">
           <div className=" max-w-5xl w-full flex-1 shadow-lg bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
             <SearchBar />
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import Radio from "@/src/components/Radio";
 import AOS from "aos";
 import SearchBar from "@/src/components/SearchBar";
-import Video from "@/src/components/Video";
+
 
 const FoodPage = () => {
 
@@ -19,26 +19,21 @@ const FoodPage = () => {
       router.push(path);
     };
 
-useEffect(() => {
-          AOS.init({
-            once: true,
-            duration: 800,
-          });
-        }, []);
+
 
   return (
     <div className="w-full flex flex-col flex-1 items-center px-2 justify-center pt-30">
       <NewLayout />
-      <div className=" max-w-5xl w-full flex-1 shadow-lg shadow-neutral-100 bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
-        {/* <InputCompontent
+      {/* <div className=" max-w-5xl w-full flex-1 shadow-lg shadow-neutral-100 bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
+        <InputCompontent
           type="text"
           placeholder="Food, restaurants ......"
           value=""
           onChange={() => ""}
           className="border-none w-full rounded-full focus:ring-amber-300 focus:ring outline-none px-4 py-4"
-        /> */}
+        />
         <SearchBar />
-      </div>
+      </div> */}
       <div
         className={`flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}
       >
@@ -68,23 +63,7 @@ useEffect(() => {
           ))}
         </div>
       </div>
-
-      <div
-        className=" fixed right-5 bottom-5 z-40 rounded-2xl"
-        data-aos="fade-up"
-        data-aos-anchor-placement="bottom-bottom"
-        data-aos-delay="300"
-      >
-        <Radio />
-      </div>
-      <div
-        className=" fixed top-25 left-5 z-40 rounded-2xl"
-        data-aos="fade-up"
-        data-aos-anchor-placement="bottom-bottom"
-        data-aos-delay="300"
-      >
-        <Video />
-      </div>
+     
     </div>
   );
 };

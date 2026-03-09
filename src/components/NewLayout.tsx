@@ -1,13 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import Button from './Button'
-import Link from 'next/link'
 import { appartmentCategories, menu_list } from '@/src/constants/data'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { NavbarLinkPorps } from '../types/types'
 import CategorySelector from './CategorySelector'
+import RestateSearch from './RestateSearch'
 
 
 const NewLayout = () => {
@@ -32,14 +29,17 @@ const NewLayout = () => {
           )}
   
           {pathname === "/restate" && (
-            <CategorySelector
-              title="Our Recommendation"
-              description="Explore apartment categories"
-              items={appartmentCategories}
-              category={category}
-              setCategory={setCategory}
-              type="text"
-            />
+            <div>
+              <RestateSearch />
+              <CategorySelector
+                title="Our Recommendation"
+                description="Explore apartment categories"
+                items={appartmentCategories}
+                category={category}
+                setCategory={setCategory}
+                type="text"
+              />
+            </div>
           )}
         </div>
         </div>

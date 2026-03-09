@@ -20,24 +20,6 @@ const MarketPlace = () => {
         <BestSelling />
         <PostedAds />
       </div>
-
-      <div
-        className=" fixed top-25 left-5 z-40 rounded-2xl"
-        data-aos="fade-up"
-        data-aos-anchor-placement="bottom-bottom"
-        data-aos-delay="300"
-      >
-        <Video />
-      </div>
-
-      <div
-        className=" fixed right-5 bottom-5 z-40 rounded-2xl"
-        data-aos="fade-up"
-        data-aos-anchor-placement="bottom-bottom"
-        data-aos-delay="300"
-      >
-        <Radio />
-      </div>
     </div>
   );
 }
