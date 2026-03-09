@@ -24,7 +24,7 @@ const RestateSearch = () => {
   };
 
   return (
-    <div className="bg-white shadow-2xl rounded-full border border-gray-200 lg:my-10 my-2 flex items-center overflow-hidden transition-all duration-300 w-[95%] md:w-[80%] lg:w-[65%]">
+    <div className="bg-white shadow-2xl rounded-full border border-gray-200 lg:my-10 my-2 flex items-center overflow-hidden transition-all duration-300 w-[95%] md:w-[80%] lg:w-[65%] mx-auto">
       {/* WHERE */}
       <div
         onClick={() => setActive("where")}

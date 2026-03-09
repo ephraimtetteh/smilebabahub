@@ -25,7 +25,7 @@ const CategorySelector = ({
 
       <p className="text-[12px] text-gray-500">{description}</p>
 
-      <div className="flex gap-4 items-center overflow-x-auto">
+      <div className="flex gap-4 items-center overflow-x-scroll">
         {items.map((item, index) => {
           const value = type === "image" ? item.menu_name : item;
 
@@ -42,8 +42,8 @@ const CategorySelector = ({
                   <Image
                     src={item.menu_image}
                     alt={item.menu_name}
-                    width={60}
-                    height={60}
+                    width={70}
+                    height={70}
                     className={`rounded-full ${
                       category === item.menu_name
                         ? "border-2 border-amber-950"

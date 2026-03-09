@@ -35,13 +35,12 @@ const FoodPage = () => {
         <SearchBar />
       </div> */}
       <div
-        className={`flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}
+        className={`flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center mt-50`}
       >
         <div className=" flex items-center justify-between relative gap-12">
-          <div className="">
             <Title title={"Food & Restaurants"} />
-          </div>
-          <div>
+        
+          {/* <div>
             <button
               onClick={() => {
                 navigate("/food");
@@ -51,7 +50,7 @@ const FoodPage = () => {
             >
               View all Foods{" "}
             </button>
-          </div>
+          </div> */}
         </div>
 
         <div

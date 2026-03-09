@@ -51,7 +51,7 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
       <StoreProvider>
         <LayoutShell>
           {pathName !== "/restate" && (
-            <div className="absolute top-75 left-0 right-0 z-50">
+            <div className="absolute lg:top-75 top-50 left-0 right-0 z-50">
               <MarketplaceSearch />
             </div>
           )}

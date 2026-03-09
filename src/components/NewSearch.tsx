@@ -26,14 +26,14 @@ export default function MarketplaceSearch() {
 
   return (
     <div className="w-full flex justify-center mt-20">
-      <div className="w-[95%] lg:w-[80%] xl:w-[70%] bg-white shadow-lg rounded-full border border-gray-200 grid grid-cols-1 md:grid-cols-5 overflow-hidden">
+      <div className="w-[95%] lg:w-[80%] xl:w-[70%] bg-white shadow-lg rounded-full border border-gray-200 flex justify-between overflow-hidden">
         {/* SEARCH PRODUCT */}
         <div className="flex flex-col p-4 hover:bg-gray-50 transition">
           <label className="text-xs text-gray-500">Search</label>
 
           <input
             type="text"
-            placeholder="Search products, food, apartments..."
+            placeholder="products, food ..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="outline-none text-sm"

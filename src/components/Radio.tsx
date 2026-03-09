@@ -57,7 +57,7 @@ const Radio = () => {
             SmileBaba <span className="text-[#ffc105]">Radio</span>
           </h3>
 
-          <p className="text-red-500 text-sm mb-3 capitalize">🔴 Your smile our Pride</p>
+          <p className="text-white text-sm mb-3 capitalize">🔴 Your smile our Pride</p>
         </div>
 
         {/* Controls */}
