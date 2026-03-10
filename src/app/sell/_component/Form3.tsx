@@ -1,15 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { SellFormData, StepProps } from "@/src/types/types";
+import { SellFormData } from "@/src/types/types";
 
 
 export interface Form3Props {
   data: SellFormData;
   onBack: () => void;
+  handleSubmit: () => void;
+  isSubmitting: boolean;
 }
 
-const Form3 = ({ data, onBack }: Form3Props) => {
+const Form3 = ({ data, onBack, handleSubmit, isSubmitting }: Form3Props) => {
   return (
     <div className="min-h-screen flex justify-center px-4 pb-12">
       <div className="w-full max-w-3xl bg-white rounded shadow p-6 flex flex-col gap-6">
@@ -79,8 +81,13 @@ const Form3 = ({ data, onBack }: Form3Props) => {
             Edit
           </button>
 
-          <button className="px-6 py-3 bg-black text-white rounded">
-            Publish Ad
+          <button
+            type="button"
+            className="px-6 py-3 bg-black text-white rounded disabled:opacity-50"
+            disabled={isSubmitting}
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? "Uploading..." : "Publish Ad"}
           </button>
         </div>
       </div>

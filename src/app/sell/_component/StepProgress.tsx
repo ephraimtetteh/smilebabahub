@@ -4,7 +4,7 @@ interface Props {
   step: number;
 }
 
-const steps = ["Details", "Location", "Review"];
+const steps = ["Details", "Location", "Review", "Ad Published"];
 
 export default function StepProgress({ step }: Props) {
   return (
