@@ -401,3 +401,54 @@ Orders
 Bookings
 
 Profile
+
+
+
+
+
+const publishAd = async () => {
+
+  const form = new FormData()
+
+  form.append("title", data.title)
+  form.append("description", data.description)
+  form.append("price", data.price)
+
+  data.images.forEach((img) => {
+    if (img) form.append("images", img)
+  })
+
+  await fetch("/api/products/create", {
+    method: "POST",
+    body: form
+  })
+}
+
+
+const handleSubmit = async () => {
+  setIsSubmitting(true);
+
+  try {
+    const form = new FormData();
+
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key === "images") {
+        value.forEach((img) => {
+          if (img) form.append("images", img);
+        });
+      } else {
+        form.append(key, value as string);
+      }
+    });
+
+    await fetch("/api/products/create", {
+      method: "POST",
+      body: form,
+    });
+
+  } catch (error) {
+    console.error(error);
+  }
+
+  setIsSubmitting(false);
+};

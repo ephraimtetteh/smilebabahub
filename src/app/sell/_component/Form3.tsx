@@ -1,230 +1,91 @@
-import { Products } from '@/src/assets/assets';
-import Button from '@/src/components/Button';
-import React, { useState } from 'react'
-import { text } from 'stream/consumers';
+"use client";
 
-type Form2Props = {
-  onNext: () => void;
+import Image from "next/image";
+import { SellFormData, StepProps } from "@/src/types/types";
+
+
+export interface Form3Props {
+  data: SellFormData;
   onBack: () => void;
-};
-
-const Form3 = ({ onNext, onBack }: Form2Props) => {
-
-  const [plan, setPlan] = useState('daily')
-
-  return (
-    <div className="mt-20 flex-col flex  items-start justify-center w-80% px-6 md:px-16 lg:px-24 xl:px-32 text-black py-10 bg-black/20">
-      <div className="flex flex-col items-center justify-center mx-auto">
-        <h1 className="text-center py-2 font-bold text-3xl items-center justify-center capitalize">
-          Subscription packages
-        </h1>
-        <p className="text-center">
-          Please choose your prefer Ads page to continue
-        </p>
-        <div className="flex gap-4 pt-8">
-          <Button
-            onClick={() => setPlan("daily")}
-            text="Daily"
-            className={plan === "daily" ? "bg-[#ffc10565]" : ""}
-          />
-          <Button
-            text="Weekly"
-            onClick={() => setPlan("weekly")}
-            className={plan === "weekly" ? "bg-[#ffc10565]" : ""}
-          />
-          <Button
-            text="Monthly"
-            onClick={() => setPlan("monthly")}
-            className={plan === "monthly" ? "bg-[#ffc10565]" : ""}
-          />
-        </div>
-      </div>
-
-      {plan === "daily" && (
-        <div className="grid lg:grid-cols-3 md:grid-cols-2 p-8 gap-8 items-start">
-          <div className="bg-white shadow-2xl shadow-neutral-100 p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 30/{" "}
-                <span className="text-[12px] text-green-500">monthly</span>
-              </p>
-            </div>
-            <div>
-              {Products.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>Free</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select" className="w-full mt-4" />
-          </div>
-
-          <div className="bg-white shadow-2xl shadow-neutral-100 p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 30/{" "}
-                <span className="text-[12px] text-green-500">monthly</span>
-              </p>
-            </div>
-            <div>
-              {Products.slice(0, 8).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>{item.title}</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select" className="w-full mt-4" />
-          </div>
-
-          <div className="bg-white shadow-2xl shadow-neutral-100 p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 30/{" "}
-                <span className="text-[12px] text-green-500">monthly</span>
-              </p>
-            </div>
-            <div>
-              {Products.slice(0, 10).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>{item.title}</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select" className="w-full mt-4" />
-          </div>
-        </div>
-      )}
-
-      {plan === "weekly" && (
-        <div className="grid lg:grid-cols-3 md:grid-cols-2 p-8 gap-8 items-start">
-          <div className="bg-white shadow-2xl shadow-neutral-100 p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 30/{" "}
-                <span className="text-[12px] text-green-500">monthly</span>
-              </p>
-            </div>
-            <div>
-              {Products.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>Free</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select" className="w-full mt-4" />
-          </div>
-
-          <div className="bg-white shadow-2xl shadow-neutral-100 p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 30/{" "}
-                <span className="text-[12px] text-green-500">monthly</span>
-              </p>
-            </div>
-            <div>
-              {Products.slice(0, 8).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>{item.title}</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select" className="w-full mt-4" />
-          </div>
-
-          <div className="bg-white shadow-2xl shadow-neutral-100 p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 30/{" "}
-                <span className="text-[12px] text-green-500">monthly</span>
-              </p>
-            </div>
-            <div>
-              {Products.slice(0, 10).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>{item.title}</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select" className="w-full mt-4" />
-          </div>
-        </div>
-      )}
-
-      {plan === "monthly" && (
-        <div className="grid lg:grid-cols-3 md:grid-cols-2 p-8 gap-8">
-          <div className="bg-white shadow-2xl shadow-neutral-100 p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 360/{" "}
-                <span className="text-[12px] text-green-500">yearly</span>
-              </p>
-            </div>
-
-            <div>
-              {Products.slice(0, 10).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>{item.title}</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select" className="w-full mt-4" />
-          </div>
-
-          <div className="bg-white/50 shadow-2xl p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 30/{" "}
-                <span className="text-[12px] text-green-500">monthly</span>
-              </p>
-            </div>
-            <div>
-              {Products.slice(0, 12).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>{item.title}</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select"  className="w-full mt-4" />
-          </div>
-
-          <div className="bg-white/50 shadow-2xl p-4 rounded-2xl ">
-            <div className="py-2 flex-col items-center justify-center">
-              <h3 className="text-[20px] font-bold">Basic Package</h3>
-              <p className="text-20px font-bold">
-                GH 360/{" "}
-                <span className="text-[12px] text-green-500">monthly</span>
-              </p>
-            </div>
-            <div>
-              {Products.slice(0, 12).map((item) => (
-                <div key={item.id} className="flex gap-2 py-2">
-                  <span className=" bg-black/50 rounded px-1"></span>
-                  <p>{item.title}</p>
-                </div>
-              ))}
-            </div>
-            <Button text="Select" className="w-full mt-4" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
 
-export default Form3
+const Form3 = ({ data, onBack }: Form3Props) => {
+  return (
+    <div className="min-h-screen flex justify-center px-4 pb-12">
+      <div className="w-full max-w-3xl bg-white rounded shadow p-6 flex flex-col gap-6">
+        <h2 className="text-xl font-semibold">Review Your Ad</h2>
+
+        {/* Images */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {data.images?.map(
+            (img, index) =>
+              img && (
+                <div key={index} className="relative h-28 w-full">
+                  <Image
+                    src={URL.createObjectURL(img)}
+                    alt="preview"
+                    fill
+                    className="object-cover rounded"
+                  />
+                </div>
+              ),
+          )}
+        </div>
+
+        {/* Title */}
+        <div>
+          <p className="text-gray-500 text-sm">Title</p>
+          <p className="font-medium">{data.title}</p>
+        </div>
+
+        {/* Category */}
+        <div>
+          <p className="text-gray-500 text-sm">Category</p>
+          <p className="font-medium">
+            {data.category} / {data.categoryChild}
+          </p>
+        </div>
+
+        {/* Location */}
+        <div>
+          <p className="text-gray-500 text-sm">Location</p>
+          <p className="font-medium">
+            {data.region} - {data.city}
+          </p>
+        </div>
+
+        {/* Price */}
+        <div>
+          <p className="text-gray-500 text-sm">Price</p>
+          <p className="font-medium">GH₵ {data.price}</p>
+        </div>
+
+        {/* Description */}
+        <div>
+          <p className="text-gray-500 text-sm">Description</p>
+          <p className="text-gray-700">{data.description}</p>
+        </div>
+
+        {/* Contact */}
+        <div>
+          <p className="text-gray-500 text-sm">Contact</p>
+          <p>{data.name}</p>
+          <p>{data.phone}</p>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-between pt-6">
+          <button onClick={onBack} className="px-6 py-3 border rounded">
+            Edit
+          </button>
+
+          <button className="px-6 py-3 bg-black text-white rounded">
+            Publish Ad
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Form3;

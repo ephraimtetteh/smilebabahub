@@ -50,25 +50,20 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     <>
       <StoreProvider>
         <LayoutShell>
-          {pathName !== "/restate" && (
-            <div className="absolute lg:top-75 top-50 left-0 right-0 z-50">
-              <MarketplaceSearch />
-            </div>
-          )}
           {children}
           <Script
             src="https://video2.getstreamhosting.com:2020/dist/widgets.js"
             strategy="afterInteractive"
           />
 
-          <div
+         {pathName !== '/' && pathName !=='/sell' && <div
             className="hidden md:block fixed bottom-5 left-5 z-40 rounded-2xl"
             data-aos="fade-up"
             data-aos-anchor-placement="bottom-bottom"
-            data-aos-delay="300"
+            data-aos-delay="1000"
           >
             <Video />
-          </div>
+          </div>}
 
           <div
             className=" fixed right-5 bottom-5 z-40 rounded-2xl"

@@ -24,7 +24,7 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
     >
       <div className=" flex items-center justify-between relative gap-12">
         <div className="">
-          <Title title={"Browse our market place"} />
+          <Title title={"Browse our marketplace"} />
         </div>
         <div>
           <button

@@ -5,6 +5,8 @@ import Image from 'next/image';
 import React, { useEffect } from 'react'
 import AOS from "aos";
 import "aos/dist/aos.css";
+import MarketplaceSearch from './NewSearch';
+import SearchBar from './SearchBar';
 
 const Hero = () => {
 
@@ -32,11 +34,12 @@ const Hero = () => {
             Place
           </h3>
         </div>
-        {/* <div className="lg:block lg:w-full">
+        <div className="lg:block lg:w-full">
+            <MarketplaceSearch />
           <div className=" max-w-5xl w-full flex-1 shadow-lg bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
-            <SearchBar />
+            {/* <SearchBar /> */}
           </div>
-        </div> */}
+        </div>
       </div>
     </div>
   );

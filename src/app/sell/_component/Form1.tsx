@@ -2,66 +2,82 @@
 
 import { assets } from "@/src/assets/assets";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Categories } from '@/src/constants/sellFormData'
-import { Category, FormProps } from "@/src/types/types";
+import { Category, StepProps } from "@/src/types/types";
+import { validateForm } from "@/src/utils/sellFormutils";
 
 
 
 
-const Form1 = ({ onNext }: FormProps) => {
+const Form1 = ({ data, updateField, onNext, errors }: StepProps) => {
 
-  const [categories, setCategories] = useState< Category[]> ([])
   const [categoryId, setCategoryId] = useState<string>("");
   const [childId, setChildId] = useState("");
-  const [image, setImage] = useState<File | null >(null)
-  const [data, setData] = useState({
-    title: "",
-    category: {},
-  });
+
+  
+  const handleImageChange = (index: number, file: File | null) => {
+    const newImages = [...data.images || []];
+    newImages[index] = file;
+
+    updateField("images", newImages);;
+  };
 
   const selectedCategory = Categories.find((category: Category) => category.id === categoryId) || null;
   const selectedChild = selectedCategory?.children?.find((child) => child.id === childId) || null;
 
-  useEffect(() => {
-    setCategories(categories)
-  }, [])
+ 
 
 
-  const onChangeHandler = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    setData({ ...data, [e.target.name]: e.target.value });
-    console.log(data);
-  };
+//   const onChangeHandler = (e: React.ChangeEvent<
+//  HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+//     >
+//   ) => {
+//     updateField(e.target.name, e.target.value);
+//     console.log(data);
+//   };
 
-  const handleNext = async () => {};
+const handleNext = () => {
+  const { isValid, errors } = validateForm(data, 1);
+
+  if (!isValid) {
+    console.log(errors);
+    return;
+  }
+
+  onNext();
+};
   
 
   return (
-    <div className="absolute right-0 left-0 flex flex-col flex-1 items-center justify-start bg-amber-50 h-screen">
-      <div className="w-[60%] flex flex-col flex-1 items-center justify-center mt-30">
-        <div className="flex bg-white w-full py-3 px-4 items-center justify-center rounded mb-4">
-          <p className="flex-1 text-center font-bold">Post Your Ad</p>
+    <div className="min-h-screen flex justify-center px-4 sm:px-6 lg:px-8 pb-20">
+      <div className="w-full max-w-3xl mt-5">
+        <div className="bg-black mb-4 text-white rounded shadow p-2 sm:p-6 flex">
+          <p className="flex-1 text-start font-bold">Post Your Ad</p>
           <p className="text-end text-[#ffc105]">clear</p>
         </div>
-        <form className="bg-white px-60 py-6 flex flex-col flex-1 w-full mb-20">
+        <form className="flex flex-col gap-4">
           <input
             type="text"
+            name="title"
+            value={data.title}
+            onChange={(e) => updateField("title", e.target.value)}
             placeholder="title"
-            required
-            className="border-gray-300 border px-4 py-3 w-full sm:w-125 rounded placeholder:text-[20px] mb-4 outline-none"
+            className={`border rounded px-4 py-3 w-full outline-none
+              ${errors?.title ? "border-red-500" : "border-gray-300"}`}
           />
+          {errors?.title && (
+            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+          )}
 
           <select
             value={categoryId}
             onChange={(e) => {
               setCategoryId(e.target.value);
               setChildId("");
+              updateField("category", e.target.value);
             }}
-            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
+            className="border border-gray-300 rounded px-4 py-3 w-full outline-none"
           >
             <option value="">Select Category</option>
             {Categories.map((cat) => (
@@ -69,13 +85,20 @@ const Form1 = ({ onNext }: FormProps) => {
                 {cat.name}
               </option>
             ))}
+
+            {errors?.category && (
+              <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+            )}
           </select>
 
           <select
             value={childId}
-            onChange={(e) => setChildId(e.target.value)}
+            onChange={(e) => {
+              setChildId(e.target.value);
+              updateField("categoryChild", e.target.value);
+            }}
             disabled={!selectedCategory}
-            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
+            className="border border-gray-300 rounded px-4 py-3 w-full outline-none"
           >
             <option value="">Select Sub-Category</option>
 
@@ -88,7 +111,7 @@ const Form1 = ({ onNext }: FormProps) => {
 
           <select
             disabled={!selectedChild}
-            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
+            className="border border-gray-300 rounded px-4 py-3 w-full outline-none"
           >
             <option value="">Select Location</option>
 
@@ -114,27 +137,46 @@ const Form1 = ({ onNext }: FormProps) => {
             First picture - is the title picture. You can change the order of
             photos: just grab your photos and drag
           </p>
-          <label htmlFor="image">
-            <Image
-              src={!image ? assets.upload_area : URL.createObjectURL(image)}
-              width={140}
-              height={70}
-              alt=""
-              className="mt-4"
-            />
-            <input
-              onChange={(e) => setImage(e.target.files?.[0] || null)}
-              type="file"
-              id="image"
-              hidden
-              required
-            />
-          </label>
+
+          <div className="flex flex-wrap gap-4">
+            {data.images.map((img, index) => (
+              <label key={index} htmlFor={`image-${index}`}>
+                {/* {index === 0 && (
+                  <span className="absolute top-1 left-1 bg-black text-white text-xs px-2 py-1 rounded">
+                    Main
+                  </span>
+                )} */}
+                <Image
+                  src={img ? URL.createObjectURL(img) : assets.upload_area}
+                  width={140}
+                  height={70}
+                  alt="upload"
+                  className="mt-4 cursor-pointer"
+                />
+
+                <input
+                  type="file"
+                  id={`image-${index}`}
+                  hidden
+                  accept="image/*"
+                  onChange={(e) =>
+                    handleImageChange(index, e.target.files?.[0] || null)
+                  }
+                />
+              </label>
+            ))}
+          </div>
 
           <button
-            onClick={onNext}
+            onClick={handleNext}
             type="button"
-            className="mt-4 w-full h-12 bg-black text-white"
+            disabled={
+              !data.title ||
+              !data.category ||
+              !data.categoryChild ||
+              !data.images?.some((img) => img)
+            }
+            className="mt-4 w-full h-12 rounded bg-black text-white cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
           >
             Next
           </button>

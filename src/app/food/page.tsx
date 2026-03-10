@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import Radio from "@/src/components/Radio";
 import AOS from "aos";
 import SearchBar from "@/src/components/SearchBar";
+import MarketplaceSearch from "@/src/components/NewSearch";
 
 
 const FoodPage = () => {
@@ -24,6 +25,7 @@ const FoodPage = () => {
   return (
     <div className="w-full flex flex-col flex-1 items-center px-2 justify-center pt-30">
       <NewLayout />
+      <MarketplaceSearch />
       {/* <div className=" max-w-5xl w-full flex-1 shadow-lg shadow-neutral-100 bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
         <InputCompontent
           type="text"
@@ -35,9 +37,9 @@ const FoodPage = () => {
         <SearchBar />
       </div> */}
       <div
-        className={`flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center mt-50`}
+        className={`flex flex-col text-black items-center bg-no-repeat bg-cover bg-center mt-20`}
       >
-        <div className=" flex items-center justify-between relative gap-12">
+        <div className=" flex items-center justify-between relative gap-12 lg:pb-12">
             <Title title={"Food & Restaurants"} />
         
           {/* <div>

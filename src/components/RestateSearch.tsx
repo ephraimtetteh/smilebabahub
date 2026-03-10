@@ -28,7 +28,7 @@ const RestateSearch = () => {
       {/* WHERE */}
       <div
         onClick={() => setActive("where")}
-        className={`flex flex-col px-6 py-3 flex-1 cursor-pointer transition ${
+        className={`flex flex-col px-6 py-3 flex-1 cursor-pointer transition items-start ${
           active === "where" ? "bg-gray-100" : ""
         }`}
       >
@@ -49,7 +49,7 @@ const RestateSearch = () => {
       {/* WHEN */}
       <div
         onClick={() => setActive("when")}
-        className={`flex flex-col px-6 py-3 flex-1 cursor-pointer transition ${
+        className={`flex flex-col px-6 py-3 flex-1 items-start cursor-pointer transition ${
           active === "when" ? "bg-gray-100" : ""
         }`}
       >
@@ -69,7 +69,7 @@ const RestateSearch = () => {
       {/* GUEST */}
       <div
         onClick={() => setActive("guest")}
-        className={`flex flex-col px-6 py-3 flex-1 cursor-pointer transition ${
+        className={`flex flex-col px-6 py-3 flex-1 items-start cursor-pointer transition ${
           active === "guest" ? "bg-gray-100" : ""
         }`}
       >

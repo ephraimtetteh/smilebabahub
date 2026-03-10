@@ -26,9 +26,9 @@ export default function MarketplaceSearch() {
 
   return (
     <div className="w-full flex justify-center mt-20">
-      <div className="w-[95%] lg:w-[80%] xl:w-[70%] bg-white shadow-lg rounded-full border border-gray-200 flex justify-between overflow-hidden">
+      <div className="w-[95%] lg:w-[80%] xl:w-[70%] bg-white/30 backdrop-blur-3xl shadow-lg rounded-full flex justify-between overflow-hidden">
         {/* SEARCH PRODUCT */}
-        <div className="flex flex-col p-4 hover:bg-gray-50 transition">
+        <div className="flex flex-col p-4 hover:bg-gray-300 w-full rounded-full transition">
           <label className="text-xs text-gray-500">Search</label>
 
           <input
@@ -44,7 +44,7 @@ export default function MarketplaceSearch() {
         </div>
 
         {/* CATEGORY */}
-        <div className="flex flex-col p-4 border-l border-gray-200 hover:bg-gray-50 transition">
+        <div className="flex flex-col p-4 border-l border-gray-200 w-full rounded-full hover:bg-gray-300 transition">
           <label className="text-xs text-gray-500">Category</label>
 
           <select
@@ -60,7 +60,7 @@ export default function MarketplaceSearch() {
         </div>
 
         {/* LOCATION */}
-        <div className="flex flex-col p-4 border-l border-gray-200 hover:bg-gray-50 transition">
+        <div className="flex flex-col p-4 border-l border-gray-200 w-full rounded-full hover:bg-gray-300 transition">
           <label className="text-xs text-gray-500">Location</label>
 
           <input
@@ -76,7 +76,7 @@ export default function MarketplaceSearch() {
         </div>
 
         {/* PRICE */}
-        <div className="flex flex-col p-4 border-l border-gray-200 hover:bg-gray-50 transition">
+        <div className="flex flex-col p-4 border-l border-gray-200 w-full rounded-full hover:bg-gray-300 transition">
           <label className="text-xs text-gray-500">Max Price</label>
 
           <input

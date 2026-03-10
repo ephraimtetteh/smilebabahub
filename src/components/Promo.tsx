@@ -25,7 +25,7 @@ const Promo = ({className}: FeaturedProps) => {
     >
       <div className=" flex items-center justify-between relative gap-12">
         <div className="">
-          <Title title={"Popular Apartments"} />
+          <Title title={"Fine Apartments"} />
         </div>
         <div>
           <button
