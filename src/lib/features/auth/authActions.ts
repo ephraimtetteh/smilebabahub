@@ -8,15 +8,37 @@ import getErrorMessage from "@/src/utils/getErrorMessage";
 export const register = createAsyncThunk(
   "/smilebaba/auth/register",
   async (
-    userData: { username: string; email: string; password: string; phone: string },
-    { dispatch },
+    userData: {
+      username: string;
+      email: string;
+      password: string;
+      phone: string;
+    },
+    { dispatch, rejectWithValue },
   ) => {
     try {
       const res = await axiosInstance.post("/auth/register", userData);
+
       dispatch(setUser(res.data.user));
       dispatch(setIsAuthenticated(true));
+
+      return res.data;
     } catch (error) {
-      dispatch(setMessage({ type: "error", message: getErrorMessage(error) }));
+      const message = getErrorMessage(error);
+      dispatch(setMessage({ type: "error", message }));
+      return rejectWithValue(message);
+    }
+  },
+);
+
+export const verifyOTP = createAsyncThunk(
+  "/auth/verifyOtp",
+  async (data: { phone: string; otp: string }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/auth/verify-otp", data);
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
     }
   },
 );

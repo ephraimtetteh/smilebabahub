@@ -5,9 +5,17 @@ import Image from 'next/image'
 import Link from 'next/link';
 import React, { useState } from 'react'
 import { FaEyeSlash, FaEye } from "react-icons/fa";
-import { useAppDispatch } from '../../redux';
+import { useAppDispatch, useAppSelector } from '../../redux';
 import { register } from '@/src/lib/features/auth/authActions';
 import { useRouter } from "next/navigation";
+import {
+  setIsAuthenticated,
+  setIsAuthenticating,
+  setAccessToken,
+  setUser,
+  setMessage,
+} from "@/src/lib/features/auth/authSlice";
+import { toast } from 'react-toastify';
 
 const AuthRegister
  = () => {
@@ -18,18 +26,70 @@ const AuthRegister
     phone: '',
     username: ''
   })
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+
+  const {isLoading} = useAppSelector((state) => state.auth)
+
+  const getPasswordStrength = (password: string) => {
+    if (password.length < 6) return "Weak";
+    if (password.length < 10) return "Medium";
+    return "Strong";
+  };
+
+  const isValidPhone = (phone: string) => {
+    return /^[0-9]{10,15}$/.test(phone);
+  };
+
+  const isValidEmail = (email: string) => {
+    return /\S+@\S+\.\S+/.test(email);
+  };
 
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({...user, [e.target.name]: e.target.value})
   }
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    await dispatch(register(user))
-    router.push('/auth/login')
+    e.preventDefault();
+    setError(null);
+
+    try {
+      
+      if (!isValidPhone(user.phone)) {
+        setError("Please enter a valid phone number");
+        return;
+      }
+
+      if (!isValidEmail(user.email)) {
+        setError("Enter a valid email address");
+        return;
+      }
+
+      const result = await dispatch(register(user));
+
+      if (register.fulfilled.match(result)) {
+        toast.success("Account created! Verify your phone and email.");
+        router.push(`/auth/verify?email=${user.email}&phone=${user.phone}`);
+
+        setUser({
+          email: "",
+          password: "",
+          phone: "",
+          username: "",
+        });
+
+
+      } else {
+        const message = result.payload as string;
+        setError(message || "Registration failed.");
+        toast.error(message || "Registration failed.");
+      }
+    } catch {
+      setError("Something went wrong.");
+      toast.error("Something went wrong.");
+    } 
+  
   };
 
   return (
@@ -68,57 +128,73 @@ const AuthRegister
             className=" grid lg:flex-1 lg:w-[80%] md:w-full lg:py-20 py-6 px-2 md:px-4"
           >
             <h1 className="lg:text-2xl md:text-xl md:px-2 max-sm:px-4 py-4 font-semibold">
-                Discover Great Deals connect with customer
+              Discover Great Deals connect with customer
             </h1>
-            {error && <p>{error}</p>}
+            {error && (
+              <p className="text-red-500 text-sm text-center py-2">{error}</p>
+            )}
             <input
               type="email"
+              required
               placeholder="Email Address"
               name="email"
               value={user.email}
               onChange={handleUserChange}
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />
+
             <input
-              type="name"
+              type="text"
+              required
               placeholder="Name"
               name="username"
               value={user.username}
               onChange={handleUserChange}
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />
+
             <input
-              type="text"
+              type="tel"
+              required
               placeholder="Phone"
               name="phone"
+              title="Enter a valid phone number"
               value={user.phone}
               onChange={handleUserChange}
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />
-            <div className="flex items-center justify-between border border-gray-300 rounded outline-[#ffc10522] w-full">
+
+            <div className="flex items-center justify-between border border-gray-300 rounded w-full">
               <input
-                type={showPassword ? "" : "password"}
+                type={showPassword ? "text" : "password"}
+                required
                 placeholder="Password"
                 name="password"
                 value={user.password}
                 onChange={handleUserChange}
-                className="flex-1 lg:w-full p-4 outline-none text-[14px]"
+                className="flex-1 p-4 outline-none text-[14px]"
               />
+
               <span
                 onClick={() => setShowPassword(!showPassword)}
-                className="pr-4"
+                className="pr-4 cursor-pointer"
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
             </div>
-            <Link href={""}>
-              <button
-                type="submit"
-                className="flex-1 w-full bg-[#fcce23]  font-bold text-white rounded-full py-5 mt-3 cursor-pointer"
-              >
-                Submit
-              </button>
-            </Link>
+
+            <p className="text-xs text-gray-500 px-2 mt-1">
+              Strength: {getPasswordStrength(user.password)}
+            </p>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 w-full bg-[#fcce23] font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
+            >
+              {isLoading ? "Creating account..." : "Submit"}
+            </button>
+
             <p className="text-center py-4 text-[#5a5858] text-[14px]">
               By creating an account, I accept the{" "}
               <span className="text-black underline cursor-pointer">
