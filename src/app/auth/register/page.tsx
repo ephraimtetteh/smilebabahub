@@ -8,13 +8,6 @@ import { FaEyeSlash, FaEye } from "react-icons/fa";
 import { useAppDispatch, useAppSelector } from '../../redux';
 import { register } from '@/src/lib/features/auth/authActions';
 import { useRouter } from "next/navigation";
-import {
-  setIsAuthenticated,
-  setIsAuthenticating,
-  setAccessToken,
-  setUser,
-  setMessage,
-} from "@/src/lib/features/auth/authSlice";
 import { toast } from 'react-toastify';
 
 const AuthRegister

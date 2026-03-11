@@ -1,33 +1,59 @@
 'use client'
 
 import { assets } from '@/src/assets/assets'
-import Button from '@/src/components/Button';
 import Image from 'next/image'
 import Link from 'next/link';
 import React, { useState } from 'react'
-import { useAppDispatch } from '../../redux';
+import { useAppDispatch, useAppSelector } from '../../redux';
 import { login } from '@/src/lib/features/auth/authActions';
 import { useRouter } from "next/navigation";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
+import { toast } from 'react-toastify';
 
 const Loginpage = () => {
   const dispatch = useAppDispatch()
   const router = useRouter()
+   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState({
     email: '',
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
 
+  const { isLoading } = useAppSelector((state) => state.auth);
+
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setUser({...user, [e.target.name]: e.target.value})
     }
+const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
 
-   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
-      await dispatch(login(user))
-      router.push('/')
-    };
+    try {
+
+      const result = await dispatch(login(user));
+
+      if (login.fulfilled.match(result)) {
+        toast.success("Login successful!");
+        router.push(`/vendor`);
+
+        setUser({
+          email: "",
+          password: ""
+        });
+
+
+      } else {
+        const message = result.payload as string;
+        setError(message || "Registration failed.");
+        toast.error(message || "Login failed.");
+      }
+    } catch {
+      setError("Something went wrong.");
+      toast.error("Something went wrong.");
+    } 
+  
+  };
 
   return (
     <div className="relative lg:h-200 h-[80vh] max-sm:w-[90vw] md:w-150 lg:w-350 mx-auto mt-15 flex flex-col flex-1">
@@ -60,6 +86,9 @@ const Loginpage = () => {
           </p>
         </div>
         <div className=" grid lg:flex lg:flex-col items-center justify-center text-black bg-white m-auto lg:w-[80%] rounded-2xl">
+          {error && (
+            <p className="text-red-500 text-sm text-center py-2">{error}</p>
+          )}
           <form
             onSubmit={handleLogin}
             className=" grid lg:flex-1 lg:w-[80%] md:w-full lg:py-20 py-6 px-2 md:px-4"
@@ -75,34 +104,32 @@ const Loginpage = () => {
               name="email"
               className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
             />
-            <div className="flex items-center justify-between border border-gray-300 rounded outline-[#ffc10522] w-full">
+            <div className="flex items-center justify-between border border-gray-300 rounded w-full">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
+                required
                 value={user.password}
                 onChange={handleUserChange}
                 placeholder="Password"
                 name="password"
-                className="flex-1 lg:w-full p-4 outline-none text-[14px]"
+                className="flex-1 p-4 outline-none text-[14px]"
               />
+
               <span
                 onClick={() => setShowPassword(!showPassword)}
-                className="pr-4"
+                className="pr-4 cursor-pointer"
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
             </div>
 
-            <Button
-              text="Submit"
-              className="flex-1 w-full bg-[#ccc] font-bold text-white rounded-full py-5 mt-3 cursor-pointer"
-            />
-            <p className="text-center py-4 text-[#5a5858] text-[14px]">
-              By creating an account, I accept the{" "}
-              <span className="text-black underline cursor-pointer">
-                Policy Privacy
-              </span>
-            </p>
-            <p className="text-center py-4 text-[#5a5858] text-[14px] gap-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 w-full bg-[#ccc] font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
+            > {isLoading ? "Logging in..." : "Submit"}</button>
+
+            <p className="text-center py-4 text-[#5a5858] text-[14px] gap-3">
               Do not have an account
               <Link
                 href={"/auth/register"}

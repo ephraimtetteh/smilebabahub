@@ -5,9 +5,10 @@ interface ButtonProps {
   className?: string;
   onClick?: () => void;
   icon?: JSX.Element,
+  type? : string
 }
 
-const Button = ({text, className, onClick, icon}: ButtonProps) => {
+const Button = ({text, className, onClick, icon, type}: ButtonProps) => {
   return (
     <div>
       <button

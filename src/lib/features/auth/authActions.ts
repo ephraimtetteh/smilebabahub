@@ -43,6 +43,19 @@ export const verifyOTP = createAsyncThunk(
   },
 );
 
+
+export const resendOTP = createAsyncThunk(
+  "/auth/resendOtp",
+  async (phone: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/auth/resend-otp", { phone });
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
 export const login = createAsyncThunk('/smilebaba/auth/login', 
   async(user: any, {dispatch}) => {
 
