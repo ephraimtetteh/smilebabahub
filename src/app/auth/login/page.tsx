@@ -127,7 +127,10 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
               type="submit"
               disabled={isLoading}
               className="flex-1 w-full bg-[#ccc] font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
-            > {isLoading ? "Logging in..." : "Submit"}</button>
+            >
+              {" "}
+              {isLoading ? "Logging in..." : "Submit"}
+            </button>
 
             <p className="text-center py-4 text-[#5a5858] text-[14px] gap-3">
               Do not have an account
@@ -136,6 +139,15 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
                 className="text-rose-800 underline cursor-pointer"
               >
                 Create Account
+              </Link>
+            </p>
+
+            <p className="text-right text-sm mt-2">
+              <Link
+                href="/auth/forgot-password"
+                className="text-yellow-500 hover:underline"
+              >
+                Forgot Password?
               </Link>
             </p>
           </form>

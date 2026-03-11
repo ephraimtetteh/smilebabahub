@@ -5,10 +5,13 @@ import { useState, useEffect } from "react";
 import { Menu, X, ShoppingCart, User } from "lucide-react";
 import Image from "next/image";
 import { assets } from "../assets/assets";
+import { useAppSelector } from "../app/redux";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const { user } = useAppSelector((state) => state.auth)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,7 +76,7 @@ export default function Navbar() {
           </Link>
 
           <Link href="/auth/login">
-            <User className="text-white hover:text-yellow-400 cursor-pointer" />
+              <User className="text-white hover:text-yellow-400 cursor-pointer" />
           </Link>
 
           {/* MOBILE MENU */}

@@ -85,6 +85,41 @@ export const login = createAsyncThunk('/smilebaba/auth/login',
     }
 })
 
+
+export const forgotPassword = createAsyncThunk(
+  "/auth/forgotPassword",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/auth/forgot-password", { email });
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
+
+
+
+export const resetPassword = createAsyncThunk(
+  "/auth/resetPassword",
+  async (
+    { token, password }: { token: string; password: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await axiosInstance.post("/auth/reset-password", {
+        token,
+        password,
+      });
+
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
 // export const validateUser = createAsyncThunk('/smilebaba/auth/refresh', 
 //   async(accessToken: any, { dispatch }) => {
 //     dispatch(setIsAuthenticating(true))
