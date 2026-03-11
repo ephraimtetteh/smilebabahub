@@ -180,3 +180,33 @@ export interface StepProps {
   onBack?: () => void;
   errors?: Record<string, string>;
 }
+
+export interface LoginResponseProp {
+  message: string;
+  accessToken: string;
+  username: string;
+  email: string;
+  phone: string;
+  role: string;
+  profilePicture: string;
+  cartItems: CartItem[];
+}
+
+declare interface CartItemProp {
+  productId: string;
+  title: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
+declare interface UserProp {
+  username?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  country?: string;
+  state?: string;
+  profilePicture?: string;
+  cartItems?: CartItemProp[];
+}

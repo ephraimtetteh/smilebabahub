@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { UserProp } from "@/src/types/types";
 
 
 interface Message {
@@ -10,7 +11,7 @@ declare interface authState {
   isAuthenticated: boolean;
   isAuthenticating: boolean;
   accessToken: null | string;
-  user: object
+  user: UserProp;
   message: Message
   isLoading: boolean
  }
@@ -19,7 +20,16 @@ const initialState: authState = {
  isAuthenticated: false,
  isAuthenticating: true,
  accessToken: null,
- user: {},
+ user: { 
+  username: '',
+   email: '',
+   phone: '',
+   role: '',
+   country: '',
+   state: '',
+   profilePicture: '',
+   cartItems: [],
+  },
  message: {
   type: '',
   message: ''
