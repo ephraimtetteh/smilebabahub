@@ -32,9 +32,7 @@ export default function RootLayout({
       </Head>
       <body className={`relative min-h-screen ${outfit.className}`}>
         <ToastContainer />
-        <LayoutWrapper>
-          {children}
-        </LayoutWrapper>
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );

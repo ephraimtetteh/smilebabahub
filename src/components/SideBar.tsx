@@ -2,7 +2,7 @@ import { cardCategories } from '@/src/constants/cardCategories';
 import React from 'react'
 import { FaChevronRight } from "react-icons/fa6";
 import Card from './Card';
-import Promo from './Promo';
+import Promo from './RestateComponent';
 import Video from './Video';
 
 

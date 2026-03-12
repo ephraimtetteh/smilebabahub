@@ -11,9 +11,9 @@ const CardComponent = ({item, index, quantity}: CardComponentProps) => {
   return (
     <Link href={''} className='p-2 text-black relative w-full bg-amber-950 bg-center bg-cover bg-no-repeat'>
       <div className='flex gap-2'>
-        <Image src={item.image} alt='productImage' className='w-25 rounded items-start'/>
+        <Image src={item.images[0]} alt='productImage' className='w-25 rounded items-start'/>
         <div>
-          <h3>{item.author}</h3>
+          <h3>{item.title}</h3>
           <h3>{quantity}</h3>
         </div>
       </div>

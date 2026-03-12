@@ -46,6 +46,7 @@ const AuthRegister
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    
 
     try {
       
@@ -185,7 +186,8 @@ const AuthRegister
               disabled={isLoading}
               className="flex-1 w-full bg-[#fcce23] font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
             >
-              {isLoading ? "Creating account..." : "Submit"}
+              {/* {isLoading ? "Creating account..." : "Submit"} */}
+              submit
             </button>
 
             <p className="text-center py-4 text-[#5a5858] text-[14px]">

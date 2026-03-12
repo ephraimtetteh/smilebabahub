@@ -39,10 +39,10 @@ export default function UserMenu() {
           {open && (
             <div className="absolute right-0 mt-3 w-44 bg-white shadow-lg rounded-lg py-2 text-black animate-fadeIn">
               <Link
-                href="/vendor/settings"
+                href="/auth/register"
                 className="block px-4 py-2 hover:bg-gray-100"
               >
-                Profile
+                Register
               </Link>
 
               <Link

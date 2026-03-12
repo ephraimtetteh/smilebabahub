@@ -53,20 +53,12 @@ declare type Product = {
   price?: number;
 };
 
-declare interface CardComponentProps {
-  item: Product;
-  index: number;
-  quantity?: number;
-}
+
 
 declare type Category = {
   id: string;
   name: string;
   children: Category[] | string[];
-};
-
-declare type FormProps = {
-  onNext: () => void;
 };
 
 type CategoryNode = {
@@ -115,20 +107,6 @@ declare interface InputProps {
   name?: string;
   id?: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-}
-
-interface CartItem {
-  _id: string;
-  name: string;
-  price: number;
-  amount: number;
-  image: StaticImageData;
-}
-
-declare interface CartProps extends UserPorps {
-  cartItems: CartItem[];
-  total: number;
-  amount: number;
 }
 
 type RegisterPayload = UserProps | null;
@@ -209,4 +187,68 @@ declare interface UserProp {
   state?: string;
   profilePicture?: string;
   cartItems?: CartItemProp[];
+}
+
+
+declare interface CardComponentProps {
+  item: ProductProps;
+  index: number;
+  quantity?: number;
+}
+
+export interface ProductProps {
+  id: string;
+
+  title: string;
+  description: string;
+
+  price: number;
+
+  category: "marketplace" | "apartment" | "food";
+  subCategory: string;
+
+  images: string[];
+
+  location: {
+    country: string;
+    state: string;
+    city?: string;
+  };
+
+  seller: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+
+  rating?: number;
+  reviews?: number;
+
+  createdAt?: string;
+  updatedAt?: string;
+
+  details: MarketplaceDetails | ApartmentDetails | FoodDetails;
+}
+
+export interface MarketplaceDetails {
+  brand?: string;
+  condition: "new" | "used";
+  stock?: number;
+  warranty?: string;
+}
+
+export interface ApartmentDetails {
+  bedrooms: number;
+  bathrooms: number;
+  furnished: boolean;
+  parking: boolean;
+  propertyType: "apartment" | "house" | "studio";
+  size?: number;
+}
+
+export interface FoodDetails {
+  restaurantName: string;
+  preparationTime?: number;
+  isVegetarian?: boolean;
+  ingredients?: string[];
 }

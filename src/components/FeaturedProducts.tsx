@@ -5,6 +5,7 @@ import { Products } from "../assets/assets";
 import Title from '@/src/components/Title'
 import FeaturedCard from "./FeaturedCard";
 import { usePathname, useRouter } from 'next/navigation.js';
+import { products } from "../utils/data/generateProducts";
 
 interface FeaturedProps {
   className?: string
@@ -17,6 +18,8 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
   const navigate = ( path:string) => {
     router.push(path)
   };
+
+   const marketplace = products.filter((item) => item.category === "marketplace");
 
   return (
     <div
@@ -40,20 +43,10 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
       </div>
 
       <div className="w-full flex overflow-x-scroll items-center justify-center gap-5 ">
-        {Products.map((item, index) => (
+        {marketplace.slice(0, 20).map((item, index) => (
           <FeaturedCard key={index} item={item} index={index} />
         ))}
       </div>
-
-      {/* <button
-        onClick={() => {
-          navigate("/");
-          scrollTo(0, 0);
-        }}
-        className="my-16 px-4 text-sm font-medium border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all cursor-pointer"
-      >
-        View all Destination{" "}
-      </button> */}
     </div>
   );
 };

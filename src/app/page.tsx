@@ -1,14 +1,12 @@
 'use client'
 
 import Hero from "@/src/components/Hero";
-import PostedAds from "@/src/components/PostedAds";
-import Promo from "@/src/components/Promo";
+import Restate from "@/src/components/RestateComponent";
 import FoodAds from "@/src/components/FoodComponent";
 import Video from "@/src/components/Video";
 import React, { useEffect } from "react";
 import AppDownload from "@/src/components/App";
 import Radio from "@/src/components/Radio";
-import Button from "../components/Button";
 import FeaturedProducts from "../components/FeaturedProducts";
 import AOS from "aos";
 
@@ -25,7 +23,7 @@ const HomePage = () => {
     <div className="w-full flex flex-col flex-1 items-center justify-center pt-20 relative">
       <Hero />
       <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
-        <Promo />
+        <Restate />
         <FoodAds />
         <FeaturedProducts />
       </div>

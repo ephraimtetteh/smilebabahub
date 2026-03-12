@@ -128,8 +128,8 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
               disabled={isLoading}
               className="flex-1 w-full bg-[#ccc] font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
             >
-              {" "}
-              {isLoading ? "Logging in..." : "Submit"}
+              {/* {isLoading ? "Logging in..." : "Submit"} */}
+              Submit
             </button>
 
             <p className="text-center py-4 text-[#5a5858] text-[14px] gap-3">

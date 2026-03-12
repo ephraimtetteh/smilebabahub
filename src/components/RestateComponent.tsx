@@ -1,23 +1,24 @@
 'use client'
 
 import React from "react";
-import { Products } from "../assets/assets";
 import Title from '@/src/components/Title'
 import FeaturedCard from "./FeaturedCard";
-import { usePathname, useRouter } from 'next/navigation.js';
-import { realEstate } from "@/src/constants/data";
+import { useRouter } from 'next/navigation.js';
+import { products } from "../utils/data/generateProducts";
 
 interface FeaturedProps {
   className?: string
 }
 
 
-const Promo = ({className}: FeaturedProps) => {
+const Restate = ({className}: FeaturedProps) => {
   const router = useRouter()
 
   const navigate = ( path:string) => {
     router.push(path)
   };
+
+  const restate = products.filter((item) => item.category === "food");
 
   return (
     <div
@@ -44,7 +45,7 @@ const Promo = ({className}: FeaturedProps) => {
         className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2"
         style={{ maxWidth: "100%" }}
       >
-        {realEstate.slice(0, 8).map((item, index) => (
+        {restate.slice(0, 20).map((item, index) => (
           <FeaturedCard key={item.id} item={item} index={index} />
         ))}
       </div>
@@ -52,4 +53,4 @@ const Promo = ({className}: FeaturedProps) => {
   );
 };
 
-export default Promo;
+export default Restate;
