@@ -69,7 +69,7 @@ export default function MarketplaceSearch() {
          className="bg-white/30 backdrop-blur-3xl shadow-lg 
          rounded-2xl md:rounded-full 
          flex flex-col md:flex-row overflow-hidden
-         transition-all duration-300 ease-in-out"
+         transition-all duration-300 ease-in-out max-sm:mb-8"
           >
             {/* SEARCH */}
             <div className="flex flex-col p-4 flex-1 hover:bg-gray-100">

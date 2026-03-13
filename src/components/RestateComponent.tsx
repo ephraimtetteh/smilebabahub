@@ -43,7 +43,7 @@ const Restate = ({className}: FeaturedProps) => {
       </div>
 
       <div
-        className="flex flex-1 overflow-x-scroll items-center justify-center gap-x-2"
+        className="w-full grid grid-cols-2 lg:flex flex-1 flex-wrap lg:overflow-x-scroll items-center justify-center gap-2"
         style={{ maxWidth: "100%" }}
       >
         {restate.slice(0, 20).map((item, index) => (

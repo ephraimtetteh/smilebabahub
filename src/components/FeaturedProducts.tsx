@@ -24,7 +24,7 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
 
   return (
     <div
-      className={`${className} flex flex-col text-black items-center px-6 bg-no-repeat bg-cover bg-center`}
+      className={`${className} flex flex-col text-black items-center px-3 bg-no-repeat bg-cover bg-center`}
     >
       <div className=" flex items-center justify-between relative gap-12">
         <div className="">
@@ -43,7 +43,10 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
         </div>
       </div>
 
-      <div className="w-full flex overflow-x-scroll items-center justify-center gap-5 ">
+      <div
+        className="w-full grid grid-cols-2 lg:flex flex-1 flex-wrap lg:overflow-x-scroll items-center justify-center gap-4"
+        style={{ maxWidth: "100%" }}
+      >
         {marketplace.slice(0, 20).map((item, index) => (
           <FeaturedCard key={index} item={item} index={index} />
         ))}

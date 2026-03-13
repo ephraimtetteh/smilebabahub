@@ -40,14 +40,13 @@ interface FeaturedProps {
       </div>
 
       <div
-        className="flex flex-1 px-4 overflow-x-scroll items-center justify-center gap-x-2"
+        className="w-full grid grid-cols-2 lg:flex flex-1 flex-wrap lg:overflow-x-scroll items-center justify-center gap-2"
         style={{ maxWidth: "100%" }}
       >
         {Products.map((item, index) => (
           <FeaturedCard key={item.id} item={item} index={index} />
         ))}
       </div>
-
     </div>
   );
 };

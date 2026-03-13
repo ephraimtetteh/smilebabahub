@@ -51,34 +51,39 @@ const Radio = () => {
     <div className="px-3 sm:px-6 md:px-12 lg:px-14 xl:px-12">
       <div
         className="bg-linear-to-br from-amber-950 to-black 
-    border border-[#d8a304] 
-    rounded-[28px] md:rounded-3xl lg:rounded-2xl 
-    flex flex-col p-6 md:p-7 
-    text-white mt-4 
-    shadow-xl shadow-black/40"
+        border border-[#d8a304] 
+        rounded-full md:rounded-3xl lg:rounded-2xl 
+        flex flex-col p-3 md:p-7 
+        text-white mt-4 
+        shadow-xl shadow-black/40"
       >
         {/* Radio Icon */}
         <IoRadioOutline
           size={34}
-          className="text-[#ffc105] mx-auto mb-3 drop-shadow-lg"
+          className=" hidden lg:block text-[#ffc105] mx-auto mb-3 drop-shadow-lg"
         />
 
         {/* Title */}
-        <div className="text-center">
-          <h3 className="text-xl md:text-2xl font-semibold tracking-wide">
+        <div className="lg:block text-center">
+          <h3 className=" hidden lg:block text-xl md:text-2xl font-semibold tracking-wide">
             SmileBaba <span className="text-[#ffc105]">Radio</span>
           </h3>
+          <h3 className="lg:hidden block md:text-2xl font-semibold tracking-wide">
+            Radio
+          </h3>
 
-          <p className="text-gray-300 text-sm mt-1">🔴 Your smile our Pride</p>
+          <p className="text-gray-300 hidden lg:block text-sm mt-1">
+            🔴 Your smile our Pride
+          </p>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-5 md:gap-6 mt-5">
+        <div className="flex items-center justify-center gap-3 md:gap-6 lg:mt-5 mt-2">
           {/* Play / Pause */}
           <button
             onClick={togglePlay}
             className="bg-[#ffc105] text-black 
-          p-4 md:p-3 
+          p-2 md:p-3 
           rounded-full 
           shadow-lg shadow-yellow-500/30 
           hover:scale-105 transition"
@@ -90,7 +95,7 @@ const Radio = () => {
           <button
             onClick={toggleMute}
             className="bg-gray-800/80 backdrop-blur-md 
-          p-4 md:p-3 
+          p-2 md:p-3 
           rounded-full 
           border border-gray-700
           hover:bg-gray-700 transition"
@@ -102,7 +107,7 @@ const Radio = () => {
           <button
             className="text-red-500 
           p-3 md:p-2 
-          rounded-full 
+          rounded-full hidden lg:block
           hover:bg-red-500/10 transition"
           >
             <FaHeart size={18} />

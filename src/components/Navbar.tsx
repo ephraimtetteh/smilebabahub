@@ -28,22 +28,17 @@ export default function Navbar() {
   }, []);
 
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (!searchQuery.trim()) {
-        router.push("/search");
-        return;
-      }
+  // useEffect(() => {
+  //   const timeoutId = setTimeout(() => {
+  //     const params = new URLSearchParams();
+  //     if (searchQuery.trim()) {
+  //       params.append('search',searchQuery)
+  //     }
+  //     router.replace(`/search?${params.toString()}`);
+  //   }, 500);
 
-      const params = new URLSearchParams({
-        search: searchQuery,
-      });
-
-      router.replace(`/search?${params.toString()}`);
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, router]);
+  //   return () => clearTimeout(timeoutId);
+  // }, [searchQuery]);
 
   return (
     <nav
