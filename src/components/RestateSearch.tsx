@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { toast } from 'react-toastify';
 
 const RestateSearch = () => {
   const [location, setLocation] = useState("");
@@ -11,24 +12,31 @@ const RestateSearch = () => {
   const [active, setActive] = useState<string | null>(null);
 
   const router = useRouter();
-  
 
   const handleSearch = () => {
     const params = new URLSearchParams();
 
     if (location) params.append("location", location);
-    if (date) params.append("d", date);
+    if (date) params.append("date", date);
     if (guest) params.append("guest", guest);
+
+    if (!params.toString()) {
+      return toast.error("Please enter at least a one Field");
+    }
 
     router.push(`/search?${params.toString()}`);
   };
 
   return (
-    <div className="bg-white shadow-2xl rounded-full border border-gray-200 lg:my-10 my-2 flex items-center overflow-hidden transition-all duration-300 w-[95%] md:w-[80%] lg:w-[65%] mx-auto">
+    <div
+      className="bg-white shadow-xl rounded-2xl border border-gray-200 
+    flex flex-col md:flex-row items-stretch md:items-center 
+    w-[95%] md:w-[90%] lg:w-[65%] mx-auto overflow-hidden transition-all"
+    >
       {/* WHERE */}
       <div
         onClick={() => setActive("where")}
-        className={`flex flex-col px-6 py-3 flex-1 cursor-pointer transition items-start ${
+        className={`flex flex-col px-4 py-3 flex-1 cursor-pointer transition ${
           active === "where" ? "bg-gray-100" : ""
         }`}
       >
@@ -39,17 +47,20 @@ const RestateSearch = () => {
           placeholder="Search destination"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          className="outline-none text-sm"
+          className="outline-none text-sm bg-transparent"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch();
+          }}
         />
       </div>
 
-      {/* DIVIDER */}
-      <div className="h-10 w-px bg-gray-200"></div>
+      {/* Divider (hidden on mobile) */}
+      <div className="hidden md:block h-10 w-px bg-gray-200"></div>
 
       {/* WHEN */}
       <div
         onClick={() => setActive("when")}
-        className={`flex flex-col px-6 py-3 flex-1 items-start cursor-pointer transition ${
+        className={`flex flex-col px-4 py-3 flex-1 cursor-pointer transition ${
           active === "when" ? "bg-gray-100" : ""
         }`}
       >
@@ -59,17 +70,20 @@ const RestateSearch = () => {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="outline-none text-sm"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch();
+          }}
+          className="outline-none text-sm bg-transparent"
         />
       </div>
 
-      {/* DIVIDER */}
-      <div className="h-10 w-px bg-gray-200"></div>
+      {/* Divider */}
+      <div className="hidden md:block h-10 w-px bg-gray-200"></div>
 
       {/* GUEST */}
       <div
         onClick={() => setActive("guest")}
-        className={`flex flex-col px-6 py-3 flex-1 items-start cursor-pointer transition ${
+        className={`flex flex-col px-4 py-3 flex-1 cursor-pointer transition ${
           active === "guest" ? "bg-gray-100" : ""
         }`}
       >
@@ -80,15 +94,22 @@ const RestateSearch = () => {
           placeholder="Add guests"
           value={guest}
           onChange={(e) => setGuest(e.target.value)}
-          className="outline-none text-sm"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch();
+          }}
+          className="outline-none text-sm bg-transparent"
         />
       </div>
 
       {/* SEARCH BUTTON */}
-
-      <button className="bg-amber-400 hover:bg-amber-500 transition p-4 rounded-full mr-2" onClick={handleSearch}>
-        <Search size={20} />
-      </button>
+      <div className="flex items-center justify-center md:pr-2 py-3 md:py-0">
+        <button
+          className="bg-amber-400 hover:bg-amber-500 transition p-3 md:p-4 rounded-full"
+          onClick={handleSearch}
+        >
+          <Search size={18} />
+        </button>
+      </div>
     </div>
   );
 }

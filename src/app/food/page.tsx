@@ -25,25 +25,22 @@ const FoodPage = () => {
 
 
   return (
-    <div className="w-full flex flex-col flex-1 items-center px-2 justify-center pt-30">
-      <NewLayout />
-      <MarketplaceSearch />
-      <div
-        className={`flex flex-col text-black items-center bg-no-repeat bg-cover bg-center mt-20`}
-      >
-        <div className=" flex items-center justify-between relative gap-12 lg:pb-12">
-          <Title title={"Food & Restaurants"} />
-        </div>
+    <div className="w-full flex flex-col items-center mt-20 px-4">
+      <div className="py-10 w-full max-w-7xl">
+        <MarketplaceSearch />
+        <NewLayout />
+      </div>
 
-        <div
-          className="flex flex-1 flex-wrap items-center justify-center gap-4"
-          style={{ maxWidth: "100%" }}
-        >
-          {foods.length > 0 &&
-            foods.map((item, index) => (
-              <FeaturedCard key={item.id} item={item} index={index} />
-            ))}
-        </div>
+      <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {foods.length === 0 ? (
+          <p className="text-gray-500 col-span-full text-center">
+            No products found
+          </p>
+        ) : (
+          foods.map((item, index) => (
+            <FeaturedCard key={item.id} item={item} index={index} />
+          ))
+        )}
       </div>
     </div>
   );

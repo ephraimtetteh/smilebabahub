@@ -18,26 +18,38 @@ const Hero = () => {
   }, []);
 
   return (
-    <div className="relative lg:h-[50vh] h-[30vh] w-full lg:py-10 overflow-hidden">
+    <div className="relative w-full h-[40vh] sm:h-[45vh] lg:h-[55vh] overflow-hidden">
+      {/* Background Image */}
       <Image
         src={assets.heroImage}
         alt="Background"
         fill
         priority
-        className="object-cover w-full"
+        className="object-cover"
       />
-      <div className="absolute inset-0"></div>
-      <div className="absolute top-0 left-0 p-12 w-full " data-aos="slide-up">
-        <div className="max-w-3xl py-12 items-center justify-center mx-auto">
-          <h3 className="lg:text-5xl text-lg font-semibold text-black/80 max-w-full capitalize  text-center">
-            find food, homes <br /> & Everything you need - <br /> All in one
-            Place
+
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/10"></div>
+
+      {/* Content */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center px-4 sm:px-8"
+        data-aos="slide-up"
+      >
+        {/* Heading */}
+        <div className="max-w-3xl text-center">
+          <h3 className="text-xl sm:text-3xl lg:text-5xl font-semibold text-black/80 leading-tight capitalize">
+            Find food, homes <br className="hidden sm:block" />
+            & everything you need —
+            <br className="hidden sm:block" />
+            all in one place
           </h3>
         </div>
-        <div className="lg:block lg:w-full">
+
+        {/* Search Section */}
+        <div className="w-full mt-6 sm:mt-8 flex justify-center">
+          <div className="w-full max-w-5xl">
             <MarketplaceSearch />
-          <div className=" max-w-5xl w-full flex-1 shadow-lg bg-white/30 backdrop-blur-3xl items-center z-50 justify-center mx-auto rounded-full">
-            {/* <SearchBar /> */}
           </div>
         </div>
       </div>

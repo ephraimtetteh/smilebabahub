@@ -7,12 +7,15 @@ import Image from "next/image";
 import { assets } from "../assets/assets";
 import UserMenu from "./UserMenu";
 import { useAppSelector } from "../app/redux";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('')
 
   const { amount } = useAppSelector((state) => state.cart)
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +26,24 @@ export default function Navbar() {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!searchQuery.trim()) {
+        router.push("/search");
+        return;
+      }
+
+      const params = new URLSearchParams({
+        search: searchQuery,
+      });
+
+      router.replace(`/search?${params.toString()}`);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, router]);
 
   return (
     <nav
@@ -59,7 +80,14 @@ export default function Navbar() {
           <Image src={assets.searchIcon} alt="search" width={18} height={18} />
 
           <input
+            type="text"
             placeholder="Search products..."
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && searchQuery.trim()) {
+                router.push(`/search?search=${searchQuery}`);
+              }
+            }}
             className="bg-transparent outline-none text-white ml-2 w-40 lg:w-56"
           />
         </div>
@@ -75,7 +103,9 @@ export default function Navbar() {
             <Link href="/cart">
               <ShoppingCart className="text-white hover:text-yellow-400 cursor-pointer" />
             </Link>
-            <div className="absolute top-4 right-70 text-white font-bold">{amount === 0 ?'': amount}</div>
+            <div className="absolute top-4 right-70 text-white font-bold">
+              {amount === 0 ? "" : amount}
+            </div>
           </div>
 
           <UserMenu />
