@@ -6,29 +6,35 @@ import { Products } from "@/src/constants/data";
 import { useAppSelector } from "../redux";
 import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const CartPage = () => {
   const user = useAppSelector((state) => state.auth.user);
   const { total, delivery, subTotal, cartItems } = useAppSelector((state) => state.cart)
+
+  const router = useRouter()
 
 
 
   const [openModal, setOpenModal] = useState(false);
 
   // get full product details
-  const cartProducts = useMemo(() => {
-    return cartItems.map((item) => {
-      const product = Products.find((p) => p.id === item.id);
-      return {
-        ...product,
-        quantity: item.amount,
-      };
-    });
-  }, [cartItems]);
+  // const cartProducts = useMemo(() => {
+  //   return cartItems.map((item) => {
+  //     const product = Products.find((p) => p.id === item.id);
+  //     return {
+  //       ...product,
+  //       quantity: item.amount,
+  //     };
+  //   });
+  // }, [cartItems]);
 
   const handleOrder = () => {
-    toast.success("Order Successful");
-    setOpenModal(false);
+    if(!user) {
+      router.push('/auth/login')
+    }
+
+    return toast.success("Order Successful");
   };
 
   if(cartItems.length === 0){
@@ -56,6 +62,7 @@ const CartPage = () => {
               image={product.image}
               amount={product.amount}
               price={product.price}
+              category={product.category}
               status="pending"
             />
           ))}

@@ -1,11 +1,15 @@
 "use client";
 
+import Button from "@/src/components/Button";
 import { ProductProps } from "@/src/types/types";
 import { products } from "@/src/utils/data/generateProducts";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAppDispatch } from "../redux";
+import { addToCart } from "@/src/lib/features/cart/cartSlice";
+import { Products } from "@/src/constants/data";
 
 
 export default function SearchPage() {
@@ -19,6 +23,8 @@ export default function SearchPage() {
 
   const [results, setResults] = useState<ProductProps[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const dispatch = useAppDispatch()
 
   // useEffect(() => {
   //   const fetchResults = async () => {
@@ -46,7 +52,7 @@ export default function SearchPage() {
     const fetchResults = async () => {
       try {
         if (query || category || location || price) {
-          const filtered = products.filter((product) => {
+          const filtered = Products.filter((product) => {
             // const matchesQuery =
             //   !query ||
             //   product.title.toLowerCase().includes(query.toLowerCase());
@@ -125,6 +131,28 @@ export default function SearchPage() {
               <p className="text-xs text-gray-400 mt-1">
                 Category: {item.category}
               </p>
+
+              {/* {Products.filter((product) => (
+                <div key={product.id}>
+                  <Button
+                    text="Buy"
+                    onClick={() => {
+                      if (!product) return;
+
+                      dispatch(
+                        addToCart({
+                          id: product.id,
+                          title: product.title,
+                          price: product.price,
+                          image: product.images[0],
+                          category: product.category,
+                          amount: 1,
+                        }),
+                      );
+                    }}
+                  />
+                </div>
+              ))} */}
             </div>
           </Link>
         ))}

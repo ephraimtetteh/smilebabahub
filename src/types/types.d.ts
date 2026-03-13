@@ -170,10 +170,22 @@ export interface LoginResponseProp {
   cartItems: CartItem[];
 }
 
+export interface RegisterResponseProp {
+  message: string;
+  user: {
+    username: string;
+    email: string;
+    phone: string;
+    role: string;
+    profilePicture?: string;
+  };
+}
+
 declare interface CartItemProp {
   id?: string;
   title?: string;
   price: number;
+  category: string;
   image: string | StaticImageData;
   amount: number;
   status?: 'pending' | 'delivered' | 'cancelled'

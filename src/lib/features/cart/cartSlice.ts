@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { StaticImageData } from "next/image";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { CartItemProp } from "@/src/types/types";
+import { login } from "../auth/authActions";
 
 declare interface cartState {
   loading: boolean;
@@ -26,8 +27,10 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    addToCart: (state, action:PayloadAction<CartItemProp>) => {
-      const existingItem = state.cartItems.find((item) => item?.id === action.payload.id);
+    addToCart: (state, action: PayloadAction<CartItemProp>) => {
+      const existingItem = state.cartItems.find(
+        (item) => item?.id === action.payload.id,
+      );
 
       if (existingItem) {
         existingItem.amount += 1;
@@ -67,8 +70,14 @@ const cartSlice = createSlice({
 
       state.subTotal = subTotal;
       state.amount = amount;
-      state.total = subTotal + state.delivery
+      state.total = subTotal + state.delivery;
     },
+  },
+
+  extraReducers: (builder) => {
+    builder.addCase(login.fulfilled, (state, action) => {
+      state.cartItems = action.payload.cartItems;
+    });
   },
 });
 

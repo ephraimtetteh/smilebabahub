@@ -26,6 +26,8 @@ import Offer from "@/src/components/Offer";
 import Profile from "@/src/components/Profile";
 import { ApartmentDetails, FoodDetails, MarketplaceDetails, ProductProps } from "@/src/types/types";
 import { Products } from "@/src/constants/data";
+import { useAppDispatch, useAppSelector } from "../../redux";
+import { addToCart } from "@/src/lib/features/cart/cartSlice";
 
 const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
@@ -42,6 +44,9 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   //   console.log(foundProduct);
   //   setProduct(foundProduct);
   // }, [id]);
+
+  
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
     const foundProduct = Products.find((room) => room.id === id);
@@ -173,7 +178,23 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                   <Offer onClose={() => setIsOpen((prev) => !prev)} />
                 )}
 
-                <Button text="Buy" />
+                <Button
+                  text="Buy"
+                  onClick={() => {
+                    if (!product) return;
+
+                    dispatch(
+                      addToCart({
+                        id: product.id,
+                        title: product.title,
+                        price: product.price,
+                        image: product.images[0],
+                        category: product.category,
+                        amount: 1,
+                      }),
+                    );
+                  }}
+                />
               </div>
             </div>
           </div>

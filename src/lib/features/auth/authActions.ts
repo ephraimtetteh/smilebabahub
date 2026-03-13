@@ -2,23 +2,27 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { setIsAuthenticated, setIsAuthenticating, setAccessToken, setUser, setMessage } from "./authSlice";
 import axiosInstance from "../../api/axios";
 import getErrorMessage from "@/src/utils/getErrorMessage";
-import { LoginResponseProp } from "@/src/types/types";
+import { LoginResponseProp, RegisterResponseProp } from "@/src/types/types";
 
 
 
-export const register = createAsyncThunk(
+export const register = createAsyncThunk<
+  RegisterResponseProp,
+  {
+    username: string;
+    email: string;
+    password: string;
+    phone: string;
+  },
+  { rejectValue: string }
+>(
   "/smilebaba/auth/register",
-  async (
-    userData: {
-      username: string;
-      email: string;
-      password: string;
-      phone: string;
-    },
-    { dispatch, rejectWithValue },
-  ) => {
+  async (userData, { dispatch, rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post("/auth/register", userData);
+      const res = await axiosInstance.post<RegisterResponseProp>(
+        "/auth/register",
+        userData,
+      );
 
       dispatch(setUser(res.data.user));
       dispatch(setIsAuthenticated(true));
@@ -26,11 +30,15 @@ export const register = createAsyncThunk(
       return res.data;
     } catch (error) {
       const message = getErrorMessage(error);
+
       dispatch(setMessage({ type: "error", message }));
+
       return rejectWithValue(message);
     }
   },
 );
+
+
 
 export const verifyOTP = createAsyncThunk(
   "/auth/verifyOtp",
@@ -57,47 +65,52 @@ export const resendOTP = createAsyncThunk(
   },
 );
 
-export const login = createAsyncThunk('/smilebaba/auth/login', 
-  async(  userData: {
+export const login = createAsyncThunk<
+  LoginResponseProp,
+  {
     email: string;
     password: string;
-  }, {dispatch}) => {
+  }
+>("/smilebaba/auth/login", async (userData, { dispatch }) => {
+  try {
+    dispatch(setIsAuthenticating(true));
 
-    
-    try {
-      dispatch(setIsAuthenticating(true))
-      const response = await axiosInstance.post<LoginResponseProp>(
-        "/api/login",
-        userData,
-      );
+    const response = await axiosInstance.post<LoginResponseProp>(
+      "/api/login",
+      userData,
+    );
 
-      dispatch(
-        setUser({
-          username: response.data.username,
-          email: response.data.email,
-          phone: response.data.phone,
-          role: response.data.role,
-          profilePicture: response.data.profilePicture,
-          cartItems: response.data.cartItems,
-        }),
-      );
-      dispatch(setIsAuthenticated(true));
+    dispatch(
+      setUser({
+        username: response.data.username,
+        email: response.data.email,
+        phone: response.data.phone,
+        role: response.data.role,
+        profilePicture: response.data.profilePicture,
+        cartItems: response.data.cartItems,
+      }),
+    );
 
-    } catch (error) {
-      dispatch(setIsAuthenticated(false))
-      dispatch(setAccessToken(null))
-      dispatch(setUser({}))
-      dispatch(
-        setMessage({
-          type: "error",
-          message: getErrorMessage(error),
-        }),
-      );
-    }
-    finally {
-      dispatch(setIsAuthenticating(false))
-    }
-})
+    dispatch(setIsAuthenticated(true));
+
+    return response.data;
+  } catch (error) {
+    dispatch(setIsAuthenticated(false));
+    dispatch(setAccessToken(null));
+    dispatch(setUser({}));
+
+    dispatch(
+      setMessage({
+        type: "error",
+        message: getErrorMessage(error),
+      }),
+    );
+
+    throw error;
+  } finally {
+    dispatch(setIsAuthenticating(false));
+  }
+});
 
 
 export const forgotPassword = createAsyncThunk(

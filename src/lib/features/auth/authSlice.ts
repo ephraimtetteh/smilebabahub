@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { UserProp } from "@/src/types/types";
+import { register } from "./authActions";
 
 
 interface Message {
@@ -59,6 +60,13 @@ export const authSlice = createSlice({
       state.message = action.payload
     }
   },
+
+  extraReducers: (builder) => {
+    builder.addCase(register.fulfilled, (state, action) => {
+      state.user = action.payload.user;
+      state.isAuthenticated = true;
+    });
+  }
 })
 
 export const {

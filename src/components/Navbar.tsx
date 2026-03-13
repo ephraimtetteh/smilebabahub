@@ -6,10 +6,13 @@ import { Menu, X, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { assets } from "../assets/assets";
 import UserMenu from "./UserMenu";
+import { useAppSelector } from "../app/redux";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const { amount } = useAppSelector((state) => state.cart)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -68,10 +71,12 @@ export default function Navbar() {
               Post Ad
             </button>
           </Link>
-
-          <Link href="/cart">
-            <ShoppingCart className="text-white hover:text-yellow-400 cursor-pointer" />
-          </Link>
+          <div>
+            <Link href="/cart">
+              <ShoppingCart className="text-white hover:text-yellow-400 cursor-pointer" />
+            </Link>
+            <div className="absolute top-4 right-70 text-white font-bold">{amount === 0 ?'': amount}</div>
+          </div>
 
           <UserMenu />
 

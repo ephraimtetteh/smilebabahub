@@ -522,3 +522,21 @@ store
     sidebarOpen
   }
 }
+
+
+
+authSlice
+  handles login/logout/user
+
+cartSlice
+  handles cart logic
+  listens to login.fulfilled
+
+foodSlice
+  restaurants/meals
+
+apartmentSlice
+  listings/bookings
+
+marketplaceSlice
+  products

@@ -7,7 +7,6 @@ import Footer from "./Footer";
 import Navbar from "./Navbar";
 import Script from "next/script";
 import Video from "./Video";
-import MarketplaceSearch from "./NewSearch";
 import Radio from "./Radio";
 import AOS from "aos";
 import { calculateTotals } from "../lib/features/cart/cartSlice";
@@ -21,7 +20,9 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const isSellingPage = pathName.startsWith("/sell");
 
 
-
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+  }, [cartItems]);
   
   useEffect(() => {
     dispatch(calculateTotals());
