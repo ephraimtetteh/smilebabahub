@@ -4,9 +4,8 @@ import React from "react";
 import Title from '@/src/components/Title'
 import FeaturedCard from "./FeaturedCard";
 import { useRouter } from 'next/navigation.js';
-import { food_list } from "@/src/constants/data";
-import Button from "./Button";
-import { products } from "../utils/data/generateProducts";
+import { Products } from "../constants/data";
+
 
 interface FeaturedProps {
   className?: string
@@ -19,7 +18,7 @@ const FoodAds = ({className}: FeaturedProps) => {
     router.push(path);
   };
 
-  const foods = products.filter((item) => item.category === "food");
+  const foods = Products.filter((item) => item.category === "food");
   return (
 
     <div

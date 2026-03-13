@@ -17,6 +17,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import createWebStorage from "redux-persist/lib/storage/createWebStorage";
 import { useRef } from "react";
 import authReducer from "@/src/lib/features/auth/authSlice";
+import cartReducer from '@/src/lib/features/cart/cartSlice'
 import globalReducer from '@/src/lib'
 import { api } from "../lib/api/api";
 
@@ -48,6 +49,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   global: globalReducer,
+  cart: cartReducer,
   [api.reducerPath]: api.reducer
 })
 

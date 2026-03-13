@@ -454,3 +454,71 @@ const handleSubmit = async () => {
 };
 
 https://picsum.photos/600/400
+
+
+
+
+
+
+
+
+
+
+
+store
+ ├ auth
+ │   ├ user
+ │   ├ token
+ │
+ ├ cart
+ │   ├ foodCart
+ │   ├ marketplaceCart
+ │
+ ├ food
+ │   ├ restaurants
+ │   ├ meals
+ │
+ ├ apartments
+ │   ├ listings
+ │   ├ bookings
+ │
+ └ marketplace
+     ├ products
+
+
+
+
+
+
+
+
+
+  {
+  auth: {
+    user
+    token
+  },
+
+  cart: {
+    foodCart
+    marketplaceCart
+  },
+
+  food: {
+    restaurants
+    meals
+  },
+
+  apartments: {
+    listings
+    bookings
+  },
+
+  marketplace: {
+    products
+  },
+
+  ui: {
+    sidebarOpen
+  }
+}

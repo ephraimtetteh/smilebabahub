@@ -1,4 +1,4 @@
-import { assets, Products } from '@/src/assets/assets'
+import { assets } from '@/src/assets/assets'
 import InputSearch from '@/src/components/InputSearch'
 import CustomersComponent from '@/src/components/VendorComponents/CustomersComponent'
 import Limit from '@/src/components/VendorComponents/Limit'

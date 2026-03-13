@@ -1,9 +1,10 @@
-import { Products } from "@/src/assets/assets";
+
 import React from "react";
 
 import InputSearch from "@/src/components/InputSearch";
 import OrderSumary from "@/src/components/VendorComponents/OrderComponent";
 import Limit from "@/src/components/VendorComponents/Limit";
+import { Products } from "@/src/constants/data";
 
 const page = () => {
   return (
@@ -16,7 +17,7 @@ const page = () => {
 
       {/* ====== add product component */}
       {Products.slice(3, 10).map((item) => (
-        <OrderSumary key={item.id} orderId={item.id} image={item.image} status="Pending" customer={item.author} created_At={'11-22-25'} />
+        <OrderSumary key={item.id} orderId={item.id} image={item.images[0]} status="Pending" created_At={'11-22-25'} />
       ))}
 
       {/* ===== bottom */}

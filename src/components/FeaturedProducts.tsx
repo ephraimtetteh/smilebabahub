@@ -1,11 +1,12 @@
 'use client'
 
 import React from "react";
-import { Products } from "../assets/assets";
+
 import Title from '@/src/components/Title'
 import FeaturedCard from "./FeaturedCard";
 import { usePathname, useRouter } from 'next/navigation.js';
 import { products } from "../utils/data/generateProducts";
+import { Products } from "../constants/data";
 
 interface FeaturedProps {
   className?: string
@@ -19,7 +20,7 @@ const FeaturedProducts = ({className}: FeaturedProps) => {
     router.push(path)
   };
 
-   const marketplace = products.filter((item) => item.category === "marketplace");
+   const marketplace = Products.filter((item) => item.category === "marketplace");
 
   return (
     <div

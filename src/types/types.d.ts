@@ -24,7 +24,7 @@ declare interface AddProductOrderProps {
     | "Delivered"
     | "Cancelled";
   action?: JSX.Element;
-  orderId?: number;
+  orderId?: string;
   customer?: string;
   created_At?: string;
   total?: string;
@@ -171,11 +171,12 @@ export interface LoginResponseProp {
 }
 
 declare interface CartItemProp {
-  productId: string;
-  title: string;
+  id?: string;
+  title?: string;
   price: number;
-  quantity: number;
-  image: string;
+  image: string | StaticImageData;
+  amount: number;
+  status?: 'pending' | 'delivered' | 'cancelled'
 }
 
 declare interface UserProp {
@@ -207,7 +208,7 @@ export interface ProductProps {
   category: "marketplace" | "apartment" | "food";
   subCategory: string;
 
-  images: string[];
+  images: StaticImageData[] | string[];
 
   location: {
     country: string;
@@ -242,7 +243,7 @@ export interface ApartmentDetails {
   bathrooms: number;
   furnished: boolean;
   parking: boolean;
-  propertyType: "apartment" | "house" | "studio";
+  propertyType: "apartment" | "house" | "studio" | "hostel";
   size?: number;
 }
 

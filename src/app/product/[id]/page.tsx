@@ -1,9 +1,8 @@
 "use client";
 
-import { Products } from "@/src/assets/assets";
 import Button from "@/src/components/Button";
 import FeaturedProducts from "@/src/components/FeaturedProducts";
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import {
@@ -25,8 +24,8 @@ import RelatedAds from "@/src/components/FoodComponent";
 import ChatRoom from "@/src/components/ChatRoom";
 import Offer from "@/src/components/Offer";
 import Profile from "@/src/components/Profile";
-import { ApartmentDetails, FoodDetails, MarketplaceDetails, Product, ProductProps } from "@/src/types/types";
-import { products } from "@/src/utils/data/generateProducts";
+import { ApartmentDetails, FoodDetails, MarketplaceDetails, ProductProps } from "@/src/types/types";
+import { Products } from "@/src/constants/data";
 
 const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
@@ -36,7 +35,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const [phone, setPhone] = useState(false);
   const [chatRoom, setChatRoom] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [mainImage, setMainImage] = useState<string | null>(null);
+  const [mainImage, setMainImage] = useState<string | StaticImageData | null>(null);
 
   // useEffect(() => {
   //   const foundProduct = Products.find((product) => product.id === Number(id));
@@ -45,7 +44,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   // }, [id]);
 
   useEffect(() => {
-    const foundProduct = products.find((room) => room.id === id);
+    const foundProduct = Products.find((room) => room.id === id);
 
     if (!foundProduct) return;
 
@@ -59,47 +58,39 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
 
   return (
     product && (
-      <div className=" py-10 flex flex-col flex-1 items-center justify-center lg:justify-between bg-white pt-30">
-        <div className="lg:flex lg:flex-row items-start justify-center px-4 md:px-16 lg:px-14 xl:px-22 gap-3">
+      <div className="py-28 md:py-35 px-4 md:px-16 lg:px-24 xl:px-32">
+        <div className="grid lg:grid-cols-[2fr_1fr] gap-8">
           {/* main card items details */}
           <div className="lg:w-[80%]">
             <h1 className="lg:text-3xl font-semibold py-2 pb-6 capitalize">
               {product?.title ?? "Product image"}
             </h1>
-            <div className="rounded items-center justify-center w-full">
-              <Image
-                src={mainImage || product?.images[0]}
-                alt="room image"
-                width={600}
-                height={400}
-                className="w-full rounded-xl shadow-lg object-cover"
-              />
-              <div className="flex flex-col lg:flex-row mt-6 gap-6">
-                {/* <div className="lg:w-1/2 w-full">
+            <div className="flex flex-col lg:flex-row mt-6 gap-6">
+              <div className="lg:w-1/2 w-full">
                 <Image
-                  src={mainImage}
-                  alt="room image"
+                  src={mainImage || product.images[0]}
+                  alt={product.title}
+                  width={800}
+                  height={600}
                   className="w-full rounded-xl shadow-lg object-cover"
                 />
-              </div> */}
-                <div className="grid grid-cols-2 gap-4 lg:w-1/2 w-full">
-                  {product?.images?.length > 1 &&
-                    product.images.map((image, index) => (
-                      <Image
-                        onClick={() => setMainImage(image)}
-                        key={index}
-                        src={image}
-                        alt="room image"
-                        width={200}
-                        height={150}
-                        className={`w-full rounded-xl shadow-md object-cover cursor-pointer ${
-                          mainImage === image && "outline-3 outline-orange-300"
-                        }`}
-                      />
-                    ))}
-                </div>
               </div>
-              <Card />
+
+              <div className="grid grid-cols-2 gap-4 lg:w-1/2 w-full">
+                {product.images?.map((image, index) => (
+                  <Image
+                    key={index}
+                    src={image}
+                    alt={product.title}
+                    width={220}
+                    height={200}
+                    onClick={() => setMainImage(image)}
+                    className={`cursor-pointer rounded-lg object-cover ${
+                      mainImage === image ? "ring-2 ring-orange-400" : ""
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
             {/* ====== product description */}
             <div className="grid gap-3 bg-white py-10 mb-4">
@@ -126,14 +117,20 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
               <small className="py-1">
                 <p>{product?.title}</p>
-                <p> {product?.category}</p>
+                <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs">
+                  {product.category}
+                </span>
                 <p>{product?.subCategory}</p>
                 <div>
                   {product.category === "apartment" && (
                     <div>
-                      <p>{(product.details as ApartmentDetails)?.bedrooms} Rooms</p>
+                      <p>
+                        {(product.details as ApartmentDetails)?.bedrooms} Rooms
+                      </p>
                       <p>{(product.details as ApartmentDetails)?.furnished}</p>
-                      <p>{(product.details as ApartmentDetails)?.propertyType}</p>
+                      <p>
+                        {(product.details as ApartmentDetails)?.propertyType}
+                      </p>
                       <p>{(product.details as ApartmentDetails)?.size}</p>
                       <p>{(product.details as ApartmentDetails)?.parking}</p>
                     </div>
@@ -150,7 +147,9 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
 
                   {product.category === "marketplace" && (
                     <div>
-                      <p>{(product.details as MarketplaceDetails)?.condition}</p>
+                      <p>
+                        {(product.details as MarketplaceDetails)?.condition}
+                      </p>
                       <p>{(product.details as MarketplaceDetails)?.brand}</p>
                       <p>{(product.details as MarketplaceDetails)?.warranty}</p>
                       <p>{(product.details as MarketplaceDetails)?.warranty}</p>
@@ -180,16 +179,12 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
           </div>
 
           {/* side bar */}
-          <aside className="">
+          <aside className="lg:w-[360px] w-full">
             {/* price card */}
             <article className="bg-white shadow p-3 mb-4">
-              <h1 className="font-semibold text-2xl py-2">GH 185,00.00</h1>
-              <p className="shadow bg-white/10 w-fit px-2  rounded-full border border-gray-200">
-                price history
-              </p>
-              <p className="py-2 shadow bg-white/10 w-fit px-2  rounded-full border border-gray-200 my-4 text-[16px]">
-                Market Price <span>GH 280K ~ 220k</span>
-              </p>
+              <h1 className="font-semibold text-2xl py-2">
+                GH {product.price?.toLocaleString()}
+              </h1>
               <div>
                 {!callRequest && (
                   <Button
@@ -232,8 +227,8 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             <article className="bg-white shadow p-3 mb-4">
               <h1 className="font-semibold text-2xl py-2">Seller Details</h1>
 
-              <Link href={"/history"} className="flex gap-4">
-                <Profile />
+              <Link href={`/seller/${product.seller.id}`}>
+                <Profile item={product} />
               </Link>
 
               <div className="grid gap-2">
@@ -275,8 +270,8 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             <article className="bg-white shadow p-3 mb-4">
               <h4 className="text-center font-bold">Safety Tips</h4>
               <p className="px-3">
-                {safetyTips.map((list) => (
-                  <li key={list.length}>{list}</li>
+                {safetyTips.map((tip, index) => (
+                  <li key={index}>{tip}</li>
                 ))}
               </p>
             </article>

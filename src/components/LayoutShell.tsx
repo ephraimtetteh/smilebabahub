@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import React, { useEffect } from "react";
-import StoreProvider from "../app/redux";
+import StoreProvider, { useAppDispatch, useAppSelector } from "../app/redux";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import Script from "next/script";
@@ -10,12 +10,22 @@ import Video from "./Video";
 import MarketplaceSearch from "./NewSearch";
 import Radio from "./Radio";
 import AOS from "aos";
+import { calculateTotals } from "../lib/features/cart/cartSlice";
 
 const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const pathName = usePathname();
+  const dispatch = useAppDispatch();
+  const cartItems = useAppSelector((state) => state.cart.cartItems);
 
   const hideNavFooter = pathName.startsWith("/auth");
   const isSellingPage = pathName.startsWith("/sell");
+
+
+
+  
+  useEffect(() => {
+    dispatch(calculateTotals());
+  }, [cartItems]);
 
   const navBarDispaly = () => {
     switch (true) {
@@ -46,6 +56,10 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
       duration: 800,
     });
   }, []);
+
+
+
+
   return (
     <>
       <StoreProvider>
@@ -56,23 +70,27 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
             strategy="afterInteractive"
           />
 
-         {pathName !== '/' && pathName !=='/sell' && <div
-            className="hidden md:block fixed bottom-5 left-5 z-40 rounded-2xl"
-            data-aos="fade-up"
-            data-aos-anchor-placement="bottom-bottom"
-            data-aos-delay="1000"
-          >
-            <Video />
-          </div>}
+          {pathName !== "/" && pathName !== "/sell" && pathName !== "/auth" && (
+            <div
+              className="hidden md:block fixed bottom-5 left-25 z-40 rounded-2xl"
+              data-aos="fade-up"
+              data-aos-anchor-placement="bottom-bottom"
+              data-aos-delay="1000"
+            >
+              <Video />
+            </div>
+          )}
 
-          <div
-            className=" fixed right-5 bottom-5 z-40 rounded-2xl"
-            data-aos="fade-up"
-            data-aos-anchor-placement="bottom-bottom"
-            data-aos-delay="300"
-          >
-            <Radio />
-          </div>
+          {pathName !== "/sell" && pathName !== "/auth" && (
+            <div
+              className=" fixed right-5 bottom-5 z-40 rounded-2xl"
+              data-aos="fade-up"
+              data-aos-anchor-placement="bottom-bottom"
+              data-aos-delay="300"
+            >
+              <Radio />
+            </div>
+          )}
         </LayoutShell>
       </StoreProvider>
     </>

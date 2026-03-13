@@ -10,7 +10,7 @@ import Radio from "@/src/components/Radio";
 import AOS from "aos";
 import SearchBar from "@/src/components/SearchBar";
 import MarketplaceSearch from "@/src/components/NewSearch";
-import { products } from "@/src/utils/data/generateProducts";
+import { Products } from "@/src/constants/data";
 
 
 const FoodPage = () => {
@@ -20,7 +20,7 @@ const FoodPage = () => {
       router.push(path);
     };
 
-    const foods = products.filter((item) => item.category === "food");
+    const foods = Products.filter((item) => item.category === "food");
 
 
 

@@ -1,7 +1,7 @@
 import React from 'react'
-import { Products } from '@/src/assets/assets';
 import Image from 'next/image';
 import Title from './Title';
+import { Products } from '../constants/data';
 
 type VideoProps = {
   className?: string
@@ -18,10 +18,10 @@ const Card = ({className}: VideoProps) => {
       <div className={`${className} flex flex-row overflow-x-scroll`}>
         {Products.slice(0, 4).map((item) => (
           <article key={item.id} className="border border-[#ccc] mb-3 rounded shadow-2xs items-center justify-center mr-2">
-            <Image src={item.image} alt={item.title} className='text-[16px] text-[#ffc105] text-center justify-center lg:w-50 lg:h-25' />
+            <Image src={item.images[0]} alt={item.title} className='text-[16px] text-[#ffc105] text-center justify-center lg:w-50 lg:h-25' width={50} height={50} />
             
             <div className='text-[14px] p-2 text-black'>
-              {item.author}
+              {item.title}
             </div>
           </article>
         ))}

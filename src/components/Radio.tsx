@@ -48,49 +48,77 @@ const Radio = () => {
   };
   
   return (
-    <div className="px-4 md:px-16 lg:px-14 xl:px-12">
-      <div className="bg-amber-950 border-2 border-[#d8a304] rounded-2xl flex flex-col p-4 text-white mt-4">
-        <IoRadioOutline size={30} className="text-[#ffc105] mx-auto mb-2" />
+    <div className="px-3 sm:px-6 md:px-12 lg:px-14 xl:px-12">
+      <div
+        className="bg-linear-to-br from-amber-950 to-black 
+    border border-[#d8a304] 
+    rounded-[28px] md:rounded-3xl lg:rounded-2xl 
+    flex flex-col p-6 md:p-7 
+    text-white mt-4 
+    shadow-xl shadow-black/40"
+      >
+        {/* Radio Icon */}
+        <IoRadioOutline
+          size={34}
+          className="text-[#ffc105] mx-auto mb-3 drop-shadow-lg"
+        />
 
+        {/* Title */}
         <div className="text-center">
-          <h3 className="text-2xl font-semibold">
+          <h3 className="text-xl md:text-2xl font-semibold tracking-wide">
             SmileBaba <span className="text-[#ffc105]">Radio</span>
           </h3>
 
-          <p className="text-white text-sm mb-3 capitalize">🔴 Your smile our Pride</p>
+          <p className="text-gray-300 text-sm mt-1">🔴 Your smile our Pride</p>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-6 mt-2">
+        <div className="flex items-center justify-center gap-5 md:gap-6 mt-5">
           {/* Play / Pause */}
           <button
             onClick={togglePlay}
-            className="bg-[#ffc105] text-black p-3 rounded-full"
+            className="bg-[#ffc105] text-black 
+          p-4 md:p-3 
+          rounded-full 
+          shadow-lg shadow-yellow-500/30 
+          hover:scale-105 transition"
           >
-            {playing ? <FaPause size={16} /> : <FaPlay size={16} />}
+            {playing ? <FaPause size={18} /> : <FaPlay size={18} />}
           </button>
 
           {/* Mute */}
-          <button onClick={toggleMute} className="bg-gray-800 p-3 rounded-full">
+          <button
+            onClick={toggleMute}
+            className="bg-gray-800/80 backdrop-blur-md 
+          p-4 md:p-3 
+          rounded-full 
+          border border-gray-700
+          hover:bg-gray-700 transition"
+          >
             {muted ? <FaVolumeMute /> : <FaVolumeUp />}
           </button>
 
           {/* Favorite */}
-          <button className="text-red-500">
+          <button
+            className="text-red-500 
+          p-3 md:p-2 
+          rounded-full 
+          hover:bg-red-500/10 transition"
+          >
             <FaHeart size={18} />
           </button>
         </div>
 
         {/* Loading */}
         {loading && (
-          <p className="text-yellow-400 text-center mt-3">
+          <p className="text-yellow-400 text-center mt-4 text-sm animate-pulse">
             Connecting to live stream...
           </p>
         )}
 
         {/* Error */}
         {error && (
-          <p className="text-red-400 text-center mt-3">
+          <p className="text-red-400 text-center mt-4 text-sm">
             Unable to load radio stream.
           </p>
         )}

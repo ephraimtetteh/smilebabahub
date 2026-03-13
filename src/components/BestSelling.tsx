@@ -4,7 +4,7 @@ import React from "react";
 import Title from '@/src/components/Title'
 import FeaturedCard from "./FeaturedCard";
 import { useRouter } from 'next/navigation.js';
-import { products } from "../utils/data/generateProducts";
+import { Products } from "../constants/data";
 
 interface FeaturedProps {
   className?: string
@@ -28,7 +28,7 @@ const BestSelling = ({className}: FeaturedProps) => {
         className="flex flex-1 overflow-x-scroll items-center justify-center gap-5"
         style={{ maxWidth: "100%" }}
       >
-        {products.slice(0, 20).map((item, index) => (
+        {Products.slice(0, 20).map((item, index) => (
           <FeaturedCard key={item.id} item={item} index={index} />
         ))}
       </div>

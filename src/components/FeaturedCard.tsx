@@ -10,6 +10,7 @@ const FeaturedCard = ({ item, index }: CardComponentProps) => {
   return (
     <Link
       href={`/product/${item.id}`}
+      key={index}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       className="relative lg:max-w-70 max-w-55 w-full rounded-xl shrink-0 bg-transparent border-white/20 border text-white shadow"
     >

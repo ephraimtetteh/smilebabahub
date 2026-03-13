@@ -1,15 +1,8 @@
 
 import BestSelling from '@/src/components/BestSelling';
-import FeaturedCard from '@/src/components/FeaturedCard';
 import FeaturedProducts from '@/src/components/FeaturedProducts';
-import FoodAds from '@/src/components/FoodComponent';
-import Hero from '@/src/components/Hero';
-import Hub from '@/src/components/Hub';
 import MarketplaceSearch from '@/src/components/NewSearch';
 import PostedAds from '@/src/components/PostedAds';
-import Radio from '@/src/components/Radio';
-import SideBar from '@/src/components/SideBar';
-import Video from '@/src/components/Video';
 import React from 'react'
 
 const MarketPlace = () => {

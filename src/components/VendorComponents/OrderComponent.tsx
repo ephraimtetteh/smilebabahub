@@ -23,10 +23,9 @@ const statuVariantStyle = (status: AddProductOrderProps['status']) => {
 const OrderSumary = ({image, created_At, customer, total, status, orderId, action}: AddProductOrderProps) => {
   return (
     <div className="flex flex-col ">
-      <div className="grid grid-cols-7 items-center justify-between text-gray-500 border-b border-gray-200 py-2">
+      <div className="grid grid-cols-6 items-center justify-between text-gray-500 border-b border-gray-200 py-2">
         <p>Order ID</p>
         <p>Image</p>
-        <p>Customer</p>
         <p>Date</p>
         <p>Total</p>
         <p>Status</p>
@@ -46,9 +45,9 @@ const OrderSumary = ({image, created_At, customer, total, status, orderId, actio
             className="rounded"
           />
         </div>
-        <div className="text-[12px]">
+        {/* <div className="text-[12px]">
           <p>{customer}</p>
-        </div>
+        </div> */}
         <div className="text-[12px] text-gray-900">
           <p>{created_At}</p>
         </div>

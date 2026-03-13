@@ -3,6 +3,7 @@
 import { ProductProps } from "@/src/types/types";
 import { products } from "@/src/utils/data/generateProducts";
 import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -100,12 +101,15 @@ export default function SearchPage() {
 
       <div className="grid md:grid-cols-3 gap-6">
         {results.map((item) => (
-          <div
+          <Link
             key={item.id}
             className="border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition"
+            href={`/product/${item.id}`}
           >
             <Image
               src={item.images[0]}
+              width={800}
+              height={600}
               alt={item.title}
               className="w-full h-48 object-cover"
             />
@@ -122,7 +126,7 @@ export default function SearchPage() {
                 Category: {item.category}
               </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

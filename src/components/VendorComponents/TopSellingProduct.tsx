@@ -4,11 +4,13 @@
 import React from 'react'
 import CardComponent from '../CardComponent'
 import { products } from '@/src/utils/data/generateProducts'
+import { Products } from '@/src/constants/data'
+
 
 const TopSellingProduct = () => {
   return (
     <div>
-      {products.slice(0, 3).map((item, index) => {
+      {Products.slice(0, 3).map((item, index) => {
         return (
           <div key={item.id} className=' items-center '>
             <CardComponent item={item} index={index} quantity={409}/>

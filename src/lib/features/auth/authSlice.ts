@@ -28,7 +28,6 @@ const initialState: authState = {
    country: '',
    state: '',
    profilePicture: '',
-   cartItems: [],
   },
  message: {
   type: '',

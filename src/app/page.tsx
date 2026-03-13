@@ -36,14 +36,14 @@ const HomePage = () => {
         </div>
       </div>
       <AppDownload />
-      <div
+      {/* <div
         className=" fixed right-5 bottom-5 z-40 rounded-2xl"
         data-aos="fade-up"
         data-aos-anchor-placement="bottom-bottom"
         data-aos-delay='300'
       >
         <Radio />
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import Title from '@/src/components/Title'
 import FeaturedCard from "./FeaturedCard";
 import { useRouter } from 'next/navigation.js';
 import { products } from "../utils/data/generateProducts";
+import { Products } from "../constants/data";
 
 interface FeaturedProps {
   className?: string
@@ -18,7 +19,7 @@ const Restate = ({className}: FeaturedProps) => {
     router.push(path)
   };
 
-  const restate = products.filter((item) => item.category === "food");
+  const restate = Products.filter((item) => item.category === "apartment");
 
   return (
     <div

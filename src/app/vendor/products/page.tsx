@@ -1,5 +1,5 @@
 'use client'
-import { Products } from '@/src/assets/assets'
+
 import AddProduct from '@/src/components/VendorComponents/AddProduct'
 import React, { useState } from 'react'
 import { FaPlus } from "react-icons/fa6";
@@ -7,6 +7,7 @@ import Button from "@/src/components/Button";
 import InputSearch from "@/src/components/InputSearch";
 import Limit from '@/src/components/VendorComponents/Limit';
 import AddProductComponent from '@/src/components/AddProductComponent';
+import { Products } from '@/src/constants/data';
 
 
 const Productpage = () => {
@@ -29,7 +30,7 @@ const Productpage = () => {
 
       {/* ====== add product component */}
       {Products.slice(3, 10).map((item) => (
-        <AddProduct key={item.id} image={item.image} status="Completed" />
+        <AddProduct key={item.id} image={item.images[0]} status="Completed" />
       ))}
 
       {/* ===== bottom */}

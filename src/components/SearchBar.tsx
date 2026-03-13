@@ -2,14 +2,18 @@
 
 import React, { useEffect, useState } from 'react'
 import InputCompontent from './InputCompontent';
-import { Products } from '../assets/assets';
 import FeaturedCard from './FeaturedCard';
 import Image from 'next/image';
+import { Products } from '../constants/data';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 
 const SearchBar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<typeof Products>([])
+
+  const router = useRouter()
+  const params = new URLSearchParams()
 
 
   useEffect(() => {
@@ -68,7 +72,7 @@ const SearchBar = () => {
               className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer"
             >
               <Image
-                src={product.image}
+                src={product.images[0]}
                 alt={product.title}
                 width={75}
                 height={75}

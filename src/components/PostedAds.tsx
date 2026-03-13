@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Products } from "../assets/assets";
 import Title from "@/src/components/Title";
 import FeaturedCard from "./FeaturedCard";
 import { usePathname, useRouter } from "next/navigation.js";
 import { products } from "../utils/data/generateProducts";
+import { Products } from "../constants/data";
 
 interface FeaturedProps {
   className?: string;
@@ -43,7 +43,7 @@ interface FeaturedProps {
         className="flex flex-1 px-4 overflow-x-scroll items-center justify-center gap-x-2"
         style={{ maxWidth: "100%" }}
       >
-        {products.map((item, index) => (
+        {Products.map((item, index) => (
           <FeaturedCard key={item.id} item={item} index={index} />
         ))}
       </div>
