@@ -28,6 +28,7 @@ import { ApartmentDetails, FoodDetails, MarketplaceDetails, ProductProps } from 
 import { Products } from "@/src/constants/data";
 import { useAppDispatch, useAppSelector } from "../../redux";
 import { addToCart } from "@/src/lib/features/cart/cartSlice";
+import Restate from "@/src/components/RestateComponent";
 
 const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
@@ -302,6 +303,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
         <div className="mt-4 w-full">
           <FeaturedProducts />
           <RelatedAds />
+          <Restate/>
         </div>
       </div>
     )

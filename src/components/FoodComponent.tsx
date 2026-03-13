@@ -27,7 +27,7 @@ const FoodAds = ({className}: FeaturedProps) => {
     
         <div className=" flex items-center justify-between relative gap-12">
           <div className="">
-            <Title title={"Food & Restaurant"} />
+            <Title title={"Food & Restaurants"} />
           </div>
           <div>
             <button
