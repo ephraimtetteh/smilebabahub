@@ -64,7 +64,8 @@ const AuthRegister
 
       if (register.fulfilled.match(result)) {
         toast.success("Account created! Verify your phone and email.");
-        router.push(`/auth/verify?email=${user.email}&phone=${user.phone}`);
+        // router.push(`/auth/verify?email=${user.email}&phone=${user.phone}`);
+        router.push('/auth/login');
 
         setUser({
           email: "",
