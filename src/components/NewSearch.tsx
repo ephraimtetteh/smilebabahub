@@ -25,7 +25,7 @@ export default function MarketplaceSearch() {
   };
 
   return (
-    <div className="w-full flex justify-center mt-20">
+    <div className="w-full flex justify-center lg:mt-20 -mt-5">
       <div className="w-[95%] lg:w-[80%] xl:w-[70%] bg-white/30 backdrop-blur-3xl shadow-lg rounded-full flex justify-between overflow-hidden">
         {/* SEARCH PRODUCT */}
         <div className="flex flex-col p-4 hover:bg-gray-300 w-full rounded-full transition">
