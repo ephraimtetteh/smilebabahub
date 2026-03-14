@@ -3,7 +3,7 @@
 import { assets } from '@/src/assets/assets'
 import Image from 'next/image'
 import Link from 'next/link';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../redux';
 import { login } from '@/src/lib/features/auth/authActions';
 import { useRouter } from "next/navigation";
@@ -25,35 +25,68 @@ const Loginpage = () => {
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setUser({...user, [e.target.name]: e.target.value})
     }
-const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
 
-    try {
+    const handleProtectedAction = () => {
+      const currentPath = window.location.pathname;
 
-      const result = await dispatch(login(user));
+      localStorage.setItem("redirectAfterLogin", currentPath);
 
-      if (login.fulfilled.match(result)) {
-        toast.success("Login successful!");
-        router.push(`/vendor`);
+      router.push("/login");
+    };
 
-        setUser({
-          email: "",
-          password: ""
-        });
+    const redirectPath = localStorage.getItem("redirectAfterLogin");
 
-
-      } else {
-        const message = result.payload as string;
-        setError(message || "Registration failed.");
-        toast.error(message || "Login failed.");
-      }
-    } catch {
-      setError("Something went wrong.");
-      toast.error("Something went wrong.");
-    } 
+    if (redirectPath) {
+      router.push(redirectPath);
+      localStorage.removeItem("redirectAfterLogin");
+    } else {
+      router.push("/dashboard");
+    }
   
-  };
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setError(null);
+
+      try {
+        const result = await dispatch(login(user));
+
+        if (login.fulfilled.match(result)) {
+          const redirectPath = localStorage.getItem("redirectAfterLogin");
+
+          if (redirectPath) {
+            router.push(redirectPath);
+            localStorage.removeItem("redirectAfterLogin");
+          } else {
+            router.push("/");
+          }
+
+          toast.success("Login successful!");
+
+          setUser({
+            email: "",
+            password: "",
+          });
+        } else {
+          const message = result.payload as string;
+          setError(message || "Login failed.");
+          toast.error(message || "Login failed.");
+        }
+      } catch {
+        setError("Something went wrong.");
+        toast.error("Something went wrong.");
+      }
+    };
+
+    useEffect(() => {
+      if (!user) {
+        const currentPath = window.location.pathname;
+
+        if (currentPath !== "/login") {
+          localStorage.setItem("redirectAfterLogin", currentPath);
+          router.push("/login");
+        }
+      }
+    }, [user, router]);
 
   return (
     <div className="relative lg:h-200 h-[80vh] max-sm:w-[90vw] md:w-150 lg:w-350 mx-auto mt-15 flex flex-col flex-1">
@@ -125,8 +158,7 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="flex-1 w-full bg-[#ccc] font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
+              className="flex-1 w-full bg-amber-500 font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
             >
               {/* {isLoading ? "Logging in..." : "Submit"} */}
               Submit

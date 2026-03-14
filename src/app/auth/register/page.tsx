@@ -184,8 +184,7 @@ const AuthRegister
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="flex-1 w-full bg-[#fcce23] font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
+              className="flex-1 w-full bg-amber-500 font-bold text-black rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
             >
               {/* {isLoading ? "Creating account..." : "Submit"} */}
               submit

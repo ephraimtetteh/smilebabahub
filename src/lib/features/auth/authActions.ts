@@ -76,7 +76,7 @@ export const login = createAsyncThunk<
     dispatch(setIsAuthenticating(true));
 
     const response = await axiosInstance.post<LoginResponseProp>(
-      "/api/login",
+      "auth/login",
       userData,
     );
 
