@@ -46,7 +46,7 @@ const RestateSearch = () => {
   return (
     <div
       ref={searchRef}
-      className="bg-white shadow-xl rounded-full border border-gray-200 
+      className="bg-white shadow-xl lg:rounded-full border border-gray-200 
       flex flex-col md:flex-row items-stretch md:items-center 
       w-[95%] md:w-[90%] lg:w-[65%] mx-auto overflow-hidden transition-all"
     >
@@ -55,7 +55,7 @@ const RestateSearch = () => {
         {!openSearch && (
           <div
             onClick={() => setOpenSearch(true)}
-            className="bg-white shadow-md rounded-full px-6 py-3 flex items-center justify-between cursor-pointer"
+            className="bg-white shadow-md rounded-2xl overflow-hidden px-6 py-3 flex items-center justify-between cursor-pointer"
           >
             <span className="text-gray-500 text-sm">
               Search products, food, apartments...
@@ -70,7 +70,7 @@ const RestateSearch = () => {
         {openSearch && (
           <div
             className="bg-white/30 backdrop-blur-3xl shadow-lg 
-          rounded-2xl md:rounded-full 
+          rounded-2xl md:rounded-2xl 
           flex flex-col md:flex-row overflow-hidden
           transition-all duration-300 ease-in-out"
           >

@@ -48,7 +48,7 @@ const Hero = () => {
 
         {/* Search Section */}
         <div className="w-full mt-6 sm:mt-8 flex justify-center">
-          <div className="w-full max-w-5xl">
+          <div className="w-full max-w-5xl max-sm:mb-5">
             <MarketplaceSearch />
           </div>
         </div>

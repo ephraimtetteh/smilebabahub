@@ -66,7 +66,7 @@ export default function MarketplaceSearch() {
         {/* EXPANDED VIEW */}
         {openSearch && (
          <div
-         className="bg-white/30 backdrop-blur-3xl shadow-lg 
+         className="bg-white backdrop-blur-3xl shadow-lg 
          rounded-2xl md:rounded-full 
          flex flex-col md:flex-row overflow-hidden
          transition-all duration-300 ease-in-out max-sm:mb-8"

@@ -20,7 +20,7 @@ const HomePage = () => {
     }, []);
 
   return (
-    <div className="w-full flex flex-col flex-1 items-center justify-center pt-20 relative">
+    <div className="w-full flex flex-col flex-1 items-center justify-center lg:pt-20 pt-18 relative">
       <Hero />
       <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
         <Restate />
