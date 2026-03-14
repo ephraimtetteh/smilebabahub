@@ -6,7 +6,7 @@ import Link from 'next/link';
 import React, { useState } from 'react'
 import { FaEyeSlash, FaEye } from "react-icons/fa";
 import { useAppDispatch, useAppSelector } from '../../redux';
-import { register } from '@/src/lib/features/auth/authActions';
+import { login, register } from '@/src/lib/features/auth/authActions';
 import { useRouter } from "next/navigation";
 import { toast } from 'react-toastify';
 
@@ -51,38 +51,51 @@ const AuthRegister
     try {
       
       if (!isValidPhone(user.phone)) {
-        setError("Please enter a valid phone number");
+        const message = "Please enter a valid phone number";
+        setError(message);
+        toast.error(message);
         return;
       }
 
       if (!isValidEmail(user.email)) {
-        setError("Enter a valid email address");
+        const message = "Enter a valid email address";
+        setError(message);
+        toast.error(message);
         return;
       }
 
       const result = await dispatch(register(user));
-
+      
       if (register.fulfilled.match(result)) {
-        toast.success("Account created! Verify your phone and email.");
-        // router.push(`/auth/verify?email=${user.email}&phone=${user.phone}`);
-        router.push('/auth/login');
-
+        toast.success("Account created!");
+        
+        const loginResult = await dispatch(login({
+          email: user.email,
+          password: user.password
+        }));
+        
+        if (login.fulfilled.match(loginResult)) {
+          router.push("/");
+          // router.push(`/auth/verify?email=${user.email}&phone=${user.phone}`);
+        }
+      
         setUser({
           email: "",
           password: "",
           phone: "",
           username: "",
         });
-
-
       } else {
         const message = result.payload as string;
         setError(message || "Registration failed.");
         toast.error(message || "Registration failed.");
       }
     } catch {
-      setError("Something went wrong.");
-      toast.error("Something went wrong.");
+      console.error(error);
+      const message = "Something went wrong.";
+      setError(message);
+      toast.error(message);
+
     } 
   
   };
