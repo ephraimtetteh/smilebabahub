@@ -110,16 +110,23 @@ export default function Navbar() {
             onClick={() => setMenuOpen(!menuOpen)}
             className="lg:hidden text-white"
           >
-            {menuOpen ? <X size={26} /> : <Menu size={26} />}
+            {menuOpen ? '' : <Menu size={26} />}
           </button>
         </div>
       </div>
 
       {/* MOBILE MENU */}
       <div
-        className={`lg:hidden fixed top-0 left-0 w-full h-screen bg-black text-white flex flex-col items-center justify-center gap-8 text-xl transition-transform duration-500
+        className={`lg:hidden fixed top-0 left-0 w-full h-screen bg-white/50 backdrop-blur-3xl text-black flex flex-col items-center justify-start gap-8 text-xl transition-transform duration-500 py-5
         ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
+
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="lg:hidden text-black"
+        >
+          {menuOpen ? <X size={26} /> : ''}
+        </button>
         <Link onClick={() => setMenuOpen(false)} href="/food">
           Food
         </Link>
