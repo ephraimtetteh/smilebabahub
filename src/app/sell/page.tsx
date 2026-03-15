@@ -18,10 +18,11 @@ const ProductUpload = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SellFormData>({
     title: "",
     category: "",
-    categoryChild: "",
+    subcategory: "",
+    type: "",
     images: [null, null, null, null, null],
     region: "",
     city: "",
@@ -86,7 +87,8 @@ const ProductUpload = () => {
 
         form.append("title", formData.title);
         form.append("category", formData.category);
-        form.append("categoryChild", formData.categoryChild);
+        form.append("subcategory", formData.subcategory);
+        form.append("type", formData.type);
         form.append("description", formData.description);
         form.append("price", formData.price);
         form.append("price", formData.name);

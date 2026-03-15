@@ -12,8 +12,9 @@ import { validateForm } from "@/src/utils/sellFormutils";
 
 const Form1 = ({ data, updateField, onNext, errors }: StepProps) => {
 
-  const [categoryId, setCategoryId] = useState<string>("");
-  const [childId, setChildId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [typeId, setTypeId] = useState("");
 
   
   const handleImageChange = (index: number, file: File | null) => {
@@ -23,8 +24,11 @@ const Form1 = ({ data, updateField, onNext, errors }: StepProps) => {
     updateField("images", newImages);;
   };
 
-  const selectedCategory = Categories.find((category: Category) => category.id === categoryId) || null;
-  const selectedChild = selectedCategory?.children?.find((child) => child.id === childId) || null;
+  const selectedCategory = Categories.find((cat) => cat.id === categoryId);
+
+  const selectedSubcategory = selectedCategory?.subcategories?.find(
+    (sub) => sub.id === subcategoryId,
+  );
 
  
 
@@ -73,63 +77,66 @@ const handleNext = () => {
           <select
             value={categoryId}
             onChange={(e) => {
-              setCategoryId(e.target.value);
-              setChildId("");
-              updateField("category", e.target.value);
+              const value = e.target.value;
+
+              setCategoryId(value);
+              setSubcategoryId("");
+              setTypeId("");
+
+              updateField("category", value);
             }}
             className="border border-gray-300 rounded px-4 py-3 w-full outline-none"
           >
             <option value="">Select Category</option>
+
             {Categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>
             ))}
-
-            {errors?.category && (
-              <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-            )}
           </select>
 
           <select
-            value={childId}
-            onChange={(e) => {
-              setChildId(e.target.value);
-              updateField("categoryChild", e.target.value);
-            }}
+            value={subcategoryId}
             disabled={!selectedCategory}
+            onChange={(e) => {
+              const value = e.target.value;
+
+              setSubcategoryId(value);
+              setTypeId("");
+
+              updateField("subcategory", value);
+            }}
             className="border border-gray-300 rounded px-4 py-3 w-full outline-none"
           >
-            <option value="">Select Sub-Category</option>
+            <option value="">Select Subcategory</option>
 
-            {selectedCategory?.children?.map((child) => (
-              <option key={child.id} value={child.id}>
-                {child.name}
+            {selectedCategory?.subcategories?.map((sub) => (
+              <option key={sub.id} value={sub.id}>
+                {sub.name}
               </option>
             ))}
           </select>
 
           <select
-            disabled={!selectedChild}
+            value={typeId}
+            disabled={!selectedSubcategory}
+            onChange={(e) => {
+              const value = e.target.value;
+
+              setTypeId(value);
+
+              updateField("type", value);
+            }}
             className="border border-gray-300 rounded px-4 py-3 w-full outline-none"
           >
-            <option value="">Select Location</option>
+            <option value="">Select Type</option>
 
-            {selectedChild?.children?.map((grandChild, index) => {
-              if (typeof grandChild === "string") {
-                return (
-                  <option key={index} value={grandChild}>
-                    {grandChild}
-                  </option>
-                );
-              }
-
-              return (
-                <option key={grandChild.id} value={grandChild.id}>
-                  {grandChild.name}
-                </option>
-              );
-            })}
+            {selectedSubcategory?.children?.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
+            ))}
           </select>
 
           <p className="text-xl">Add Photo</p>
@@ -173,7 +180,8 @@ const handleNext = () => {
             disabled={
               !data.title ||
               !data.category ||
-              !data.categoryChild ||
+                !data.subcategory ||
+                !data.type ||
               !data.images?.some((img) => img)
             }
             className="mt-4 w-full h-12 rounded bg-black text-white cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"

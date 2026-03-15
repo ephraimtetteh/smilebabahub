@@ -134,18 +134,38 @@ declare interface NavbarLinkPorps {
   label: string;
 }
 
+// export interface SellFormData {
+//   title: string;
+//   category: string;
+//   categoryChild: string;
+//   images: (File | null)[];
+
+//   region: string;
+//   city: string;
+//   description: string;
+//   phone: string;
+//   price: string;
+//   name: string;
+// }
+
 export interface SellFormData {
   title: string;
+
   category: string;
-  categoryChild: string;
+  subcategory: string;
+  type: string;
+
   images: (File | null)[];
 
   region: string;
   city: string;
+
   description: string;
-  phone: string;
+
   price: string;
+
   name: string;
+  phone: string;
 }
 
 export interface StepProps {

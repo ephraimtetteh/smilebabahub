@@ -88,111 +88,89 @@
 
   export const Categories = [
     {
-      id: "foods",
-      name: "foods",
-      children: [
+      id: "food",
+      name: "Food & Restaurants",
+      icon: "food",
+      subcategories: [
         {
-          id: "Rolls",
-          name: "rice",
-          children: ["plain rice ", "fried rice", "jollof rice"],
+          id: "rice-dishes",
+          name: "Rice Dishes",
+          children: [
+            { id: "jollof-rice", name: "Jollof Rice" },
+            { id: "fried-rice", name: "Fried Rice" },
+            { id: "plain-rice", name: "Plain Rice" },
+          ],
         },
         {
-          id: "Noodles",
+          id: "noodles",
           name: "Noodles",
-          children: ["plain rice ", "fried rice", "jollof rice"],
+          children: [
+            { id: "chicken-noodles", name: "Chicken Noodles" },
+            { id: "beef-noodles", name: "Beef Noodles" },
+            { id: "vegetable-noodles", name: "Vegetable Noodles" },
+          ],
         },
         {
-          id: "Salads",
-          name: "Salads",
-          children: ["plain rice ", "fried rice", "jollof rice"],
+          id: "fast-food",
+          name: "Fast Food",
+          children: [
+            { id: "burger", name: "Burger" },
+            { id: "pizza", name: "Pizza" },
+            { id: "sandwich", name: "Sandwich" },
+          ],
         },
         {
-          id: "Deserts",
-          name: "Deserts",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Sandwich",
-          name: "Sandwich",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Cake",
-          name: "Cake",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Pure Veg",
-          name: "Pure Veg",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Pasta",
-          name: "Pasta",
-          children: ["plain rice ", "fried rice", "jollof rice"],
+          id: "desserts",
+          name: "Desserts",
+          children: [
+            { id: "cake", name: "Cake" },
+            { id: "ice-cream", name: "Ice Cream" },
+            { id: "pastries", name: "Pastries" },
+          ],
         },
       ],
     },
+
     {
-      id: "appartments",
-      name: "appartments",
-      children: [
+      id: "apartments",
+      name: "Apartments & Short Stays",
+      icon: "home",
+      subcategories: [
         {
-          id: "suits",
-          name: "Suits",
-          children: ["plain rice ", "fried rice", "jollof rice"],
+          id: "short-stay",
+          name: "Short Stay",
+          children: [
+            { id: "studio", name: "Studio Apartment" },
+            { id: "1-bedroom", name: "1 Bedroom Apartment" },
+            { id: "2-bedroom", name: "2 Bedroom Apartment" },
+          ],
         },
         {
-          id: "condos",
-          name: "Condos",
-          children: ["plain rice ", "fried rice", "jollof rice"],
+          id: "vacation",
+          name: "Vacation Homes",
+          children: [
+            { id: "villa", name: "Villa" },
+            { id: "beach-house", name: "Beach House" },
+            { id: "luxury-apartment", name: "Luxury Apartment" },
+          ],
         },
         {
-          id: "Villas",
-          name: "Villas",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Flat",
-          name: "Flat",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "House",
-          name: "House",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Duplex",
-          name: "Duplex",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Studios",
-          name: "Studios",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Apartments",
-          name: "Apartments",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Townhouse",
-          name: "Townhouse",
-          children: ["plain rice ", "fried rice", "jollof rice"],
-        },
-        {
-          id: "Others",
-          name: "Others",
-          children: ["plain rice ", "fried rice", "jollof rice"],
+          id: "long-term",
+          name: "Long Term Rentals",
+          children: [
+            { id: "flat", name: "Flat" },
+            { id: "duplex", name: "Duplex" },
+            { id: "townhouse", name: "Townhouse" },
+          ],
         },
       ],
     },
+
     {
-      id: "market",
-      name: "market",
-      children: [
+      id: "marketplace",
+      name: "Marketplace",
+      icon: "shop",
+      subcategories: [
         {
           id: "vehicles",
           name: "Vehicles",
@@ -200,110 +178,46 @@
             {
               id: "cars",
               name: "Cars",
-              children: [
+              brands: [
                 "Toyota",
-                "Hyundai",
-                "Nissan",
                 "Honda",
+                "Hyundai",
                 "Kia",
                 "Ford",
-                "Mercedes-Benz",
                 "BMW",
-                "Mazda",
-                "Mitsubishi",
-                "Other",
+                "Mercedes-Benz",
+                "Nissan",
               ],
             },
             {
               id: "motorcycles",
-              name: "Motorcycles & Scooters",
-              children: ["Motorbikes", "Scooters", "Tricycles"],
-            },
-            {
-              id: "trucks",
-              name: "Trucks & Trailers",
-              children: ["Dump Trucks", "Box Trucks", "Tankers", "Trailers"],
-            },
-            {
-              id: "buses",
-              name: "Buses & Microbuses",
-              children: ["Mini Bus", "Coaster Bus", "School Bus"],
-            },
-            {
-              id: "vehicle-parts",
-              name: "Vehicle Parts & Accessories",
-              children: [
-                "Engines",
-                "Tyres & Rims",
-                "Batteries",
-                "Interior Accessories",
-                "Exterior Accessories",
-                "Oils & Fluids",
-              ],
-            },
-            {
-              id: "watercraft",
-              name: "Watercraft & Boats",
-              children: ["Boats", "Jet Skis", "Boat Engines"],
+              name: "Motorcycles",
+              brands: ["Honda", "Yamaha", "Suzuki", "Kawasaki"],
             },
           ],
         },
 
         {
-          id: "property",
-          name: "Property",
+          id: "phones",
+          name: "Phones & Tablets",
           children: [
             {
-              id: "houses-apartments",
-              name: "Houses & Apartments",
-              children: ["For Sale", "For Rent", "Short Stay"],
-            },
-            {
-              id: "commercial-property",
-              name: "Commercial Property",
-              children: ["Shops", "Offices", "Warehouses", "Hotels"],
-            },
-            {
-              id: "land",
-              name: "Land & Plots",
-              children: ["Residential Land", "Commercial Land", "Farm Land"],
-            },
-          ],
-        },
-
-        {
-          id: "phones-tablets",
-          name: "Mobile Phones & Tablets",
-          children: [
-            {
-              id: "mobile-phones",
-              name: "Mobile Phones",
-              children: [
-                "Apple iPhone",
+              id: "smartphones",
+              name: "Smartphones",
+              brands: [
+                "Apple",
                 "Samsung",
                 "Tecno",
                 "Infinix",
                 "Itel",
                 "Xiaomi",
                 "Huawei",
-                "Other",
               ],
             },
             {
               id: "tablets",
               name: "Tablets",
-              children: ["iPad", "Samsung Tablets", "Lenovo Tablets"],
-            },
-            {
-              id: "phone-accessories",
-              name: "Accessories",
-              children: [
-                "Chargers",
-                "Power Banks",
-                "Earphones",
-                "Phone Cases",
-                "Screen Protectors",
-              ],
+              brands: ["Apple iPad", "Samsung", "Lenovo"],
             },
           ],
         },
@@ -312,58 +226,10 @@
           id: "electronics",
           name: "Electronics",
           children: [
-            {
-              id: "computers",
-              name: "Computers & Laptops",
-              children: [
-                "Laptops",
-                "Desktops",
-                "Monitors",
-                "Computer Accessories",
-              ],
-            },
-            {
-              id: "tv-audio",
-              name: "TV & Audio",
-              children: [
-                "Televisions",
-                "Home Theatre Systems",
-                "Speakers",
-                "Radios",
-              ],
-            },
-            {
-              id: "cameras",
-              name: "Cameras & Accessories",
-              children: ["Digital Cameras", "CCTV Cameras", "Camera Lenses"],
-            },
-          ],
-        },
-
-        {
-          id: "home-furniture",
-          name: "Home, Furniture & Appliances",
-          children: [
-            {
-              id: "furniture",
-              name: "Furniture",
-              children: ["Sofas", "Beds", "Wardrobes", "Tables", "Chairs"],
-            },
-            {
-              id: "appliances",
-              name: "Home Appliances",
-              children: [
-                "Fridges",
-                "Washing Machines",
-                "Microwaves",
-                "Air Conditioners",
-              ],
-            },
-            {
-              id: "kitchen",
-              name: "Kitchen Appliances",
-              children: ["Cookers", "Blenders", "Rice Cookers"],
-            },
+            { id: "laptops", name: "Laptops" },
+            { id: "televisions", name: "Televisions" },
+            { id: "speakers", name: "Speakers" },
+            { id: "cameras", name: "Cameras" },
           ],
         },
 
@@ -371,21 +237,9 @@
           id: "fashion",
           name: "Fashion",
           children: [
-            {
-              id: "men-fashion",
-              name: "Men",
-              children: ["Clothing", "Shoes", "Watches", "Bags"],
-            },
-            {
-              id: "women-fashion",
-              name: "Women",
-              children: ["Dresses", "Shoes", "Handbags", "Jewelry"],
-            },
-            {
-              id: "kids-fashion",
-              name: "Kids",
-              children: ["Clothing", "Shoes", "Accessories"],
-            },
+            { id: "men", name: "Men Fashion" },
+            { id: "women", name: "Women Fashion" },
+            { id: "kids", name: "Kids Fashion" },
           ],
         },
 
@@ -393,46 +247,39 @@
           id: "services",
           name: "Services",
           children: [
-            {
-              id: "professional-services",
-              name: "Professional Services",
-              children: ["Legal Services", "Accounting", "Consulting"],
-            },
-            {
-              id: "home-services",
-              name: "Home Services",
-              children: ["Cleaning", "Plumbing", "Electrical"],
-            },
-            {
-              id: "events-services",
-              name: "Events & Entertainment",
-              children: ["MCs", "DJs", "Event Decor"],
-            },
-          ],
-        },
-
-        {
-          id: "jobs",
-          name: "Jobs",
-          children: [
-            {
-              id: "full-time",
-              name: "Full-Time Jobs",
-              children: ["Office Jobs", "IT Jobs", "Sales Jobs"],
-            },
-            {
-              id: "part-time",
-              name: "Part-Time Jobs",
-              children: ["Delivery", "Customer Service"],
-            },
-            {
-              id: "internships",
-              name: "Internships",
-              children: ["Industrial Training", "Graduate Internship"],
-            },
+            { id: "cleaning", name: "Cleaning Services" },
+            { id: "plumbing", name: "Plumbing" },
+            { id: "electrical", name: "Electrical Work" },
+            { id: "event-services", name: "Event Services" },
           ],
         },
       ],
     },
   ];
+
+
+
+  export const categoryFields = {
+    cars: [
+      "brand",
+      "model",
+      "year",
+      "mileage",
+      "fuel",
+      "transmission",
+      "price",
+    ],
+
+    smartphones: ["brand", "model", "storage", "ram", "condition", "price"],
+
+    apartment: [
+      "price_per_night",
+      "bedrooms",
+      "bathrooms",
+      "guests",
+      "amenities",
+    ],
+
+    food: ["food_name", "price", "portion", "ingredients", "delivery_time"],
+  };
 

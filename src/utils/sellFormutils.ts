@@ -11,8 +11,12 @@ export const validateForm = (formData: any, currentStep: number) => {
         errors.category = "Category is required";
       }
 
-      if (!formData.categoryChild?.trim()) {
-        errors.categoryChild = "Sub category is required";
+      if (!formData.subcategory?.trim()) {
+        errors.subcategory = "Sub category is required";
+      }
+
+      if (!formData.type?.trim()) {
+        errors.type = "type is required";
       }
 
       if (!Object.values(formData.images || []).some((image) => image)) {

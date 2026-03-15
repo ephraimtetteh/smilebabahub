@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { SellFormData } from "@/src/types/types";
+import { Categories } from "@/src/constants/sellFormData";
 
 
 export interface Form3Props {
@@ -12,6 +13,16 @@ export interface Form3Props {
 }
 
 const Form3 = ({ data, onBack, handleSubmit, isSubmitting }: Form3Props) => {
+
+  const categoryName = Categories.find((c) => c.id === data.category)?.name;
+
+  const subcategoryName = Categories.find(
+    (c) => c.id === data.category,
+  )?.subcategories?.find((s) => s.id === data.subcategory)?.name;
+
+  const typeName = Categories.find((c) => c.id === data.category)
+    ?.subcategories?.find((s) => s.id === data.subcategory)
+    ?.children?.find((t) => t.id === data.type)?.name;
   return (
     <div className="min-h-screen flex justify-center px-4 pb-12">
       <div className="w-full max-w-3xl bg-white rounded shadow p-6 flex flex-col gap-6">
@@ -44,7 +55,7 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting }: Form3Props) => {
         <div>
           <p className="text-gray-500 text-sm">Category</p>
           <p className="font-medium">
-            {data.category} / {data.categoryChild}
+            {categoryName} / {subcategoryName} / {typeName}
           </p>
         </div>
 
