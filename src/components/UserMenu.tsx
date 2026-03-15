@@ -46,6 +46,13 @@ export default function UserMenu() {
               </Link>
 
               <Link
+                href="/auth/login"
+                className="block px-4 py-2 hover:bg-gray-100"
+              >
+                Login
+              </Link>
+
+              <Link
                 href="/vendor"
                 className="block px-4 py-2 hover:bg-gray-100"
               >
