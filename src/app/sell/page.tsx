@@ -11,6 +11,7 @@ import { useAppSelector } from "../redux";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import SuccessPage from "./_component/Form4";
+import axiosInstance from "@/src/lib/api/axios";
 
 const ProductUpload = () => {
   const { user } = useAppSelector((state) => state.auth)
@@ -81,45 +82,49 @@ const ProductUpload = () => {
 
     const handleSubmit = async () => {
       setIsSubmitting(true);
-
+    
       try {
+        if (!user) {
+          router.push("/auth/login");
+          return;
+        }
+    
         const form = new FormData();
-
+    
         form.append("title", formData.title);
         form.append("category", formData.category);
         form.append("subcategory", formData.subcategory);
         form.append("type", formData.type);
         form.append("description", formData.description);
         form.append("price", formData.price);
-        form.append("price", formData.name);
-        form.append("price", formData.phone);
-        form.append("price", formData.region);
-        form.append("price", formData.city);
-
+        form.append("name", formData.name);
+        form.append("phone", formData.phone);
+        form.append("region", formData.region);
+        form.append("city", formData.city);
+    
         formData.images.forEach((img) => {
           if (img) form.append("images", img);
         });
-
-        if (!user) {
-          router.push("/auth/login");
-          return;
-        }
-
+    
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/create`,
           {
             method: "POST",
             body: form,
-          },
+            credentials: "include",
+          }
         );
-
+    
         if (!response.ok) {
           throw new Error("Failed to upload product");
         }
-
+    
         toast.success("Product successfully added");
+    
         localStorage.removeItem("sellFormDraft");
+    
         setCurrentStep(4);
+    
       } catch (error) {
         console.error(error);
         toast.error("Failed to upload product");
