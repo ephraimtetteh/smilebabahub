@@ -7,12 +7,14 @@ import { useAppSelector } from "../redux";
 import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { useProtectedAction } from "@/src/utils/useProtectedHandler";
 
 const CartPage = () => {
   const user = useAppSelector((state) => state.auth.user);
   const { total, delivery, subTotal, cartItems } = useAppSelector((state) => state.cart)
 
   const router = useRouter()
+  const protect = useProtectedAction()
 
 
 
@@ -30,10 +32,6 @@ const CartPage = () => {
   // }, [cartItems]);
 
   const handleOrder = () => {
-    if(!user) {
-      router.push('/auth/login')
-    }
-
     return toast.success("Order Successful");
   };
 
@@ -109,7 +107,12 @@ const CartPage = () => {
             </div>
           </div>
 
-          <Button text="Order" className="w-full" onClick={handleOrder} />
+          <Button text="Order" className="w-full" 
+            onClick={() => {
+            protect(() => {
+              handleOrder()
+            })
+          }} />
         </div>
       </div>
     </div>

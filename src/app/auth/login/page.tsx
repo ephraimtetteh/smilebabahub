@@ -11,82 +11,89 @@ import { FaEyeSlash, FaEye } from "react-icons/fa";
 import { toast } from 'react-toastify';
 
 const Loginpage = () => {
-  const dispatch = useAppDispatch()
-  const router = useRouter()
-   const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState({
-    email: '',
-    password: ''
-  })
-  const [showPassword, setShowPassword] = useState(false)
+    email: "",
+    password: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
 
   const { isLoading } = useAppSelector((state) => state.auth);
 
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setUser({...user, [e.target.name]: e.target.value})
-    }
+    setUser({ ...user, [e.target.name]: e.target.value });
+  };
 
-    const handleProtectedAction = () => {
-      const currentPath = window.location.pathname;
-
-      localStorage.setItem("redirectAfterLogin", currentPath);
-
-      router.push("/login");
-    };
-
+  // -----------------------------
+  // Redirect Helper
+  // -----------------------------
+  const redirectAfterLogin = () => {
     const redirectPath = localStorage.getItem("redirectAfterLogin");
 
     if (redirectPath) {
       router.push(redirectPath);
       localStorage.removeItem("redirectAfterLogin");
     } else {
-      router.push("/dashboard");
+      router.push("/");
     }
-  
-    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setError(null);
+  };
 
-      try {
-        const result = await dispatch(login(user));
+  // -----------------------------
+  // Protected Action
+  // -----------------------------
+  const handleProtectedAction = () => {
+    const currentPath = window.location.pathname;
 
-        if (login.fulfilled.match(result)) {
-          const redirectPath = localStorage.getItem("redirectAfterLogin");
+    localStorage.setItem("redirectAfterLogin", currentPath);
+    router.push("/login");
+  };
 
-          if (redirectPath) {
-            router.push(redirectPath);
-            localStorage.removeItem("redirectAfterLogin");
-          } else {
-            router.push("/");
-          }
+  // -----------------------------
+  // Login Handler
+  // -----------------------------
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
 
-          toast.success("Login successful!");
+    try {
+      const result = await dispatch(login(user));
 
-          setUser({
-            email: "",
-            password: "",
-          });
-        } else {
-          const message = result.payload as string;
-          setError(message || "Login failed.");
-          toast.error(message || "Login failed.");
-        }
-      } catch {
-        setError("Something went wrong.");
-        toast.error("Something went wrong.");
+      if (login.fulfilled.match(result)) {
+        toast.success("Login successful!");
+
+        redirectAfterLogin();
+
+        setUser({
+          email: "",
+          password: "",
+        });
+      } else {
+        const message = result.payload as string;
+        setError(message || "Login failed.");
+        toast.error(message || "Login failed.");
       }
-    };
+    } catch {
+      const message = "Something went wrong.";
+      setError(message);
+      toast.error(message);
+    }
+  };
 
-    useEffect(() => {
-      if (!user) {
-        const currentPath = window.location.pathname;
+  // -----------------------------
+  // Route Guard
+  // -----------------------------
+  useEffect(() => {
+    if (!user) {
+      const currentPath = window.location.pathname;
 
-        if (currentPath !== "/login") {
-          localStorage.setItem("redirectAfterLogin", currentPath);
-          router.push("/login");
-        }
+      if (currentPath !== "/login") {
+        localStorage.setItem("redirectAfterLogin", currentPath);
+        router.push("/login");
       }
-    }, [user, router]);
+    }
+  }, [user, router]);
 
   return (
     <div className="relative lg:h-200 h-[80vh] max-sm:w-[90vw] md:w-150 lg:w-350 mx-auto mt-15 flex flex-col flex-1">
@@ -187,6 +194,6 @@ const Loginpage = () => {
       </div>
     </div>
   );
-}
+};
 
 export default Loginpage
