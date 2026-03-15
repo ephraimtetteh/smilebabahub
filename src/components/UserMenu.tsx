@@ -57,12 +57,12 @@ export default function UserMenu() {
                 {user.country} {user.state}
               </div>
 
-              <button
+              {/* <button
                 className="block w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 onClick={handleLogout}
               >
                 Logout
-              </button>
+              </button> */}
             </div>
           )}
         </>
