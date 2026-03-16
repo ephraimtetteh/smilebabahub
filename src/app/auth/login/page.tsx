@@ -69,6 +69,16 @@ const Loginpage = () => {
           email: "",
           password: "",
         });
+
+        const redirect = localStorage.getItem("redirectAfterLogin");
+
+        if (redirect) {
+          router.push(redirect);
+          localStorage.removeItem("redirectAfterLogin");
+        } else {
+          router.push("/");
+        }
+        
       } else {
         const message = result.payload as string;
         setError(message || "Login failed.");

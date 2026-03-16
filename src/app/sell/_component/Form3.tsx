@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { SellFormData } from "@/src/types/types";
 import { Categories } from "@/src/constants/sellFormData";
+import { useProtectedAction } from "@/src/utils/useProtectedHandler";
 
 
 export interface Form3Props {
@@ -10,9 +11,12 @@ export interface Form3Props {
   onBack: () => void;
   handleSubmit: () => void;
   isSubmitting: boolean;
+  uploadProgress: number
 }
 
-const Form3 = ({ data, onBack, handleSubmit, isSubmitting }: Form3Props) => {
+const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: Form3Props) => {
+
+  const protect = useProtectedAction()
 
   const categoryName = Categories.find((c) => c.id === data.category)?.name;
 
@@ -23,10 +27,28 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting }: Form3Props) => {
   const typeName = Categories.find((c) => c.id === data.category)
     ?.subcategories?.find((s) => s.id === data.subcategory)
     ?.children?.find((t) => t.id === data.type)?.name;
+
+    const previewImages = data.images?.map((img) =>
+      img ? URL.createObjectURL(img) : null,
+    );
   return (
     <div className="min-h-screen flex justify-center px-4 pb-12">
       <div className="w-full max-w-3xl bg-white rounded shadow p-6 flex flex-col gap-6">
         <h2 className="text-xl font-semibold">Review Your Ad</h2>
+
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <p>Uploading images... {uploadProgress}%</p>
+        )}
+
+        {uploadProgress === 100 && <p>Processing upload...</p>}
+        {uploadProgress > 0 && (
+          <div className="w-full bg-gray-200 rounded h-2">
+            <div
+              className="bg-black h-2 rounded"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+        )}
 
         {/* Images */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -96,7 +118,7 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting }: Form3Props) => {
             type="button"
             className="px-6 py-3 bg-black text-white rounded disabled:opacity-50"
             disabled={isSubmitting}
-            onClick={handleSubmit}
+            onClick={() => protect(() => handleSubmit())}
           >
             {isSubmitting ? "Uploading..." : "Publish Ad"}
           </button>

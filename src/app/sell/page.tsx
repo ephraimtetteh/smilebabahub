@@ -19,6 +19,7 @@ const ProductUpload = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState<SellFormData>({
     title: "",
     category: "",
@@ -80,17 +81,71 @@ const ProductUpload = () => {
     }, []);
 
 
+    // const handleSubmit = async () => {
+    //   setIsSubmitting(true);
+    
+    //   try {
+    //     if (!user) {
+    //       router.push("/auth/login");
+    //       return;
+    //     }
+    
+    //     const form = new FormData();
+    
+    //     form.append("title", formData.title);
+    //     form.append("category", formData.category);
+    //     form.append("subcategory", formData.subcategory);
+    //     form.append("type", formData.type);
+    //     form.append("description", formData.description);
+    //     form.append("price", formData.price);
+    //     form.append("name", formData.name);
+    //     form.append("phone", formData.phone);
+    //     form.append("region", formData.region);
+    //     form.append("city", formData.city);
+    
+    //     formData.images.forEach((img) => {
+    //       if (img) form.append("images", img);
+    //     });
+    
+    //     const response = await fetch(
+    //       `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/create`,
+    //       {
+    //         method: "POST",
+    //         headers: {
+    //           "Content-Type": "application/json",
+    //           Authorization: `Bearer ${accessToken}`,
+    //         },
+    //         body: form,
+    //         credentials: "include",
+    //       },
+    //     );
+    
+    //     if (!response.ok) {
+    //       throw new Error("Failed to upload product");
+    //     }
+    
+    //     toast.success("Product successfully added");
+    
+    //     localStorage.removeItem("sellFormDraft");
+    
+    //     setCurrentStep(4);
+    
+    //   } catch (error) {
+    //     console.error(error);
+    //     toast.error("Failed to upload product");
+    //   } finally {
+    //     setIsSubmitting(false);
+    //   }
+    // };
+
+
     const handleSubmit = async () => {
+      if (isSubmitting) return;
       setIsSubmitting(true);
-    
+
       try {
-        if (!user) {
-          router.push("/auth/login");
-          return;
-        }
-    
         const form = new FormData();
-    
+
         form.append("title", formData.title);
         form.append("category", formData.category);
         form.append("subcategory", formData.subcategory);
@@ -101,35 +156,39 @@ const ProductUpload = () => {
         form.append("phone", formData.phone);
         form.append("region", formData.region);
         form.append("city", formData.city);
-    
-        formData.images.forEach((img) => {
-          if (img) form.append("images", img);
+
+        formData.images
+  .filter((file): file is File => file !== null)
+  .forEach((file) => {
+    form.append("images", file);
+  });
+
+        await axiosInstance.post("/products/create", form, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const total = progressEvent.total ?? 0;
+
+            if (total === 0) return;
+
+            const percent = Math.round((progressEvent.loaded * 100) / total);
+
+            setUploadProgress(percent);
+          },
         });
-    
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/create`,
-          {
-            method: "POST",
-            body: form,
-            credentials: "include",
-          }
-        );
-    
-        if (!response.ok) {
-          throw new Error("Failed to upload product");
-        }
-    
+
         toast.success("Product successfully added");
-    
+
         localStorage.removeItem("sellFormDraft");
-    
+
         setCurrentStep(4);
-    
       } catch (error) {
         console.error(error);
         toast.error("Failed to upload product");
       } finally {
         setIsSubmitting(false);
+        setUploadProgress(0);
       }
     };
 
@@ -167,14 +226,20 @@ const ProductUpload = () => {
         return (
           <>
             <StepProgress step={currentStep} />
-            <Form3 data={formData} onBack={prevStep} handleSubmit={handleSubmit} isSubmitting={isSubmitting} />
+            <Form3
+              data={formData}
+              onBack={prevStep}
+              handleSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+              uploadProgress={uploadProgress}
+            />
           </>
         );
 
       case 4:
         return (
           <>
-            <StepProgress step={currentStep} />
+            <StepProgress step={currentStep}  />
             <SuccessPage />
           </>
         );

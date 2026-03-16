@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 const SuccessPage = () => {
   const router = useRouter();
 
+  const handlePostAnother = () => {
+    router.push("/sell?new=true");
+    router.refresh(); 
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-amber-50 px-4">
       <div className="bg-white p-10 rounded shadow max-w-md w-full text-center">
@@ -22,10 +27,7 @@ const SuccessPage = () => {
             Go to Dashboard
           </button>
 
-          <button
-            onClick={() => router.push("/sell")}
-            className="border py-3 rounded"
-          >
+          <button onClick={handlePostAnother} className="border py-3 rounded">
             Post Another Ad
           </button>
         </div>

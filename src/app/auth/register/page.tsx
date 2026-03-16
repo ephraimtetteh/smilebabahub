@@ -78,6 +78,15 @@ const AuthRegister
           router.push("/");
           // router.push(`/auth/verify?email=${user.email}&phone=${user.phone}`);
         }
+
+        const redirect = localStorage.getItem("redirectAfterLogin");
+
+        if (redirect) {
+          router.push(redirect);
+          localStorage.removeItem("redirectAfterLogin");
+        } else {
+          router.push("/");
+        }
       
         setUser({
           email: "",
