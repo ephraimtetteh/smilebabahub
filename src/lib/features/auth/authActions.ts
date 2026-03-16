@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { setIsAuthenticated, setIsAuthenticating, setAccessToken, setUser, setMessage } from "./authSlice";
 import axiosInstance from "../../api/axios";
 import getErrorMessage from "@/src/utils/getErrorMessage";
-import { LoginResponseProp, RegisterResponseProp } from "@/src/types/types";
+import { LoginResponseProp, RegisterResponseProp, UserProp } from "@/src/types/types";
 
 
 
@@ -76,28 +76,27 @@ export const login = createAsyncThunk<
     dispatch(setIsAuthenticating(true));
 
     const response = await axiosInstance.post<LoginResponseProp>(
-      "auth/login",
+      "/auth/login",
       userData,
     );
 
-    dispatch(
-      setUser({
-        username: response.data.username,
-        email: response.data.email,
-        phone: response.data.phone,
-        role: response.data.role,
-        profilePicture: response.data.profilePicture,
-        cartItems: response.data.cartItems,
-      }),
-    );
-
+    // dispatch(
+    //   setUser({
+    //     username: response.data.username,
+    //     email: response.data.email,
+    //     phone: response.data.phone,
+    //     role: response.data.role,
+    //     profilePicture: response.data.profilePicture,
+    //     cartItems: response.data.cartItems,
+    //   }),
+    // );
+    dispatch(setUser(response.data.user));
     dispatch(setIsAuthenticated(true));
-
     return response.data;
   } catch (error) {
     dispatch(setIsAuthenticated(false));
     dispatch(setAccessToken(null));
-    dispatch(setUser({}));
+    dispatch(setUser(null));
 
     dispatch(
       setMessage({
@@ -126,6 +125,22 @@ export const forgotPassword = createAsyncThunk(
 );
 
 
+export const restoreSession = createAsyncThunk<
+   UserProp,
+  void,
+  { rejectValue: string }
+>("auth/refresh", async (_, { rejectWithValue }) => {
+  try {
+    await axiosInstance.post("/auth/refresh");
+
+    const response = await axiosInstance.get("/auth/me");
+
+    return response.data.user;
+  } catch (error) {
+    return rejectWithValue(getErrorMessage(error));
+  }
+});
+
 
 
 export const resetPassword = createAsyncThunk(
@@ -147,40 +162,6 @@ export const resetPassword = createAsyncThunk(
   },
 );
 
-// export const validateUser = createAsyncThunk('/smilebaba/auth/refresh', 
-//   async(accessToken: any, { dispatch }) => {
-//     dispatch(setIsAuthenticating(true))
-
-//     try {
-//       if(!accessToken){
-//         toast.error('User Not Found')
-//       }
-
-//       const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}`, {headers: {Authorization: `Bearer ${ accessToken }`}})
-
-//       if(!res?.data?.user){
-//         toast.error('User Not Found')
-//       }
-
-//       const user = res.data.user
-
-//       cookieStore.set('accessToken', accessToken)
-//       cookieStore.set('user', JSON.stringify(user))
-
-//       dispatch(setIsAuthenticated(true))
-//       dispatch( setAccessToken(accessToken))
-//       dispatch( setUser(user))
-
-//       dispatch(setIsAuthenticating(false))
-
-//     } catch (error) {
-//       console.log(error)
-//       dispatch(setIsAuthenticated(false));
-//       dispatch(setAccessToken(null));
-//       dispatch(setUser({}));
-//       dispatch(setIsAuthenticating(false));
-//     }
-// })
 
 export const validateUser = createAsyncThunk(
   "/smilebaba/auth/me",
@@ -190,6 +171,7 @@ export const validateUser = createAsyncThunk(
 
       dispatch(setUser(res.data.user));
       dispatch(setIsAuthenticated(true));
+      return res.data.user;
     } catch(error) {
       dispatch(setIsAuthenticated(false));
       return rejectWithValue(getErrorMessage(error));
@@ -198,11 +180,21 @@ export const validateUser = createAsyncThunk(
 );
 
 
-export const logout = createAsyncThunk('/smilebaba/auth/logout',
-   async(_, {dispatch}) => {
-    dispatch(setIsAuthenticating(true))
-    await axiosInstance.post("/auth/logout");
+export const logout = createAsyncThunk(
+  "/smilebaba/auth/logout",
+  async (_, { dispatch }) => {
+    try {
+      dispatch(setIsAuthenticating(true));
 
-    dispatch(setUser({}));
-    dispatch(setIsAuthenticated(false));
-})
+      await axiosInstance.post("/auth/logout");
+
+      dispatch(setUser(null));
+      dispatch(setAccessToken(null));
+      dispatch(setIsAuthenticated(false));
+    } finally {
+      dispatch(setIsAuthenticating(false));
+    }
+  },
+);
+
+

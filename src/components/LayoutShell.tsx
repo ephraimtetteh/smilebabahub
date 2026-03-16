@@ -10,6 +10,7 @@ import Video from "./Video";
 import Radio from "./Radio";
 import AOS from "aos";
 import { calculateTotals } from "../lib/features/cart/cartSlice";
+import { restoreSession } from "../lib/features/auth/authActions";
 
 const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const pathName = usePathname();
@@ -27,6 +28,14 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     dispatch(calculateTotals());
   }, [cartItems]);
+
+  
+
+  useEffect(() => {
+    dispatch(restoreSession());
+  }, [dispatch]);
+
+
 
   const navBarDispaly = () => {
     switch (true) {

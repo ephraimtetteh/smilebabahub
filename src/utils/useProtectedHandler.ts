@@ -14,7 +14,7 @@ export const useProtectedAction = () => {
 
       localStorage.setItem("redirectAfterLogin", currentPath);
 
-      router.push("/login");
+      router.push("/auth/login");
       return;
     }
 

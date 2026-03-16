@@ -108,11 +108,8 @@ const CartPage = () => {
           </div>
 
           <Button text="Order" className="w-full" 
-            onClick={() => {
-            protect(() => {
-              handleOrder()
-            })
-          }} />
+            onClick={() => protect(() => handleOrder())
+          } />
         </div>
       </div>
     </div>

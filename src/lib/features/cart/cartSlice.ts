@@ -76,7 +76,7 @@ const cartSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(login.fulfilled, (state, action) => {
-      state.cartItems = action.payload.cartItems;
+      state.cartItems = action.payload.user.cartItems ?? [];
     });
   },
 });

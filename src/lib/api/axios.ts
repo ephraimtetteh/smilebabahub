@@ -22,10 +22,10 @@ axiosInstance.interceptors.response.use(
 
       try {
         await axiosInstance.post("/auth/refresh");
-
+        
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        window.location.href = "/auth/login";
+        window.location.replace("/auth/login");
       }
     }
 

@@ -47,7 +47,7 @@ const Loginpage = () => {
     const currentPath = window.location.pathname;
 
     localStorage.setItem("redirectAfterLogin", currentPath);
-    router.push("/login");
+    router.push("/auth/login");
   };
 
   // -----------------------------
@@ -78,7 +78,7 @@ const Loginpage = () => {
         } else {
           router.push("/");
         }
-        
+
       } else {
         const message = result.payload as string;
         setError(message || "Login failed.");
@@ -98,9 +98,9 @@ const Loginpage = () => {
     if (!user) {
       const currentPath = window.location.pathname;
 
-      if (currentPath !== "/login") {
+      if (currentPath !== "/auth/login") {
         localStorage.setItem("redirectAfterLogin", currentPath);
-        router.push("/login");
+        router.push("/auth/login");
       }
     }
   }, [user, router]);

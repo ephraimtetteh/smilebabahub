@@ -182,12 +182,7 @@ export interface StepProps {
 export interface LoginResponseProp {
   message: string;
   accessToken: string;
-  username: string;
-  email: string;
-  phone: string;
-  role: string;
-  profilePicture: string;
-  cartItems: CartItem[];
+  user: UserProp;
 }
 
 export interface RegisterResponseProp {
