@@ -25,7 +25,7 @@ axiosInstance.interceptors.response.use(
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        window.location.href = "/login";
+        window.location.href = "/auth/login";
       }
     }
 
