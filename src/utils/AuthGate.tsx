@@ -9,7 +9,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!hasCheckedAuth || isAuthenticating) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center bg-amber-50">
         <p>Loading app...</p>
       </div>
     );

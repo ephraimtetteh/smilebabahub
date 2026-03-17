@@ -96,10 +96,10 @@ export const login = createAsyncThunk<
     dispatch(setUser(response.data.user));
     dispatch(setIsAuthenticated(true));
 
-    const { accessToken } = response.data;
+    // const { accessToken } = response.data;
 
-    localStorage.setItem("accessToken", accessToken);
-    dispatch(setAccessToken(accessToken));
+    // localStorage.setItem("accessToken", accessToken);
+    // dispatch(setAccessToken(accessToken));
     return response.data;
   } catch (error) {
     dispatch(setIsAuthenticated(false));
@@ -139,18 +139,18 @@ export const restoreSession = createAsyncThunk<
   { rejectValue: string }
 >("auth/refresh", async (_, { dispatch, rejectWithValue }) => {
   try {
-    const refreshRes=await axiosInstance.post(
+     await axiosInstance.post(
       "/auth/refresh",
-      {},
-      { withCredentials: true },
+      // {},
+      // { withCredentials: true },
     );
   
-    const newToken = refreshRes.data.accessToken;
+    // const newToken = refreshRes.data.accessToken;
 
-    if (newToken) {
-      localStorage.setItem("accessToken", newToken);
-      dispatch(setAccessToken(newToken));
-    }
+    // if (newToken) {
+    //   localStorage.setItem("accessToken", newToken);
+    //   dispatch(setAccessToken(newToken));
+    // }
 
     const response = await axiosInstance.get("/auth/me");
 

@@ -18,7 +18,7 @@ import useAutoRefresh from "../utils/useAutoRefresh";
 export const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
 
-  useAutoRefresh(); 
+  //useAutoRefresh(); 
 
   useEffect(() => {
     dispatch(restoreSession());
@@ -44,12 +44,12 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   }, [cartItems]);
   
 
-  useEffect(() => {
-    if (!hasRun.current) {
-      dispatch(restoreSession());
-      hasRun.current = true;
-    }
-  }, [dispatch]);
+  // useEffect(() => {
+  //   if (!hasRun.current) {
+  //     dispatch(restoreSession());
+  //     hasRun.current = true;
+  //   }
+  // }, [dispatch]);
 
 
 
