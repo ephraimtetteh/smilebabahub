@@ -42,10 +42,6 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   // }, [dispatch, isAuthenticated, isLoading]);
 
 
-  useEffect(() => {
-    axiosInstance.get("/auth/me").catch(() => {});
-  }, []);
-
 
 
   const navBarDispaly = () => {
