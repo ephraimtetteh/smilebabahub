@@ -34,7 +34,12 @@ axiosInstance.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then(() => axiosInstance(originalRequest))
+          .then((token) => {
+            if (token) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
+            return axiosInstance(originalRequest);
+          })
           .catch((err) => Promise.reject(err));
       }
 
@@ -42,15 +47,22 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await axiosInstance.post("/auth/refresh");
+        const res = await axiosInstance.post("/auth/refresh");
 
-        processQueue(null);
+        const newToken = res.data.accessToken;
+
+        if (newToken) {
+          localStorage.setItem("accessToken", newToken);
+        }
+
+        processQueue(null, newToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         return axiosInstance(originalRequest);
       } catch (err) {
         processQueue(err, null);
 
-        // 🔥 important
         window.location.href = "/auth/login";
 
         return Promise.reject(err);

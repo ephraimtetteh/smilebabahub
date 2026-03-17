@@ -92,6 +92,9 @@ export const login = createAsyncThunk<
     // );
     dispatch(setUser(response.data.user));
     dispatch(setIsAuthenticated(true));
+
+    const { accessToken } = response.data;
+    localStorage.setItem("accessToken", accessToken);
     return response.data;
   } catch (error) {
     dispatch(setIsAuthenticated(false));
