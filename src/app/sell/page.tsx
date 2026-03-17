@@ -11,13 +11,22 @@ import { toast } from "react-toastify";
 import SuccessPage from "./_component/Form4";
 import axiosInstance from "@/src/lib/api/axios";
 import ProtectedRoute from "@/src/components/ProtectRoute";
+import { useAppSelector } from "../redux";
+import { useCallback } from "react";
 
 const ProductUpload = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hasRestoredUpload, setHasRestoredUpload] = useState(false);
+  const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+
+
   const [formData, setFormData] = useState<SellFormData>({
     title: "",
     category: "",
@@ -61,7 +70,11 @@ const ProductUpload = () => {
 
   
     useEffect(() => {
-      localStorage.setItem("sellFormDraft", JSON.stringify(formData));
+      const timeout = setTimeout(() => {
+        localStorage.setItem("sellFormDraft", JSON.stringify(formData));
+      }, 500);
+
+      return () => clearTimeout(timeout);
     }, [formData]);
 
     useEffect(() => {
@@ -71,6 +84,18 @@ const ProductUpload = () => {
         setFormData(JSON.parse(savedDraft));
       }
     }, []);
+
+    
+    
+
+    useEffect(() => {
+      if (isAuthenticated && hasRestoredUpload && !hasAutoSubmitted) {
+        setHasAutoSubmitted(true);
+        handleSubmit();
+        toast.info("Resuming your upload...");
+
+      }
+    }, [isAuthenticated, hasRestoredUpload, hasAutoSubmitted]);
 
 
     // const handleSubmit = async () => {
@@ -131,7 +156,7 @@ const ProductUpload = () => {
     // };
 
 
-    const handleSubmit = async () => {
+    const handleSubmit = useCallback(async () => {
       if (isSubmitting) return;
       setIsSubmitting(true);
 
@@ -150,10 +175,10 @@ const ProductUpload = () => {
         form.append("city", formData.city);
 
         formData.images
-  .filter((file): file is File => file !== null)
-  .forEach((file) => {
-    form.append("images", file);
-  });
+          .filter((file): file is File => file !== null)
+          .forEach((file) => {
+            form.append("images", file);
+          });
 
         await axiosInstance.post("/products/create", form, {
           headers: {
@@ -161,33 +186,41 @@ const ProductUpload = () => {
           },
           onUploadProgress: (progressEvent) => {
             const total = progressEvent.total ?? 0;
-
             if (total === 0) return;
 
             const percent = Math.round((progressEvent.loaded * 100) / total);
-
             setUploadProgress(percent);
           },
         });
 
         toast.success("Product successfully added");
-
         localStorage.removeItem("sellFormDraft");
-
         setCurrentStep(4);
       } catch (error: any) {
         console.error(error);
+
         if (error.response?.status === 401) {
           toast.error("Session expired. Please try again.");
         } else {
           toast.error("Failed to upload product");
         }
-      
       } finally {
         setIsSubmitting(false);
         setUploadProgress(0);
       }
-    };
+    }, [formData, isSubmitting]);
+
+
+    useEffect(() => {
+      const pending = localStorage.getItem("pendingUpload");
+
+      if (pending) {
+        setFormData(JSON.parse(pending));
+        setHasRestoredUpload(true);
+        localStorage.removeItem("pendingUpload");
+      }
+    }, []);
+
 
 
     

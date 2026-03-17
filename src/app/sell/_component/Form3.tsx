@@ -44,6 +44,7 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: For
         router.push("/auth/login");
         return;
       }
+      localStorage.setItem("pendingUpload", JSON.stringify(data));
 
       handleSubmit();
     };

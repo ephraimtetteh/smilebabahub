@@ -11,10 +11,14 @@ import Radio from "./Radio";
 import AOS from "aos";
 import { calculateTotals } from "../lib/features/cart/cartSlice";
 import { restoreSession } from "../lib/features/auth/authActions";
+import AuthGate from "../utils/AuthGate";
+import useAutoRefresh from "../utils/useAutoRefresh";
 
 
 export const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
+
+  useAutoRefresh(); 
 
   useEffect(() => {
     dispatch(restoreSession());
@@ -28,17 +32,24 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.cartItems);
   const hideNavFooter = pathName.startsWith("/auth");
+  const hasRun = React.useRef(false);
 
 
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-  }, [cartItems]);
-  
-  useEffect(() => {
-    dispatch(calculateTotals());
-  }, [cartItems]);
+    const timeout = setTimeout(() => {
+      localStorage.setItem("cart", JSON.stringify(cartItems));
+    }, 300);
 
+    return () => clearTimeout(timeout);
+  }, [cartItems]);
   
+
+  useEffect(() => {
+    if (!hasRun.current) {
+      dispatch(restoreSession());
+      hasRun.current = true;
+    }
+  }, [dispatch]);
 
 
 
@@ -80,37 +91,39 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     <>
       <StoreProvider>
         <AppInitializer>
-          <LayoutShell>
-            {children}
-            <Script
-              src="https://video2.getstreamhosting.com:2020/dist/widgets.js"
-              strategy="afterInteractive"
-            />
+            <LayoutShell>
+          <AuthGate>
+              {children}
+              <Script
+                src="https://video2.getstreamhosting.com:2020/dist/widgets.js"
+                strategy="afterInteractive"
+              />
 
-            {pathName !== "/" &&
-              pathName !== "/sell" &&
-              pathName !== "/auth" && (
+              {pathName !== "/" &&
+                pathName !== "/sell" &&
+                pathName !== "/auth" && (
+                  <div
+                    className="hidden md:block fixed bottom-5 left-25 z-40 rounded-2xl"
+                    data-aos="fade-up"
+                    data-aos-anchor-placement="bottom-bottom"
+                    data-aos-delay="1000"
+                  >
+                    <Video />
+                  </div>
+                )}
+
+              {pathName !== "/sell" && pathName !== "/auth" && (
                 <div
-                  className="hidden md:block fixed bottom-5 left-25 z-40 rounded-2xl"
+                  className=" fixed right-5 bottom-5 z-40 rounded-2xl"
                   data-aos="fade-up"
                   data-aos-anchor-placement="bottom-bottom"
-                  data-aos-delay="1000"
+                  data-aos-delay="300"
                 >
-                  <Video />
+                  <Radio />
                 </div>
               )}
-
-            {pathName !== "/sell" && pathName !== "/auth" && (
-              <div
-                className=" fixed right-5 bottom-5 z-40 rounded-2xl"
-                data-aos="fade-up"
-                data-aos-anchor-placement="bottom-bottom"
-                data-aos-delay="300"
-              >
-                <Radio />
-              </div>
-            )}
-          </LayoutShell>
+          </AuthGate>
+            </LayoutShell>
         </AppInitializer>
       </StoreProvider>
     </>
