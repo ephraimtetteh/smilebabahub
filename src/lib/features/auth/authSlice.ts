@@ -11,6 +11,7 @@ interface Message {
 declare interface authState {
   isAuthenticated: boolean;
   isAuthenticating: boolean;
+  hasCheckedAuth: boolean;
   accessToken: null | string;
   user: UserProp | null;
   message: Message;
@@ -18,15 +19,16 @@ declare interface authState {
 }
 
 const initialState: authState = {
- isAuthenticated: false,
- isAuthenticating: true,
- accessToken: null,
- user: null,
- message: {
-  type: '',
-  message: ''
- },
- isLoading: true
+  isAuthenticated: false,
+  isAuthenticating: true,
+  hasCheckedAuth: false,
+  accessToken: null,
+  user: null,
+  message: {
+    type: "",
+    message: "",
+  },
+  isLoading: true,
 };
 
 export const authSlice = createSlice({
@@ -67,11 +69,13 @@ export const authSlice = createSlice({
         state.isAuthenticating = false;
         state.isAuthenticated = true;
         state.user = action.payload;
+        state.hasCheckedAuth = true; 
       })
       .addCase(restoreSession.rejected, (state) => {
         state.isAuthenticating = false;
         state.isAuthenticated = false;
         state.user = null;
+        state.hasCheckedAuth = true; 
       });
   }
 })

@@ -7,14 +7,12 @@ import { validateForm } from "@/src/utils/sellFormutils";
 import StepProgress from "./_component/StepProgress";
 import Form3 from "./_component/Form3";
 import { SellFormData } from "@/src/types/types";
-import { useAppSelector } from "../redux";
-import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import SuccessPage from "./_component/Form4";
 import axiosInstance from "@/src/lib/api/axios";
+import ProtectedRoute from "@/src/components/ProtectRoute";
 
 const ProductUpload = () => {
-  const { user } = useAppSelector((state) => state.auth)
 
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -33,12 +31,6 @@ const ProductUpload = () => {
     price: "",
     name: "",
   });
-
-  const router = useRouter()
-  // const handleInputChange = (e: React.ChangeEvent< HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-  //     setFormData({ ...formData, [e.target.name]: e.target.value });
-  //     console.log(formData);
-  //   };
 
   const updateField = <K extends keyof SellFormData>(
     field: K,
@@ -183,9 +175,14 @@ const ProductUpload = () => {
         localStorage.removeItem("sellFormDraft");
 
         setCurrentStep(4);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        toast.error("Failed to upload product");
+        if (error.response?.status === 401) {
+          toast.error("Session expired. Please try again.");
+        } else {
+          toast.error("Failed to upload product");
+        }
+      
       } finally {
         setIsSubmitting(false);
         setUploadProgress(0);
@@ -194,24 +191,77 @@ const ProductUpload = () => {
 
 
     
-    switch (currentStep) {
-      case 1:
-        return (
-          <>
-            <StepProgress step={currentStep} />
+    // switch (currentStep) {
+    //   case 1:
+    //     return (
+    //       <>
+    //         <StepProgress step={currentStep} />
+    //         <Form1
+    //           data={formData}
+    //           updateField={updateField}
+    //           onNext={nextStep}
+    //           errors={errors}
+    //         />
+    //       </>
+    //     );
+
+    //   case 2:
+    //     return (
+    //       <>
+    //         <StepProgress step={currentStep} />
+    //         <Form2
+    //           data={formData}
+    //           updateField={updateField}
+    //           onNext={nextStep}
+    //           onBack={prevStep}
+    //           errors={errors}
+    //         />
+    //       </>
+    //     );
+
+    //   case 3:
+    //     return (
+    //       <>
+    //         <StepProgress step={currentStep} />
+    //         <ProtectedRoute>
+    //           <Form3
+    //             data={formData}
+    //             onBack={prevStep}
+    //             handleSubmit={handleSubmit}
+    //             isSubmitting={isSubmitting}
+    //             uploadProgress={uploadProgress}
+    //           />
+    //         </ProtectedRoute>
+    //       </>
+    //     );
+
+    //   case 4:
+    //     return (
+    //       <>
+    //         <StepProgress step={currentStep}  />
+    //         <SuccessPage />
+    //       </>
+    //     );
+
+    //   default:
+    //     return null;
+    // }
+
+    return (
+      <ProtectedRoute>
+        <>
+          <StepProgress step={currentStep} />
+
+          {currentStep === 1 && (
             <Form1
               data={formData}
               updateField={updateField}
               onNext={nextStep}
               errors={errors}
             />
-          </>
-        );
+          )}
 
-      case 2:
-        return (
-          <>
-            <StepProgress step={currentStep} />
+          {currentStep === 2 && (
             <Form2
               data={formData}
               updateField={updateField}
@@ -219,13 +269,9 @@ const ProductUpload = () => {
               onBack={prevStep}
               errors={errors}
             />
-          </>
-        );
+          )}
 
-      case 3:
-        return (
-          <>
-            <StepProgress step={currentStep} />
+          {currentStep === 3 && (
             <Form3
               data={formData}
               onBack={prevStep}
@@ -233,20 +279,12 @@ const ProductUpload = () => {
               isSubmitting={isSubmitting}
               uploadProgress={uploadProgress}
             />
-          </>
-        );
+          )}
 
-      case 4:
-        return (
-          <>
-            <StepProgress step={currentStep}  />
-            <SuccessPage />
-          </>
-        );
-
-      default:
-        return null;
-    }
+          {currentStep === 4 && <SuccessPage />}
+        </>
+      </ProtectedRoute>
+    );
 };
 
 export default ProductUpload;
