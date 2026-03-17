@@ -155,7 +155,7 @@ export interface SellFormData {
   subcategory: string;
   type: string;
 
-  images: (File | null)[];
+  images: (File | string | null)[];
 
   region: string;
   city: string;

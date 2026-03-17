@@ -5,6 +5,7 @@ import { SellFormData } from "@/src/types/types";
 import { Categories } from "@/src/constants/sellFormData";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "../../redux";
+import { useEffect, useState } from "react";
 
 
 export interface Form3Props {
@@ -17,6 +18,7 @@ export interface Form3Props {
 
 const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: Form3Props) => {
   const router = useRouter();
+  const [previewUrls, setPreviewUrls] = useState<(string | null)[]>([]);
   const { isAuthenticated, isAuthenticating } = useAppSelector(
     (state) => state.auth,
   );
@@ -31,9 +33,36 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: For
     ?.subcategories?.find((s) => s.id === data.subcategory)
     ?.children?.find((t) => t.id === data.type)?.name;
 
-    const previewImages = data.images?.map((img) =>
-      img ? URL.createObjectURL(img) : null,
-    );
+
+    useEffect(() => {
+      const urls = (data.images || []).map((img) => {
+        if (!img) return null;
+
+        const isFile = (img: unknown): img is File | Blob => {
+          return (
+            typeof img === "object" &&
+            img !== null &&
+            (img instanceof File || img instanceof Blob)
+          );
+        };
+
+        if (isFile(img)) {
+          return URL.createObjectURL(img);
+        }
+
+        return null;
+      });
+
+      setPreviewUrls(urls);
+
+      return () => {
+        urls.forEach((url) => {
+          if (url && url.startsWith("blob:")) {
+            URL.revokeObjectURL(url);
+          }
+        });
+      };
+    }, [data.images]);
 
 
     const handleClick = () => {
@@ -69,12 +98,12 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: For
 
         {/* Images */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {data.images?.map(
-            (img, index) =>
-              img && (
+          {previewUrls.map(
+            (url, index) =>
+              url && (
                 <div key={index} className="relative h-28 w-full">
                   <Image
-                    src={URL.createObjectURL(img)}
+                    src={url}
                     alt="preview"
                     fill
                     className="object-cover rounded"
