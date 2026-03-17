@@ -17,6 +17,7 @@ const Form2 = ({ data, updateField, onNext, onBack, errors }: StepProps) => {
       console.log(errors);
       return;
     }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   
     onNext();
   };

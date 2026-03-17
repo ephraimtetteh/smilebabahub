@@ -69,7 +69,7 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: For
         return;
       }
       localStorage.setItem("pendingUpload", JSON.stringify(data));
-
+      window.scrollTo({ top: 0, behavior: "smooth" });
       handleSubmit();
     };
   return (

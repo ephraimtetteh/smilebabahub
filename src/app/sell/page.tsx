@@ -283,7 +283,9 @@ const ProductUpload = () => {
     return (
       <ProtectedRoute>
         <>
-          <StepProgress step={currentStep} />
+          <div className="flex justify-center w-full">
+            <StepProgress step={currentStep} />
+          </div>
 
           {currentStep === 1 && (
             <Form1

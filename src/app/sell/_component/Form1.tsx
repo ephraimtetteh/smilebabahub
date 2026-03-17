@@ -52,6 +52,7 @@ const handleNext = () => {
     console.log(errors);
     return;
   }
+  window.scrollTo({ top: 0, behavior: "smooth" });
 
   onNext();
 };

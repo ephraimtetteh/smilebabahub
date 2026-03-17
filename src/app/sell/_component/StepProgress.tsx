@@ -8,8 +8,8 @@ const steps = ["Details", "Location", "Review", "Ad Published"];
 
 export default function StepProgress({ step }: Props) {
   return (
-    <div className="w-full max-w-3xl mx-auto mb-8 pt-30 ">
-      <div className="flex items-center justify-between ">
+    <div className="w-full max-w-3xl mx-auto mb-8 pt-30 flex justify-center px-4 sm:px-6">
+      <div className="flex items-center justify-center w-full">
         {steps.map((label, index) => {
           const stepNumber = index + 1;
           const active = step >= stepNumber;

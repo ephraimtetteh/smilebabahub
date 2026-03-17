@@ -17,10 +17,11 @@ export default function UserMenu() {
   const handleLogout = () => {
     dispatch(logout());
     router.push("/auth/login");
+    setOpen(false)
   };
 
   return (
-    <div className="relative">
+    <div className="relative z-50">
       {!user ? (
         <Link href="/auth/login">
           <User className="text-white hover:text-yellow-400 cursor-pointer" />
@@ -37,39 +38,48 @@ export default function UserMenu() {
           </button>
 
           {open && (
-            <div className="absolute right-0 mt-3 w-44 bg-white shadow-lg rounded-lg py-2 text-black animate-fadeIn">
-              <Link
-                href="/auth/register"
-                className="block px-4 py-2 hover:bg-gray-100"
-              >
-                Register
-              </Link>
-
-              <Link
-                href="/auth/login"
-                className="block px-4 py-2 hover:bg-gray-100"
-              >
-                Login
-              </Link>
-
-              <Link
-                href="/vendor"
-                className="block px-4 py-2 hover:bg-gray-100"
-              >
-                Dashboard
-              </Link>
+            <div className="absolute right-0 mt-3 w-44 bg-white shadow-lg rounded-lg py-2 text-black animate-fadeIn z-[200]">
+              {!user && (
+                <div>
+                  <Link
+                    href="/auth/register"
+                    onClick={() => setOpen(false)}
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
+                    Register
+                  </Link>
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setOpen(false)}
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
+                    Login
+                  </Link>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 px-4 py-2 text-gray-600 text-sm border-b">
                 <MapPin size={16} />
                 {user.country} {user.state}
               </div>
 
-              {/* <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={handleLogout}
-              >
-                Logout
-              </button> */}
+              {user && (
+                <div>
+                  <Link
+                    href="/vendor"
+                    onClick={() => setOpen(false)}
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </>

@@ -112,7 +112,7 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   </div>
                 )} */}
 
-              {pathName !== "/sell" && pathName !== "/auth" && (
+              {/* {pathName !== "/sell" && pathName !== "/auth" && (
                 <div
                   className=" fixed right-5 bottom-5 z-40 rounded-2xl"
                   data-aos="fade-up"
@@ -121,7 +121,7 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                 >
                   <Radio />
                 </div>
-              )}
+              )} */}
           </AuthGate>
             </LayoutShell>
         </AppInitializer>
