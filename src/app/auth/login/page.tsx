@@ -20,7 +20,11 @@ const Loginpage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
 
-  const { isLoading } = useAppSelector((state) => state.auth);
+  const {
+    user: authUser,
+    isAuthenticated,
+    isAuthenticating,
+  } = useAppSelector((state) => state.auth);
 
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({ ...user, [e.target.name]: e.target.value });
@@ -95,7 +99,7 @@ const Loginpage = () => {
   // Route Guard
   // -----------------------------
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticating && !isAuthenticated) {
       const currentPath = window.location.pathname;
 
       if (currentPath !== "/auth/login") {
@@ -103,7 +107,7 @@ const Loginpage = () => {
         router.push("/auth/login");
       }
     }
-  }, [user, router]);
+  }, [isAuthenticated, isAuthenticating, router]);
 
   return (
     <div className="relative lg:h-200 h-[80vh] max-sm:w-[90vw] md:w-150 lg:w-350 mx-auto mt-15 flex flex-col flex-1">
