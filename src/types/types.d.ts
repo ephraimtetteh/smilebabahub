@@ -148,6 +148,8 @@ declare interface NavbarLinkPorps {
 //   name: string;
 // }
 
+
+
 export interface SellFormData {
   title: string;
 

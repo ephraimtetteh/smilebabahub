@@ -15,7 +15,6 @@ const Form1 = ({ data, updateField, onNext, errors }: StepProps) => {
   const [categoryId, setCategoryId] = useState("");
   const [subcategoryId, setSubcategoryId] = useState("");
   const [typeId, setTypeId] = useState("");
-  const [previewUrls, setPreviewUrls] = useState<(string | null)[]>([]);
   
   const handleImageChange = (index: number, file: File | null) => {
     const newImages = [...data.images || []];
@@ -24,15 +23,15 @@ const Form1 = ({ data, updateField, onNext, errors }: StepProps) => {
     updateField("images", newImages);;
   };
 
-  const getImageSrc = (img: any) => {
+  const getImageSrc = (img: File | string | null) => {
     if (!img) return assets.upload_area;
 
-    if (img instanceof File || img instanceof Blob) {
+    if (img instanceof File) {
       return URL.createObjectURL(img);
     }
 
     if (typeof img === "string") {
-      return img; // already a URL
+      return img;
     }
 
     return assets.upload_area;
@@ -43,20 +42,6 @@ const Form1 = ({ data, updateField, onNext, errors }: StepProps) => {
   const selectedSubcategory = selectedCategory?.subcategories?.find(
     (sub) => sub.id === subcategoryId,
   );
-
-  useEffect(() => {
-    const urls = (data.images || []).map((img) =>
-      img instanceof File ? URL.createObjectURL(img) : img,
-    );
-
-    setPreviewUrls(urls);
-
-    return () => {
-      urls.forEach((url) => {
-        if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
-      });
-    };
-  }, [data.images]);
 
 
 
@@ -165,15 +150,10 @@ const handleNext = () => {
           </p>
 
           <div className="flex flex-wrap gap-4">
-            {previewUrls.map((url, index) => (
+            {data.images.map((img, index) => (
               <label key={index} htmlFor={`image-${index}`}>
-                {/* {index === 0 && (
-                  <span className="absolute top-1 left-1 bg-black text-white text-xs px-2 py-1 rounded">
-                    Main
-                  </span>
-                )} */}
                 <Image
-                  src={url || assets.upload_area}
+                  src={getImageSrc(img)}
                   width={140}
                   height={70}
                   alt="upload"

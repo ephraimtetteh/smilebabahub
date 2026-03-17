@@ -37,7 +37,6 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: For
     useEffect(() => {
       const urls = (data.images || []).map((img) => {
         if (!img) return null;
-
         const isFile = (img: unknown): img is File | Blob => {
           return (
             typeof img === "object" &&
@@ -45,16 +44,12 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: For
             (img instanceof File || img instanceof Blob)
           );
         };
-
         if (isFile(img)) {
           return URL.createObjectURL(img);
         }
-
         return null;
       });
-
       setPreviewUrls(urls);
-
       return () => {
         urls.forEach((url) => {
           if (url && url.startsWith("blob:")) {
@@ -98,19 +93,22 @@ const Form3 = ({ data, onBack, handleSubmit, isSubmitting, uploadProgress }: For
 
         {/* Images */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {previewUrls.map(
-            (url, index) =>
-              url && (
-                <div key={index} className="relative h-28 w-full">
-                  <Image
-                    src={url}
-                    alt="preview"
-                    fill
-                    className="object-cover rounded"
-                  />
+          {previewUrls.map((url, index) => (
+            <div key={index} className="relative h-28 w-full">
+              {url ? (
+                <Image
+                  src={url}
+                  alt="preview"
+                  fill
+                  className="object-cover rounded"
+                />
+              ) : (
+                <div className="bg-gray-100 h-full w-full rounded flex items-center justify-center text-sm text-gray-400">
+                  Empty
                 </div>
-              ),
-          )}
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Title */}
