@@ -41,10 +41,10 @@ const storage = typeof window === 'undefined'
   : createWebStorage('local');
 
 const persistConfig = {
-  key: 'rook',
+  key: "rook",
   storage,
-  whitelist: ['global']
-}
+  whitelist: ["auth", "global", "cart"],
+};
 
 const rootReducer = combineReducers({
   auth: authReducer,

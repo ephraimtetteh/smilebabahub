@@ -3,6 +3,9 @@ import { setIsAuthenticated, setIsAuthenticating, setAccessToken, setUser, setMe
 import axiosInstance from "../../api/axios";
 import getErrorMessage from "@/src/utils/getErrorMessage";
 import { LoginResponseProp, RegisterResponseProp, UserProp } from "@/src/types/types";
+import { useAppDispatch } from "@/src/app/redux";
+
+
 
 
 
@@ -94,7 +97,9 @@ export const login = createAsyncThunk<
     dispatch(setIsAuthenticated(true));
 
     const { accessToken } = response.data;
+
     localStorage.setItem("accessToken", accessToken);
+    dispatch(setAccessToken(accessToken));
     return response.data;
   } catch (error) {
     dispatch(setIsAuthenticated(false));
@@ -132,13 +137,20 @@ export const restoreSession = createAsyncThunk<
    UserProp,
   void,
   { rejectValue: string }
->("auth/refresh", async (_, { rejectWithValue }) => {
+>("auth/refresh", async (_, { dispatch, rejectWithValue }) => {
   try {
-    await axiosInstance.post(
+    const refreshRes=await axiosInstance.post(
       "/auth/refresh",
       {},
       { withCredentials: true },
     );
+  
+    const newToken = refreshRes.data.accessToken;
+
+    if (newToken) {
+      localStorage.setItem("accessToken", newToken);
+      dispatch(setAccessToken(newToken));
+    }
 
     const response = await axiosInstance.get("/auth/me");
 

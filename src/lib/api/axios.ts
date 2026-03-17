@@ -1,4 +1,5 @@
 import axios from "axios";
+import { setAccessToken } from "../features/auth/authSlice";
 
 
 const axiosInstance = axios.create({
@@ -74,6 +75,17 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 
 
