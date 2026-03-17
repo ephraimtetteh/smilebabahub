@@ -132,7 +132,7 @@ export const restoreSession = createAsyncThunk<
 >("auth/refresh", async (_, { rejectWithValue }) => {
   try {
     await axiosInstance.post(
-      "/smilebaba/auth/refresh",
+      "/auth/refresh",
       {},
       { withCredentials: true },
     );
