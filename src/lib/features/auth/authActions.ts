@@ -131,11 +131,15 @@ export const restoreSession = createAsyncThunk<
   { rejectValue: string }
 >("auth/refresh", async (_, { rejectWithValue }) => {
   try {
-    await axiosInstance.post("/auth/refresh");
+    await axiosInstance.post(
+      "/smilebaba/auth/refresh",
+      {},
+      { withCredentials: true },
+    );
 
     const response = await axiosInstance.get("/auth/me");
 
-    return response.data.user;
+    return response.data;
   } catch (error) {
     return rejectWithValue(getErrorMessage(error));
   }
