@@ -11,6 +11,7 @@ import Radio from "./Radio";
 import AOS from "aos";
 import { calculateTotals } from "../lib/features/cart/cartSlice";
 import { restoreSession } from "../lib/features/auth/authActions";
+import axiosInstance from "../lib/api/axios";
 
 const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const pathName = usePathname();
@@ -31,9 +32,19 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
 
   
 
+  // const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  // const isLoading = useAppSelector((state) => state.auth.isLoading);
+
+  // useEffect(() => {
+  //   if (!isAuthenticated && !isLoading) {
+  //     dispatch(restoreSession());
+  //   }
+  // }, [dispatch, isAuthenticated, isLoading]);
+
+
   useEffect(() => {
-    dispatch(restoreSession());
-  }, [dispatch]);
+    axiosInstance.get("/auth/me").catch(() => {});
+  }, []);
 
 
 
