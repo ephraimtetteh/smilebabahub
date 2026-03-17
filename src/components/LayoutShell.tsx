@@ -99,7 +99,7 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                 strategy="afterInteractive"
               />
 
-              {pathName !== "/" &&
+              {/* {pathName !== "/" &&
                 pathName !== "/sell" &&
                 pathName !== "/auth" && (
                   <div
@@ -110,7 +110,7 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   >
                     <Video />
                   </div>
-                )}
+                )} */}
 
               {pathName !== "/sell" && pathName !== "/auth" && (
                 <div

@@ -7,6 +7,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import MarketplaceSearch from './NewSearch';
 import SearchBar from './SearchBar';
+import Radio from './Radio';
 
 const Hero = () => {
 
@@ -18,15 +19,15 @@ const Hero = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-[40vh] sm:h-[45vh] lg:h-[55vh] overflow-hidden">
+    <div className="relative w-full h-[40vh] sm:h-[45vh] lg:h-[55vh] bg-[#ffd700] overflow-hidden">
       {/* Background Image */}
-      <Image
+      {/* <Image
         src={assets.heroImage}
         alt="Background"
         fill
         priority
         className="object-cover"
-      />
+      /> */}
 
       {/* Overlay */}
       {/* <div className="absolute inset-0 bg-black/10"></div> */}
@@ -38,7 +39,7 @@ const Hero = () => {
       >
         {/* Heading */}
         <div className="max-w-3xl text-center">
-          <h3 className="text-xl sm:text-3xl lg:text-5xl font-semibold text-black/80 leading-tight capitalize">
+          <h3 className="text-xl sm:text-4xl lg:text-6xl font-semibold text-black/80 leading-tight capitalize">
             Find food, homes <br className="hidden sm:block" />
             & everything you need —
             <br className="hidden sm:block" />
@@ -50,6 +51,7 @@ const Hero = () => {
         <div className="w-full mt-6 sm:mt-8 flex justify-center">
           <div className="w-full max-w-5xl max-sm:mb-5">
             <MarketplaceSearch />
+            <Radio />
           </div>
         </div>
       </div>

@@ -48,92 +48,73 @@ const Radio = () => {
   };
   
   return (
-    <div className="px-3 sm:px-6 md:px-12 lg:px-14 xl:px-12">
+    <div className="px-3">
       <div
-        className="bg-linear-to-br from-amber-950 to-black 
-        border border-[#d8a304] 
-        rounded-full md:rounded-3xl lg:rounded-2xl 
-        flex flex-col p-3 md:p-7 
-        text-white mt-4 
-        shadow-xl shadow-black/40"
+        className="flex items-center gap-4 p-4 rounded-2xl 
+        bg-[#1A1A1A] text-white shadow-lg"
       >
-        {/* Radio Icon */}
-        <IoRadioOutline
-          size={34}
-          className=" hidden lg:block text-[#ffc105] mx-auto mb-3 drop-shadow-lg"
-        />
+        {/* LEFT: LIVE + INFO */}
+        <div className="flex flex-col flex-1">
+          <div className="flex items-center gap-2">
+            {/* Live Dot */}
+            <span className="live-dot"></span>
 
-        {/* Title */}
-        <div className="lg:block text-center">
-          <h3 className=" hidden lg:block text-xl md:text-2xl font-semibold tracking-wide">
-            SmileBaba <span className="text-[#ffc105]">Radio</span>
-          </h3>
-          <h3 className="lg:hidden block md:text-2xl font-semibold tracking-wide">
-            Radio
-          </h3>
+            <span className="text-[10px] font-semibold uppercase text-[#FFD700]">
+              Live
+            </span>
+          </div>
 
-          <p className="text-gray-300 hidden lg:block text-sm mt-1">
-            🔴 Your smile our Pride
+          <p className="text-sm font-bold mt-1">SmileBaba Radio</p>
+
+          <p className="text-xs text-[#A0A0A0]">
+            🎧 Live Marketplace Vibes
           </p>
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-3 md:gap-6 lg:mt-5 mt-2">
-          {/* Play / Pause */}
-          <button
-            onClick={togglePlay}
-            className="bg-[#ffc105] text-black 
-          p-2 md:p-3 
-          rounded-full 
-          shadow-lg shadow-yellow-500/30 
+        {/* CENTER: PLAY */}
+        <button
+          onClick={togglePlay}
+          className="w-12 h-12 bg-[#FFD700] text-black 
+          rounded-full flex items-center justify-center
           hover:scale-105 transition"
-          >
-            {playing ? <FaPause size={18} /> : <FaPlay size={18} />}
-          </button>
+        >
+          {playing ? <FaPause size={18} /> : <FaPlay size={18} />}
+        </button>
 
-          {/* Mute */}
+        {/* RIGHT: CONTROLS */}
+        <div className="flex items-center gap-2">
           <button
             onClick={toggleMute}
-            className="bg-gray-800/80 backdrop-blur-md 
-          p-2 md:p-3 
-          rounded-full 
-          border border-gray-700
-          hover:bg-gray-700 transition"
+            className="p-2 rounded-full bg-[#333333] hover:bg-[#444] transition"
           >
             {muted ? <FaVolumeMute /> : <FaVolumeUp />}
           </button>
 
-          {/* Favorite */}
-          <button
-            className="text-red-500 
-          p-3 md:p-2 
-          rounded-full hidden lg:block
-          hover:bg-red-500/10 transition"
-          >
-            <FaHeart size={18} />
+          <button className="p-2 rounded-full hover:bg-[#333333] transition hidden md:block">
+            <FaHeart className="text-red-500" />
           </button>
         </div>
-
-        {/* Loading */}
-        {loading && (
-          <p className="text-yellow-400 text-center mt-4 text-sm animate-pulse">
-            Connecting to live stream...
-          </p>
-        )}
-
-        {/* Error */}
-        {error && (
-          <p className="text-red-400 text-center mt-4 text-sm">
-            Unable to load radio stream.
-          </p>
-        )}
-
-        {/* Hidden Audio */}
-        <audio ref={audioRef} preload="none" onError={() => setError(true)}>
-          <source src={streamUrl} type="audio/mpeg" />
-        </audio>
       </div>
-    </div>
+
+      {/* Loading */}
+      {loading && (
+        <p className="text-[#FFD700] text-xs mt-2 animate-pulse">
+          Connecting to live stream...
+        </p>
+      )}
+
+      {/* Error */}
+      {error && (
+        <p className="text-[#FF4D4D] text-xs mt-2">
+          Unable to load radio stream.
+        </p>
+      )}
+
+      {/* Audio */}
+      <audio ref={audioRef} preload="none" onError={() => setError(true)}>
+        <source src={streamUrl} type="audio/mpeg" />
+      </audio>
+      </div>
   );
 };
 

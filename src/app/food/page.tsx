@@ -26,9 +26,12 @@ const FoodPage = () => {
 
   return (
     <div className="w-full flex flex-col items-center mt-20 px-4">
-      <div className="py-10 w-full max-w-7xl">
+      <div className="py-15 w-full max-w-7xl">
         <MarketplaceSearch />
         <NewLayout />
+        <div className="pt-10">
+          <Radio />
+        </div>
       </div>
 
       <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
