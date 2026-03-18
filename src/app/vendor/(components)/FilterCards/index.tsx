@@ -25,47 +25,49 @@ const getTextVaraintStyles = (variant: FilterCardProps["title"]) => {
 
 const FilterCards = ({ text, title, percentage, icon }: FilterCardProps) => {
   return (
-    <div className="flex flex-row flex-1 items-center justify-between bg-white shadow shadow-neutral-400 rounded-xl p-8">
-    <div className='flex flex-col'>
-      <h1 className="text-gray-500 pb-2 text-[14px]">{title}</h1>
-      <h3 className="text-black pb-2 text-lg font-semibold">{text}</h3>
-      <h3 className="text-red-500 pb-2 text-[14px]">{percentage}%</h3>
+    <div className="flex items-center justify-between bg-white shadow shadow-neutral-400 rounded-xl p-5 sm:p-6 lg:p-8 w-full">
+      <div className="flex flex-col">
+        <h1 className="text-gray-500 pb-2 text-[14px]">{title}</h1>
+        <h3 className="text-black pb-2 text-base sm:text-lg font-semibold">
+          {text}
+        </h3>
+        <h3 className="text-red-500 pb-2 text-[14px]">{percentage}%</h3>
+      </div>
+      <div className={`${getTextVaraintStyles(title)} p-3 sm:p-4 rounded-2xl`}>
+        {icon}
+      </div>
     </div>
-    <div className={`${getTextVaraintStyles(title)} p-4 rounded-2xl`}>
-      {icon}
-    </div>
-  </div>
-  )
+  );
 }
 
 const index = () => {
   return (
-    <div className='flex flex-row fl-1 gap-6 pb-12'>
-      <FilterCards 
-        title='Total Sales'
-        text='$00.00'
-        percentage='0.0'
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-12">
+      <FilterCards
+        title="Total Sales"
+        text="$00.00"
+        percentage="0.0"
         icon={<Activity />}
       />
 
-      <FilterCards 
-        title='Daily Sales'
-        text='$00.00'
-        percentage='0.0'
+      <FilterCards
+        title="Daily Sales"
+        text="$00.00"
+        percentage="0.0"
         icon={<CircleDollarSign />}
       />
 
-      <FilterCards 
-        title='Total Earnings'
-        text='$00.00'
-        percentage='0.0'
+      <FilterCards
+        title="Total Earnings"
+        text="$00.00"
+        percentage="0.0"
         icon={<BadgeCheck />}
       />
 
-      <FilterCards 
-        title='Pending Orders'
-        text='$00.00'
-        percentage='0.0'
+      <FilterCards
+        title="Pending Orders"
+        text="$00.00"
+        percentage="0.0"
         icon={<ShoppingBasket />}
       />
     </div>

@@ -14,28 +14,38 @@ const Productpage = () => {
   const [showAddProduct, setShowAddProduct] = useState(false)
 
   return (
-    <div className="bg-gray-50 flex flex-col gap-4 py-8 px-8 border-gray-200 border">
-      <div className="flex flex-1 items-center justify-between pb-2">
+    <div className="bg-gray-50 flex flex-col gap-6 py-6 px-4 sm:px-6 lg:px-8 border border-gray-200">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <Button
           text="Add Product"
           icon={<FaPlus />}
-          className="flex items-center gap-2 text-white"
+          className="flex items-center justify-center gap-2 text-white w-full sm:w-auto"
           onClick={() => setShowAddProduct(true)}
         />
-        {showAddProduct && <AddProductComponent showAddProduct={showAddProduct} setShowAddProduct={setShowAddProduct} />}
-        <div>
+
+        <div className="w-full sm:w-64">
           <InputSearch text="Search" />
         </div>
       </div>
 
-      {/* ====== add product component */}
-      {Products.slice(3, 10).map((item) => (
-        <AddProduct key={item.id} image={item.images[0]} status="Completed" />
-      ))}
+      {/* PRODUCTS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Products.slice(3, 10).map((item) => (
+          <AddProduct key={item.id} image={item.images[0]} status="Completed" />
+        ))}
+      </div>
 
-      {/* ===== bottom */}
-
+      {/* BOTTOM */}
       <Limit />
+
+      {/* MODAL (OUTSIDE FLOW) */}
+      {showAddProduct && (
+        <AddProductComponent
+          showAddProduct={showAddProduct}
+          setShowAddProduct={setShowAddProduct}
+        />
+      )}
     </div>
   );
 }

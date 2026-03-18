@@ -1,5 +1,6 @@
 import axios from "axios";
 import { setAccessToken } from "../features/auth/authSlice";
+import { safeStorage } from "@/src/utils/safeStorage";
 
 
 const axiosInstance = axios.create({
@@ -33,22 +34,38 @@ axiosInstance.interceptors.response.use(
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => axiosInstance(originalRequest));
+          failedQueue.push({
+            resolve: (token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(axiosInstance(originalRequest));
+            },
+            reject,
+          });
+        });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        await axiosInstance.post("/auth/refresh");
+        const res = await axiosInstance.post("/auth/refresh");
+        console.log("REFRESH RESPONSE:", res.data);
 
-        processQueue(null);
+        const newAccessToken = res.data.accessToken;
+
+        safeStorage.set("accessToken", newAccessToken);
+
+        processQueue(null, newAccessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
         return axiosInstance(originalRequest);
       } catch (err) {
         processQueue(err, null);
-        window.location.href = "/auth/login";
+        if (!originalRequest.url.includes("/products")) {
+          window.location.href = "/auth/login";
+        }
+       
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
@@ -60,9 +77,14 @@ axiosInstance.interceptors.response.use(
 );
 
 
-// axiosInstance.interceptors.request.use((config) => {
-//   return config;
-// });
+axiosInstance.interceptors.request.use((config) => {
+  const token = safeStorage.get("accessToken");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 
 

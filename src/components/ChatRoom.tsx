@@ -10,35 +10,46 @@ type ChatRoomProps = {
 
 const ChatRoom = ({setChatRoom, icon, onClose}: ChatRoomProps) => {
   return (
-      <div className='bg-black/50 w-2xl rounded-xl relative items-center justify-center mx-auto flex'>
-    <div className="backdrop-blur-3xl text-white inset-0 shadow-2xl w-xl min-h-130 absolute right-35 rounded-xl items-center justify-center mx-auto py-6">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      {/* CHAT CONTAINER */}
+      <div className="w-full max-w-md h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        {/* HEADER */}
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <h2 className="font-semibold text-black">SmileBaba Chat Room</h2>
+          <button onClick={onClose} className="text-xl text-gray-600">
+            {icon}
+          </button>
+        </div>
 
-      <div className="flex flex-1 items-center justify-between px-4">
-        <h2> Chat Room</h2>
-        <button
-          onClick={onClose}
-          className="bg-gray-600 text-xl rounded-full text-white"
-          >
-          {icon}
-        </button>
-      </div>
-      <div className="flex flex-col gap-2  relative top-70 bottom-0 px-4">
-          <p className='text-[8px] items-center justify-center text-center pb-2'>Today</p>
-        <div className=''>
-          <div className="mb-2 flex-1 flex-col-reverse items-end justify-end bg-amber-700 text-white font-bold w-fit p-2 rounded-full">
-            <p className='text-[12px]'>First Chat Message</p>
+        {/* MESSAGES (SCROLLABLE) */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-gray-50">
+          <p className="text-center text-xs text-gray-500">Today</p>
+
+          {/* SENT */}
+          <div className="flex justify-end">
+            <div className="bg-amber-500 text-white text-sm px-3 py-2 rounded-2xl max-w-[70%]">
+              First Chat Message
+            </div>
           </div>
-       
-          <div className="flex flex-1 flex-col-reverse items-end justify-end  mb-2 bg-amber-300 w-fit p-2 rounded-full text-white">
-            <p className='text-[12px]'>Second Chat Message</p>
+
+          {/* RECEIVED */}
+          <div className="flex justify-start">
+            <div className="bg-gray-300 text-black text-sm px-3 py-2 rounded-2xl max-w-[70%]">
+              Second Chat Message
+            </div>
           </div>
         </div>
-      <div className='flex flex-1 gap-2'>
-        <input type="text" placeholder='Message' className='border border-gray-300 p-2 rounded-full flex-1 outline-none text-black'/>
-        <Button text='send' />
+
+        {/* INPUT */}
+        <div className="p-3 border-t flex gap-2">
+          <input
+            type="text"
+            placeholder="Message..."
+            className="flex-1 border border-gray-300 rounded-full px-4 py-2 outline-none text-black"
+          />
+          <Button text="Send" />
+        </div>
       </div>
-      </div>
-    </div>
     </div>
   );
 }

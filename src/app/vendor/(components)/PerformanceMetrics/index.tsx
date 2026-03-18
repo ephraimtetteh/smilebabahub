@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { RechartsDevtools } from "@recharts/devtools";
 import { Activity, TrendingUp } from 'lucide-react';
+import { ResponsiveContainer } from "recharts";
 
 // #region Sample data
 const data = [
@@ -64,49 +65,40 @@ const data = [
 
 // #endregion
 const AreaChartExample = ({ isAnimationActive = true }) => (
-  <AreaChart
-    style={{
-      width: "100%",
-      maxWidth: "700px",
-      maxHeight: "70vh",
-      aspectRatio: 1.618,
-    }}
-    responsive
-    data={data}
-    margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
-  >
-    <defs>
-      <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-        <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-      </linearGradient>
-      <linearGradient id="colorPv" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-        <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
-      </linearGradient>
-    </defs>
-    <CartesianGrid strokeDasharray="3 3" />
-    <XAxis dataKey="name" />
-    <YAxis width="auto" />
-    <Tooltip />
-    <Area
-      type="monotone"
-      dataKey="uv"
-      stroke="#8884d8"
-      fillOpacity={1}
-      fill="url(#colorUv)"
-      isAnimationActive={isAnimationActive}
-    />
-    <Area
-      type="monotone"
-      dataKey="pv"
-      stroke="#82ca9d"
-      fillOpacity={1}
-      fill="url(#colorPv)"
-      isAnimationActive={isAnimationActive}
-    />
-    <RechartsDevtools />
-  </AreaChart>
+  <div className="w-full h-[250px] sm:h-[300px] lg:h-[350px]">
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data}>
+        <defs>
+          <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+            <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="colorPv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis width="auto" />
+        <Tooltip />
+
+        <Area
+          type="monotone"
+          dataKey="uv"
+          stroke="#8884d8"
+          fill="url(#colorUv)"
+        />
+        <Area
+          type="monotone"
+          dataKey="pv"
+          stroke="#82ca9d"
+          fill="url(#colorPv)"
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>
 );
 
 
@@ -178,49 +170,51 @@ const  Example = () => {
         bottom: 5,
       }}
     >
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="name" />
-      <YAxis width="auto" />
-      <Tooltip />
-      <Legend />
-      <Line
-        type="monotone"
-        dataKey="pv"
-        stroke="#8884d8"
-        activeDot={{ r: 8 }}
-      />
-      <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
-      <RechartsDevtools />
+      <div className="w-full h-[250px] sm:h-[300px] lg:h-[350px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data2}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis width="auto" />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="pv" stroke="#8884d8" />
+            <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </LineChart>
   );
 }
 
 const index = () => {
   return (
-    <div className="flex flex-row flex-1 items-center gap-3 py-3 w-full">
-      <div className="bg-white shadow shadow-neutral-400 p-12 flex flex-col w-full rounded-2xl">
-        <div className="flex items-center justify-between pb-4 mb-10 border-b border-gray-200">
-          <h3 className=" flex text-xl gap-2 items-center">
-            <TrendingUp className='text-blue-500' />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4 w-full">
+      {/* SALES TREND */}
+      <div className="bg-white shadow shadow-neutral-300 p-4 sm:p-6 lg:p-8 flex flex-col w-full rounded-2xl">
+        <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-200">
+          <h3 className="flex text-lg sm:text-xl gap-2 items-center">
+            <TrendingUp className="text-blue-500" />
             Sales Trend
           </h3>
-          <div className="flex flex-col">
+          <div>
             <h3>$00.00</h3>
-            <h4 className="text-[14px] text-green-500">0.00%</h4>
+            <h4 className="text-sm text-green-500">0.00%</h4>
           </div>
         </div>
         <Example />
       </div>
 
-      <div className="bg-white shadow shadow-neutral-400 p-12 flex flex-col w-full rounded-2xl">
-        <div className="flex items-center justify-between pb-4 mb-10 border-b border-gray-200">
-          <h3 className=" flex text-xl gap-2 items-center ">
-            <Activity className='text-purple-500' />
+      {/* PERFORMANCE */}
+      <div className="bg-white shadow shadow-neutral-300 p-4 sm:p-6 lg:p-8 flex flex-col w-full rounded-2xl">
+        <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-200">
+          <h3 className="flex text-lg sm:text-xl gap-2 items-center">
+            <Activity className="text-purple-500" />
             Performance Metrics
           </h3>
-          <div className="flex flex-col">
+          <div>
             <h3>$00.00</h3>
-            <h4 className="text-[14px] text-green-500">0.00%</h4>
+            <h4 className="text-sm text-green-500">0.00%</h4>
           </div>
         </div>
         <AreaChartExample />

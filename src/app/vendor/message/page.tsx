@@ -12,56 +12,69 @@ const MessagePage = () => {
   const [openChat, setOpenChat] = useState(true)
   const [messageRead, setMessageRead] = useState(false)
   return (
-    <article className="  gap-4 py-8 px-8 border-gray-200 border">
-      <div className="flex items-center gap-8">
-        <h1 className="text-3xl font-bold py-4">Notifications</h1>
+    <article className="flex flex-col gap-6 py-4 sm:py-6 px-4 sm:px-6 lg:px-8 border border-gray-200 rounded-xl">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">Notifications</h1>
+
         <Button
-          text="Mark All as Aead"
+          text="Mark All as Read"
           icon={<IoChatboxEllipsesOutline />}
-          className="bg-transparent border border-[#ffc105] flex items-center gap-2"
+          className="bg-transparent border border-[#ffc105] flex items-center gap-2 w-full sm:w-auto"
           onClick={() => setMessageRead((prev) => !prev)}
         />
       </div>
-      <div className="flex flex-row items-center justify-between w-[80%] gap-6">
-        <div className={`flex flex-1 items-center justify-between gap-12  mb-3 rounded w-fit pr-3 ${messageRead ? 'bg-[#ffc10561]' : 'bg-[#ffc105]'}`}>
-          <div className="flex items-center gap-8">
+
+      {/* MAIN */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* NOTIFICATIONS */}
+        <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
+          <div
+            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded p-3 ${
+              messageRead ? "bg-[#ffc10561]" : "bg-[#ffc105]"
+            }`}
+          >
             <div
-              className="flex flex-row items-center gap-2 p-2 cursor-pointer"
+              className="flex items-start gap-3 cursor-pointer"
               onClick={() => setMessageRead(!messageRead)}
             >
               <span
-                className={`p-1.5 items-center flex rounded-full ${ messageRead? 'bg-black/20' : 'bg-black/50'}`}
+                className={`p-1.5 rounded-full ${
+                  messageRead ? "bg-black/20" : "bg-black/50"
+                }`}
               ></span>
+
               <Image
                 src={assets.profile_icon}
-                alt="product-image"
-                width={30}
-                height={30}
+                alt="profile"
+                width={35}
+                height={35}
                 className="rounded-full"
               />
-              <div className="flex flex-col py-1 gap-x-2 text-[12px]">
-                <h3>
-                  example smile you have a new Notifications form customer 112
+
+              <div className="text-sm">
+                <h3 className="font-medium">
+                  Example notification from customer
                 </h3>
-                <p>example@gmail.com</p>
+                <p className="text-xs text-gray-700">example@gmail.com</p>
               </div>
             </div>
-            <div>
-              <h3>example@gmail.com</h3>
+
+            <div className="text-xs text-right">
+              <p>12:20pm</p>
+              <p>11-11-25</p>
             </div>
           </div>
-          <div className="text-[8px]">
-            <p>12:20pm</p>
-            <p>11-11-25</p>
-          </div>
         </div>
-        <div>
+
+        {/* CHAT */}
+        <div className="w-full">
           {!openChat ? (
             <Button
               text="Start a Chat"
               icon={<IoChatboxEllipsesOutline />}
-              className="bg-transparent border border-[#ffc105] w-full flex items-center gap-2 py-4"
-              onClick={() => setOpenChat((prev) => !prev)}
+              className="bg-transparent border border-[#ffc105] w-full flex items-center justify-center gap-2 py-3"
+              onClick={() => setOpenChat(true)}
             />
           ) : (
             <ChatRoom
