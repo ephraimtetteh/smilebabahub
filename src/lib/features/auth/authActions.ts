@@ -3,7 +3,6 @@ import { setIsAuthenticated, setIsAuthenticating, setAccessToken, setUser, setMe
 import axiosInstance from "../../api/axios";
 import getErrorMessage from "@/src/utils/getErrorMessage";
 import { LoginResponseProp, RegisterResponseProp, UserProp } from "@/src/types/types";
-import { useAppDispatch } from "@/src/app/redux";
 
 
 
@@ -137,12 +136,10 @@ export const restoreSession = createAsyncThunk<
    UserProp,
   void,
   { rejectValue: string }
->("auth/refresh", async (_, { dispatch, rejectWithValue }) => {
+>("auth/refresh", async (_, { rejectWithValue }) => {
   try {
      await axiosInstance.post(
-      "/auth/refresh",
-      // {},
-      // { withCredentials: true },
+      "/auth/refresh"
     );
   
     // const newToken = refreshRes.data.accessToken;
@@ -154,7 +151,7 @@ export const restoreSession = createAsyncThunk<
 
     const response = await axiosInstance.get("/auth/me");
 
-    return response.data;
+    return response.data.user;
   } catch (error) {
     return rejectWithValue(getErrorMessage(error));
   }

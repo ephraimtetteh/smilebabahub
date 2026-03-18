@@ -4,7 +4,7 @@ import { safeStorage } from "@/src/utils/safeStorage";
 
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  baseURL: "/api",
   withCredentials: true,
 });
 
@@ -62,13 +62,21 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (err) {
         processQueue(err, null);
-        if (!originalRequest.url.includes("/products")) {
+
+        const isProductRoute = originalRequest.url?.includes("/products");
+
+        if (isProductRoute) {
+          // Save their work before redirecting
+          const formDataStr = localStorage.getItem("sellFormDraft");
+          if (formDataStr) {
+            localStorage.setItem("pendingUpload", formDataStr);
+          }
+          window.location.href = "/auth/login?reason=session_expired";
+        } else {
           window.location.href = "/auth/login";
         }
-       
+
         return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
       }
     }
 

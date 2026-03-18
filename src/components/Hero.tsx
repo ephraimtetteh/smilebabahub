@@ -19,7 +19,7 @@ const Hero = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-[50vh] sm:h-[45vh] lg:h-[60vh] bg-[#ffd700] overflow-hidden py-10">
+    <div className="relative w-full h-[40vh] sm:h-[40vh] lg:h-[60vh] bg-[#ffd700] overflow-hidden pt-10">
       {/* Background Image */}
       {/* <Image
         src={assets.heroImage}

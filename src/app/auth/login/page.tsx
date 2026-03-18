@@ -66,14 +66,13 @@ const Loginpage = () => {
 
       if (login.fulfilled.match(result)) {
         toast.success("Login successful!");
-      
-        const redirect = localStorage.getItem("redirectAfterLogin");
-      
-        if (redirect) {
-          router.push(redirect);
+        const redirectPath = localStorage.getItem("redirectAfterLogin");
+
+        if (redirectPath) {
           localStorage.removeItem("redirectAfterLogin");
+          router.push(redirectPath);
         } else {
-          router.push("/");
+          router.push("/"); // default redirect
         }
       
 

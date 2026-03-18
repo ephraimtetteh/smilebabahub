@@ -23,8 +23,6 @@ const AuthRegister
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
-  const {isLoading} = useAppSelector((state) => state.auth)
-
   const getPasswordStrength = (password: string) => {
     if (password.length < 6) return "Weak";
     if (password.length < 10) return "Medium";

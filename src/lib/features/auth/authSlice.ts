@@ -1,24 +1,23 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { UserProp } from "@/src/types/types";
-import { register, restoreSession } from "./authActions";
-
+import { register, restoreSession, login, logout } from "./authActions";
 
 interface Message {
-  type: string,
-  message: string
+  type: string;
+  message: string;
 }
-declare interface authState {
+
+interface AuthState {
   isAuthenticated: boolean;
   isAuthenticating: boolean;
   hasCheckedAuth: boolean;
   accessToken: null | string;
   user: UserProp | null;
   message: Message;
-  isLoading: boolean;
 }
 
-const initialState: authState = {
+const initialState: AuthState = {
   isAuthenticated: false,
   isAuthenticating: true,
   hasCheckedAuth: false,
@@ -28,7 +27,6 @@ const initialState: authState = {
     type: "",
     message: "",
   },
-  isLoading: true,
 };
 
 export const authSlice = createSlice({
@@ -38,22 +36,18 @@ export const authSlice = createSlice({
     setIsAuthenticated: (state, action: PayloadAction<boolean>) => {
       state.isAuthenticated = action.payload;
     },
-
     setIsAuthenticating: (state, action: PayloadAction<boolean>) => {
-      state.isAuthenticating = action.payload
+      state.isAuthenticating = action.payload;
     },
-
     setAccessToken: (state, action: PayloadAction<null | string>) => {
-      state.accessToken = action.payload
+      state.accessToken = action.payload;
     },
-
     setUser: (state, action: PayloadAction<UserProp | null>) => {
       state.user = action.payload;
     },
-
     setMessage: (state, action: PayloadAction<Message>) => {
-      state.message = action.payload
-    }
+      state.message = action.payload;
+    },
   },
 
   extraReducers: (builder) => {
@@ -61,29 +55,60 @@ export const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.isAuthenticated = true;
+        state.hasCheckedAuth = true; 
       })
+
       .addCase(restoreSession.pending, (state) => {
         state.isAuthenticating = true;
+        state.hasCheckedAuth = false;
       })
       .addCase(restoreSession.fulfilled, (state, action) => {
         state.isAuthenticating = false;
         state.isAuthenticated = true;
         state.user = action.payload;
-        state.hasCheckedAuth = true; 
+        state.hasCheckedAuth = true;
       })
       .addCase(restoreSession.rejected, (state) => {
         state.isAuthenticating = false;
         state.isAuthenticated = false;
         state.user = null;
+        state.hasCheckedAuth = true;
+      })
+
+      .addCase(login.pending, (state) => {
+        state.isAuthenticating = true;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.isAuthenticating = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.hasCheckedAuth = true; 
+      })
+      .addCase(login.rejected, (state) => {
+        state.isAuthenticating = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.hasCheckedAuth = true; 
+      })
+
+
+      .addCase(logout.fulfilled, (state) => {
+        state.isAuthenticating = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.accessToken = null;
         state.hasCheckedAuth = true; 
       });
-  }
-})
+  },
+});
 
 export const {
-  setIsAuthenticated, setIsAuthenticating, setAccessToken, setUser, setMessage
+  setIsAuthenticated,
+  setIsAuthenticating,
+  setAccessToken,
+  setUser,
+  setMessage,
 } = authSlice.actions;
 
-const authReducer = authSlice.reducer
+const authReducer = authSlice.reducer;
 export default authReducer;
-
