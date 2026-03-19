@@ -1,49 +1,34 @@
-'use client'
-
 import Hero from "@/src/components/Hero";
 import Restate from "@/src/components/RestateComponent";
 import FoodAds from "@/src/components/FoodComponent";
 import Video from "@/src/components/Video";
-import React, { useEffect } from "react";
+import React from "react";
 import AppDownload from "@/src/components/App";
-import Radio from "@/src/components/Radio";
 import FeaturedProducts from "../components/FeaturedProducts";
-import AOS from "aos";
-
 
 const HomePage = () => {
-  useEffect(() => {
-      AOS.init({
-        once: true,
-        duration: 800,
-      });
-    }, []);
-
   return (
-    <div className="w-full flex flex-col flex-1 items-center justify-center lg:pt-20 pt-18 relative">
+    <div className="w-full flex flex-col flex-1 items-center justify-center max-relative">
+      {/* Hero renders the fixed background + a spacer div */}
       <Hero />
-      <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
-        <Restate />
-        <FoodAds />
-        <FeaturedProducts />
-      </div>
-      <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
-        <div className="w-full">
-          <h1 className="lg:text-4xl font-bold py-12 capitalize text-center">
-            Promote your Business & products <br /> Live On smileBaba TV
-          </h1>
-          <Video />
+
+      {/* Scrollable content — sits on top of the fixed hero via z-10 + white bg */}
+      <div className="max-sm:relative w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
+          <Restate />
+          <FoodAds />
+          <FeaturedProducts />
         </div>
+        <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
+          <div className="w-full">
+            <h1 className="lg:text-4xl font-bold py-12 capitalize text-center">
+              Promote your Business & products <br /> Live On smileBaba TV
+            </h1>
+            <Video />
+          </div>
+        </div>
+        <AppDownload />
       </div>
-      <AppDownload />
-      {/* <div
-        className=" fixed right-5 bottom-5 z-40 rounded-2xl"
-        data-aos="fade-up"
-        data-aos-anchor-placement="bottom-bottom"
-        data-aos-delay='300'
-      >
-        <Radio />
-      </div> */}
     </div>
   );
 };

@@ -1,9 +1,6 @@
-
 "use client";
 
-
-
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import {
   FaPlay,
   FaPause,
@@ -11,75 +8,22 @@ import {
   FaVolumeMute,
   FaHeart,
 } from "react-icons/fa";
+import { useRadio } from "./RadioContext";
 
 const Radio = () => {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const {
+    playing,
+    muted,
+    volume,
+    loading,
+    error,
+    listeners,
+    togglePlay,
+    toggleMute,
+    setVolume,
+  } = useRadio();
 
-  const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [volume, setVolume] = useState(0.7);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-
-  const [listeners, setListeners] = useState(1280);
-  const [track, setTrack] = useState("Live Marketplace Vibes");
-
-  const streamUrl = "https://video2.getstreamhosting.com:2020/stream/8244";
-
-  // 🎧 Persist play state
-  useEffect(() => {
-    const saved = localStorage.getItem("radio-playing");
-    if (saved === "true") {
-      setPlaying(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("radio-playing", String(playing));
-  }, [playing]);
-
-  // 👥 Fake live listeners animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setListeners((prev) => prev + Math.floor(Math.random() * 5 - 2));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // 🔊 Volume control
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
-
-  const togglePlay = async () => {
-    if (!audioRef.current) return;
-
-    try {
-      setLoading(true);
-
-      if (playing) {
-        audioRef.current.pause();
-        setPlaying(false);
-      } else {
-        await audioRef.current.play();
-        setPlaying(true);
-      }
-    } catch (err) {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleMute = () => {
-    if (!audioRef.current) return;
-
-    audioRef.current.muted = !muted;
-    setMuted(!muted);
-  };
+  const track = "Live Marketplace Vibes";
 
   return (
     <div className="px-3">
@@ -95,11 +39,8 @@ const Radio = () => {
               Live
             </span>
           </div>
-
           <p className="text-sm font-bold truncate">SmileBaba Radio</p>
-
           <p className="text-xs text-[#A0A0A0] truncate">🎵 {track}</p>
-
           <p className="text-[11px] text-[#A0A0A0]">
             👥 {listeners.toLocaleString()} listening
           </p>
@@ -117,7 +58,6 @@ const Radio = () => {
 
         {/* CONTROLS */}
         <div className="flex flex-col items-center gap-2">
-          {/* Volume */}
           <div className="hidden md:flex items-center gap-2">
             <button
               onClick={toggleMute}
@@ -125,7 +65,6 @@ const Radio = () => {
             >
               {muted ? <FaVolumeMute /> : <FaVolumeUp />}
             </button>
-
             <input
               type="range"
               min="0"
@@ -136,8 +75,6 @@ const Radio = () => {
               className="w-20 accent-[#FFD700]"
             />
           </div>
-
-          {/* Favorite */}
           <button className="hidden md:block hover:scale-110 transition">
             <FaHeart className="text-red-500" />
           </button>
@@ -150,17 +87,11 @@ const Radio = () => {
           Connecting to live stream...
         </p>
       )}
-
       {error && (
         <p className="text-[#FF4D4D] text-xs mt-2">
           Unable to load radio stream.
         </p>
       )}
-
-      {/* AUDIO */}
-      <audio ref={audioRef} preload="none" onError={() => setError(true)}>
-        <source src={streamUrl} type="audio/mpeg" />
-      </audio>
     </div>
   );
 };

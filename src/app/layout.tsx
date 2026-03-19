@@ -4,6 +4,7 @@ import { Outfit } from "next/font/google";
 import Head from "next/head";
 import { ToastContainer } from "react-toastify";
 import LayoutWrapper from "@/src/components/LayoutShell";
+import { RadioProvider } from "@/src/components/RadioContext";
 
 
 const outfit = Outfit({
@@ -32,7 +33,9 @@ export default function RootLayout({
       </Head>
       <body className={`relative min-h-screen ${outfit.className}`}>
         <ToastContainer />
-        <LayoutWrapper>{children}</LayoutWrapper>
+        <RadioProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </RadioProvider>
       </body>
     </html>
   );
