@@ -561,7 +561,7 @@ export const assets = {
       },
 
       {
-        id: "prod008",
+        id: "prod0032348",
         title: "Chocolate Cake",
         description: "Fresh baked chocolate cake",
         price: 40,

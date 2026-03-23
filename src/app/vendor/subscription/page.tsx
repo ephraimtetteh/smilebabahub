@@ -1,12 +1,12 @@
 import React from 'react'
-import VendorSettings from '../(components)/VendorSettings'
+import VendorSubscription from '../(components)/VendorSubscription';
 
 const page = () => {
   return (
     <article className="bg-gray-50 flex flex-row items-center justify-start gap-4 py-8 px-8 border-gray-200 border">
-      <VendorSettings />
+      <VendorSubscription />
     </article>
-  )
+  );
 }
 
 export default page
