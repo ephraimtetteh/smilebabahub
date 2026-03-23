@@ -31,7 +31,8 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const pathName = usePathname();
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.cartItems);
-  const hideNavFooter = pathName.startsWith("/auth");
+  const authPath = pathName.startsWith("/auth");
+  const vendor = pathName.startsWith('/vendor')
   const hasRun = React.useRef(false);
 
 
@@ -57,10 +58,10 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const navBarDispaly = () => {
     switch (true) {
       case pathName.startsWith("/vendor"):
-        return !hideNavFooter;
+        return !authPath;
 
       default:
-        return !hideNavFooter ? <Navbar /> : null;
+        return !authPath ? <Navbar /> : null;
     }
   }
 
@@ -68,7 +69,7 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
     <>
       {navBarDispaly()}
       {children}
-      {!hideNavFooter && <Footer />}
+      {!authPath && !vendor && <Footer />}
     </>
   );
 };
