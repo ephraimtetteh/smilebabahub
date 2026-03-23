@@ -11,6 +11,7 @@ import AOS from "aos";
 import SearchBar from "@/src/components/SearchBar";
 import MarketplaceSearch from "@/src/components/NewSearch";
 import { Products } from "@/src/constants/data";
+import Video from "@/src/components/Video";
 
 
 const FoodPage = () => {
@@ -45,6 +46,7 @@ const FoodPage = () => {
           ))
         )}
       </div>
+      <Video />
     </div>
   );
 };

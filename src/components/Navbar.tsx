@@ -44,11 +44,11 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-[100] transition-all duration-300 max-sm:rounded-t-2xl
+      className={`fixed top-0 left-0 w-full z-[100] transition-all duration-300
       ${
         isScrolled
           ? "bg-black/70 backdrop-blur-md shadow-lg py-3"
-          : "bg-[#1a1a1a] py-5 "
+          : "bg-[#1a1a1a] py-3"
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6">

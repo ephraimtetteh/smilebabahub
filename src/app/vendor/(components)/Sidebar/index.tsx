@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { assets } from "@/src/assets/assets";
 import Image from "next/image";
+import Radio from "@/src/components/Radio";
 
 interface SidebarLinkPorps {
   href: string;
@@ -68,13 +69,15 @@ const Sidebar = () => {
     <div className={sidebarClassNames}>
       {/* top logo */}
       <div
-        className={`flex gap-3 justify-between md:justify-normal items-center pt-8 ${isSidebarCollapsed ? "px-5 " : "px-8"}`}
+        className={`flex gap-1 justify-between md:justify-normal items-center pt-8 ${isSidebarCollapsed ? "px-5 " : "px-8"}`}
       >
-        <Image src={assets.logo} alt="" />
+        <Link href={'/'}>
+          <Image src={assets.logo} alt="" />
+        </Link>
         <h1
-          className={`font-extrabold text-2xl text-yellow-500 ${isSidebarCollapsed ? "hidden" : "block"}`}
+          className={`font-extrabold text-sm text-yellow-500 ${isSidebarCollapsed ? "hidden" : "block"}`}
         >
-          SBH
+          Smilebaba Hub
         </h1>
         <button
           className="md:hidden px-3 py-3 bg-gray-100 rounded-full hover:bg-blue-100 "
@@ -128,6 +131,10 @@ const Sidebar = () => {
           label="Settings"
           isCollapsed={isSidebarCollapsed}
         />
+
+        <div className={`${isSidebarCollapsed ? "hidden" : "block"} mt-5`}>
+          <Radio />
+        </div>
       </div>
 
       {/* footer */}

@@ -24,9 +24,9 @@ const Navbar = () => {
   };
 
   return (
-    <div className="flex justify-between items-center w-full mb-7">
+    <div className="w-full sticky top-0 backdrop-blur bg-white/80 flex justify-between items-center px-4 py-3 shadow-sm mb-6">
       {/* left side */}
-      <div className="flex justify-between items-center gap-5">
+      <div className="flex items-center gap-5">
         <button
           className="px-3 py-3 bg-gray-300 rounded-full hover:bg-blue-100"
           onClick={toggleSidebarCollapsed}
@@ -34,41 +34,47 @@ const Navbar = () => {
           <Menu className="w-4 h-4" />
         </button>
 
-        <div className="relative ">
+        <div className="relative">
           <input
             type="search"
-            placeholder="start type to search groups and products"
-            className="pl-10 pr-4 py-2 w-50 md:w-80 border border-gray-300 bg-white rounded-lg focus:outline-none focus:border-blue-500"
+            placeholder="Start typing to search..."
+            className="pl-10 pr-4 py-2 w-40 md:w-80 border border-gray-300 bg-white rounded-lg focus:outline-none focus:border-blue-500"
           />
 
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <BellIcon className="text-gray-500 " size={20} />
+            <BellIcon className="text-gray-500" size={18} />
           </div>
         </div>
       </div>
 
       {/* right side */}
-      <div className="flex justify-between items-center gap-5">
-        <div className="hidden md:flex justify-between items-center gap-5">
-          <div>
-            <button onClick={toggleDarkMode}>
-              <Sun className="cursor-pointer text-gray-500" size={24} />
-            </button>
-          </div>
+      <div className="flex items-center gap-5">
+        <div className="hidden md:flex items-center gap-5">
+          {/* dark mode */}
+          <button onClick={toggleDarkMode}>
+            <Sun className="cursor-pointer text-gray-500" size={22} />
+          </button>
+
+          {/* notifications */}
           <div className="relative">
-            <Bell className="cursor-pointer text-gray-500" size={23} />
-            <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-[0.4rem] py-1 text-xs font-semibold leading-none text-red-100 bg-red-400 rounded-full">
+            <Bell className="cursor-pointer text-gray-500" size={22} />
+            <span className="absolute -top-2 -right-2 px-[0.4rem] py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
               0
             </span>
           </div>
-          <hr className="w-0 h-7 border border-solid border1 border-gray-300 mx-3" />
+
+          <hr className="h-6 border-gray-300" />
+
+          {/* profile */}
           <div className="flex items-center gap-3 cursor-pointer">
             <div className="w-9 h-9">
-              <Image src={assets.profile_icon} alt="" />
-            </div>{" "}
+              <Image src={assets.profile_icon} alt="profile" />
+            </div>
             <span className="font-semibold">Ephraim</span>
           </div>
         </div>
+
+        {/* settings */}
         <Link href={"/settings"}>
           <Settings className="cursor-pointer text-gray-500" size={24} />
         </Link>

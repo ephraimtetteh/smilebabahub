@@ -5,29 +5,31 @@ import Radio from "./Radio";
 const Hero = () => {
   return (
     <>
-      {/* FIXED HERO — stays in place while page scrolls beneath it */}
-      <div className=" relative max-sm:fixed max-sm:top-0 max-sm:left-0 w-full h-[40vh] sm:h-[40vh] lg:h-[60vh] bg-[#ffd700] overflow-hidden z-20">
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-4 sm:px-8">
-          <div className="max-w-3xl text-center pt-20 max-sm:pt-24">
-            <h3 className="text-xl sm:text-4xl lg:text-6xl font-semibold text-black/80 leading-tight capitalize">
-              Find food, homes <br className="hidden sm:block" />
-              & everything you need —
-              <br className="hidden sm:block" />
-              all in one place
-            </h3>
-          </div>
+      <>
+        {/* HERO */}
+        <div className="fixed sm:relative top-0 left-0 w-full z-20 bg-[#ffd700]">
+          <div className="flex flex-col items-center justify-center px-4 sm:px-8 py-16 sm:py-20 lg:py-28 text-center">
+            {/* TEXT */}
+            <div className="max-w-3xl">
+              <h3 className="text-2xl sm:text-4xl lg:text-6xl font-semibold text-black/80 leading-tight capitalize">
+                Find food, homes <br className="hidden sm:block" />
+                & everything you need —
+                <br className="hidden sm:block" />
+                all in one place
+              </h3>
+            </div>
 
-          <div className="w-full mt-2 pb-4 flex justify-center">
-            <div className="w-full max-w-5xl max-sm:mb-5">
+            {/* SEARCH + RADIO */}
+            <div className="w-full max-w-5xl mt-6 space-y-4">
               <MarketplaceSearch />
               <Radio />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* SPACER — reserves the hero's height so content starts below it */}
-      <div className="max-sm:h-[40vh] w-full shrink-0" />
+        {/* SPACER (only for mobile) */}
+        <div className="block sm:hidden h-[350px]" />
+      </>
     </>
   );
 };

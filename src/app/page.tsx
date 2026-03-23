@@ -16,16 +16,16 @@ const HomePage = () => {
       <div className="max-sm:relative w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
         <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
           <Restate />
+          <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
+            <div className="w-full">
+              <h1 className="lg:text-4xl font-bold py-12 capitalize text-center">
+                Promote your Business & products <br /> Live On smileBaba TV
+              </h1>
+              <Video />
+            </div>
+          </div>
           <FoodAds />
           <FeaturedProducts />
-        </div>
-        <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
-          <div className="w-full">
-            <h1 className="lg:text-4xl font-bold py-12 capitalize text-center">
-              Promote your Business & products <br /> Live On smileBaba TV
-            </h1>
-            <Video />
-          </div>
         </div>
         <AppDownload />
       </div>

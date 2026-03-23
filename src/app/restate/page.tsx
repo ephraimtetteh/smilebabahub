@@ -3,6 +3,7 @@
 import FeaturedCard from '@/src/components/FeaturedCard';
 import NewLayout from '@/src/components/NewLayout';
 import Radio from '@/src/components/Radio';
+import Video from '@/src/components/Video';
 import { Products } from '@/src/constants/data';
 
 
@@ -31,6 +32,7 @@ return (
         ))
       )}
     </div>
+    <Video />
   </div>
 );
     }
