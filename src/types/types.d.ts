@@ -69,6 +69,12 @@ type CategoryNode = {
 
 type BillingPlan = "monthly" | "yearly";
 
+export type SubscriptionPrice = {
+  plan: string;
+  duration: "monthly" | "yearly";
+  price: number;
+};
+
 interface SubscriptionComponentProps {
   plan: "monthly" | "yearly";
   isActive: boolean;
@@ -85,6 +91,7 @@ interface SubscriptionComponentProps {
   }[];
   tile: string;
   includes: IncludeItem[];
+  localPrice?: string;
 }
 
 export interface IncludeItem {
@@ -134,20 +141,6 @@ declare interface NavbarLinkPorps {
   label: string;
 }
 
-// export interface SellFormData {
-//   title: string;
-//   category: string;
-//   categoryChild: string;
-//   images: (File | null)[];
-
-//   region: string;
-//   city: string;
-//   description: string;
-//   phone: string;
-//   price: string;
-//   name: string;
-// }
-
 
 
 export interface SellFormData {
@@ -187,16 +180,11 @@ export interface LoginResponseProp {
   user: UserProp;
 }
 
-export interface RegisterResponseProp {
+export type RegisterResponseProp = {
   message: string;
-  user: {
-    username: string;
-    email: string;
-    phone: string;
-    role: string;
-    profilePicture?: string;
-  };
-}
+  user: UserProp;
+};
+
 
 declare interface CartItemProp {
   id?: string;
@@ -208,16 +196,29 @@ declare interface CartItemProp {
   status?: 'pending' | 'delivered' | 'cancelled'
 }
 
-declare interface UserProp {
-  username?: string;
-  email?: string;
-  phone?: string;
-  role?: string;
-  country?: string;
+export type UserProp = {
+  _id?: string;
+  username: string;
+  email: string;
+  phone: string;
+  role: "guest" | "vendor" | "admin";
+  city?: string;
   state?: string;
   profilePicture?: string;
   cartItems?: CartItemProp[];
-}
+  subscription?: {
+    plan: string;
+    billingCycle: string;
+    price: number;
+    currency: string;
+    startedAt: string;
+    expiresAt: string;
+  } | null;
+  country?: string;
+  currency?: "GHS" | "NGN";
+  symbol?: string;
+  locale?: string;
+};
 
 
 declare interface CardComponentProps {

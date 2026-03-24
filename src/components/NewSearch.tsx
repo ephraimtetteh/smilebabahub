@@ -73,7 +73,7 @@ export default function MarketplaceSearch() {
           >
             {/* SEARCH */}
             <div className="flex flex-col p-4 flex-1 hover:bg-gray-100">
-              <label className="text-xs text-gray-500">Search</label>
+              <label className="text-xs text-gray-500 ">Search</label>
 
               <input
                 type="text"

@@ -23,10 +23,7 @@ const initialState: AuthState = {
   hasCheckedAuth: false,
   accessToken: null,
   user: null,
-  message: {
-    type: "",
-    message: "",
-  },
+  message: { type: "", message: "" },
 };
 
 export const authSlice = createSlice({
@@ -52,12 +49,14 @@ export const authSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
+      // ── Register ──
       .addCase(register.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.isAuthenticated = true;
-        state.hasCheckedAuth = true; 
+        state.hasCheckedAuth = true;
       })
 
+      // ── Restore session (browser refresh) ──
       .addCase(restoreSession.pending, (state) => {
         state.isAuthenticating = true;
         state.hasCheckedAuth = false;
@@ -65,7 +64,7 @@ export const authSlice = createSlice({
       .addCase(restoreSession.fulfilled, (state, action) => {
         state.isAuthenticating = false;
         state.isAuthenticated = true;
-        state.user = action.payload;
+        state.user = action.payload; // includes currency/country
         state.hasCheckedAuth = true;
       })
       .addCase(restoreSession.rejected, (state) => {
@@ -75,29 +74,30 @@ export const authSlice = createSlice({
         state.hasCheckedAuth = true;
       })
 
+      // ── Login ──
       .addCase(login.pending, (state) => {
         state.isAuthenticating = true;
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isAuthenticating = false;
         state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.hasCheckedAuth = true; 
+        state.user = action.payload.user; // includes currency/country
+        state.hasCheckedAuth = true;
       })
       .addCase(login.rejected, (state) => {
         state.isAuthenticating = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.hasCheckedAuth = true; 
+        state.hasCheckedAuth = true;
       })
 
-
+      // ── Logout ──
       .addCase(logout.fulfilled, (state) => {
         state.isAuthenticating = false;
         state.isAuthenticated = false;
         state.user = null;
         state.accessToken = null;
-        state.hasCheckedAuth = true; 
+        state.hasCheckedAuth = true;
       });
   },
 });

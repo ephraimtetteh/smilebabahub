@@ -6,17 +6,45 @@ import Button from "@/src/components/Button";
 import { packages } from "@/src/constants/subscription";
 import SubscriptionComponent from "@/src/components/SubscriptionComponent";
 import { SubscriptionPlanProps } from "@/src/types/types";
-import { consumeReturnState } from "@/src/hooks/useSubscriptionGuard"; // ← only the helper, NOT the guard hook
+import { consumeReturnState } from "@/src/hooks/useSubscriptionGuard";
 import axiosInstance from "@/src/lib/api/axios";
+import { useAppSelector } from "../redux";
+
+// ── Currency config ────────────────────────────────────────────────────────
+// Mirrors PRICING in config/pricing.js — keeps frontend display in sync
+const PRICES: Record<string, Record<string, Record<string, number>>> = {
+  Basic: { monthly: { GHS: 0, NGN: 0 }, yearly: { GHS: 0, NGN: 0 } },
+  standard: {
+    monthly: { GHS: 49.99, NGN: 29999 },
+    yearly: { GHS: 599.88, NGN: 359880 },
+  },
+  popular: {
+    monthly: { GHS: 74.99, NGN: 44999 },
+    yearly: { GHS: 899.99, NGN: 539994 },
+  },
+  premium: {
+    monthly: { GHS: 99.99, NGN: 59999 },
+    yearly: { GHS: 1199.0, NGN: 719400 },
+  },
+};
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  GHS: "₵",
+  NGN: "₦",
+};
 
 const Subscription = ({
   selectedPlanId,
   onPlanSelect,
 }: SubscriptionPlanProps) => {
-  
   const router = useRouter();
   const params = useSearchParams();
   const isRenew = params.get("renew") === "1";
+
+  // ── Read currency from Redux (set from user's IP on login) ────────────────
+  const userCurrency =
+    useAppSelector((state) => state.auth.user?.currency) ?? "GHS";
+  const userSymbol = CURRENCY_SYMBOLS[userCurrency] ?? "₵";
 
   const [plan, setPlan] = useState<"monthly" | "yearly">("monthly");
   const [showSummary, setShowSummary] = useState(false);
@@ -34,30 +62,36 @@ const Subscription = ({
   };
 
   const activePkg = packages.find((p) => p.id === activePlanId);
-  const priceData = activePkg?.prices.find((p) => p.duration === plan);
+
+  // Pull price for the active plan/cycle/currency
+  const activePrice = PRICES[activePlanId]?.[plan]?.[userCurrency] ?? 0;
+
+  const formatPrice = (planId: string, cycle: string) => {
+    const amount = PRICES[planId]?.[cycle]?.[userCurrency];
+    if (amount === undefined) return "—";
+    if (amount === 0) return "Free";
+    return `${userSymbol}${amount.toLocaleString()}`;
+  };
 
   const handlePayNow = async () => {
     setError(null);
     setLoading(true);
 
     try {
-      // Read where the user was trying to go before being sent here
       const { returnUrl } = consumeReturnState();
 
       const res = await axiosInstance.post("/payments/initialize", {
         planId: activePlanId,
         billingCycle: plan,
-        currency: "GHS",
+        currency: userCurrency, // ✅ send user's detected currency
         returnUrl: returnUrl ?? "/vendor/dashboard",
       });
 
-      // Free plan — backend returns { free: true, redirectUrl }
       if (res.data.free) {
         router.push(res.data.redirectUrl + "?subscribed=1");
         return;
       }
 
-      // Paid plan — hand off to Flutterwave
       window.location.href = res.data.paymentLink;
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
@@ -78,6 +112,12 @@ const Subscription = ({
             ⚠️ Your subscription has expired. Renew to reactivate your listings.
           </div>
         )}
+
+        {/* Currency indicator */}
+        <div className="mb-2 px-3 py-1 bg-white/10 rounded-full text-xs font-medium opacity-70">
+          Prices shown in {userCurrency} ({userSymbol})
+        </div>
+
         <h1 className="py-2 font-bold text-2xl sm:text-3xl capitalize">
           Subscription packages
         </h1>
@@ -111,6 +151,8 @@ const Subscription = ({
               plan={plan}
               isActive={isActive}
               isPopular={item.popular}
+              // Pass the localised price so SubscriptionComponent can display it
+              localPrice={formatPrice(item.id, plan)}
               onClick={() => handlePlanSelect(item.id)}
             />
           );
@@ -151,28 +193,25 @@ const Subscription = ({
                 value={activePkg?.packageName ?? activePlanId}
               />
               <Row label="Billing" value={plan} />
-              <Row label="Price" value={`GHS ${priceData?.price ?? "—"}`} />
-              {plan === "yearly" && (
-                <div className="text-xs text-green-400 bg-green-900/30 rounded-lg px-3 py-2">
-                  🎉 You save{" "}
-                  {(() => {
-                    const monthly =
-                      activePkg?.prices.find((p) => p.duration === "monthly")
-                        ?.price ?? 0;
-                    const yearly = priceData?.price ?? 0;
-                    const saving = Number(monthly) * 12 - Number(yearly);
-                    return saving > 0
-                      ? `GHS ${saving.toFixed(2)}`
-                      : "with yearly billing";
-                  })()}
-                </div>
-              )}
+              <Row label="Price" value={formatPrice(activePlanId, plan)} />
+              <Row label="Currency" value={`${userCurrency} (${userSymbol})`} />
+              {plan === "yearly" &&
+                (() => {
+                  const monthly =
+                    PRICES[activePlanId]?.monthly?.[userCurrency] ?? 0;
+                  const yearly =
+                    PRICES[activePlanId]?.yearly?.[userCurrency] ?? 0;
+                  const saving = monthly * 12 - yearly;
+                  return saving > 0 ? (
+                    <div className="text-xs text-green-400 bg-green-900/30 rounded-lg px-3 py-2">
+                      🎉 You save {userSymbol}
+                      {saving.toLocaleString()} with yearly billing
+                    </div>
+                  ) : null;
+                })()}
             </div>
 
             <div className="flex gap-3">
-              {/* ✅ Call handlePayNow directly — no guard() here.
-                  This IS the subscription page. Wrapping with guard() would
-                  redirect non-vendors back to /subscribe (infinite loop). */}
               <button
                 onClick={handlePayNow}
                 disabled={loading}
@@ -181,7 +220,7 @@ const Subscription = ({
               >
                 {loading
                   ? "Redirecting…"
-                  : Number(priceData?.price) === 0
+                  : activePrice === 0
                     ? "Activate Free"
                     : "Pay Now"}
               </button>
