@@ -12,6 +12,7 @@ import SuccessPage from "./_component/Form4";
 import axiosInstance from "@/src/lib/api/axios";
 import { useAppSelector } from "../redux";
 import { useRouter } from "next/navigation";
+import { saveReturnState } from "@/src/hooks/useSubscriptionGuard"; // ← new
 
 const ProductUpload = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -21,9 +22,13 @@ const ProductUpload = () => {
   const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const { isAuthenticated, hasCheckedAuth } = useAppSelector(
+  const { isAuthenticated, hasCheckedAuth, user } = useAppSelector(
     (state) => state.auth,
   );
+
+  // Derived vendor check — same logic as useSubscriptionGuard
+  const isVendor = isAuthenticated && user?.role === "vendor";
+
   const router = useRouter();
 
   const [formData, setFormData] = useState<SellFormData>({
@@ -47,30 +52,28 @@ const ProductUpload = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // ✅ Save draft on every formData change (debounced)
+  // Save draft on every formData change (debounced)
   useEffect(() => {
     const timeout = setTimeout(() => {
-      // Save only serializable fields (no File objects)
       const { images, ...serializableData } = formData;
       localStorage.setItem("sellFormDraft", JSON.stringify(serializableData));
     }, 500);
-
     return () => clearTimeout(timeout);
   }, [formData]);
 
-  // ✅ Restore draft on mount
+  // Restore draft on mount
   useEffect(() => {
     const savedDraft = localStorage.getItem("sellFormDraft");
     if (savedDraft) {
       setFormData((prev) => ({
         ...prev,
         ...JSON.parse(savedDraft),
-        images: prev.images, // keep images as-is (can't restore File objects)
+        images: prev.images,
       }));
     }
   }, []);
 
-  // ✅ Restore pending upload after login and auto-submit
+  // Restore pending upload after login redirect and auto-submit
   useEffect(() => {
     const pending = localStorage.getItem("pendingUpload");
     if (pending) {
@@ -90,7 +93,6 @@ const ProductUpload = () => {
 
     try {
       const form = new FormData();
-
       form.append("title", formData.title);
       form.append("category", formData.category);
       form.append("subcategory", formData.subcategory);
@@ -123,6 +125,11 @@ const ProductUpload = () => {
       console.error(error);
       if (error.response?.status === 401) {
         toast.error("Session expired. Please log in again.");
+      } else if (error.response?.data?.code === "SUBSCRIPTION_REQUIRED") {
+        // Backend double-check caught it — redirect to subscribe
+        toast.info("A vendor subscription is required to post products.");
+        saveReturnState({ type: "post_product" });
+        router.push("/subscription");
       } else {
         toast.error("Failed to upload product");
       }
@@ -130,9 +137,9 @@ const ProductUpload = () => {
       setIsSubmitting(false);
       setUploadProgress(0);
     }
-  }, [formData, isSubmitting]);
+  }, [formData, isSubmitting, router]);
 
-  // ✅ Auto-submit after login redirect
+  // Auto-submit after login redirect
   useEffect(() => {
     if (isAuthenticated && hasRestoredUpload && !hasAutoSubmitted) {
       setHasAutoSubmitted(true);
@@ -143,22 +150,32 @@ const ProductUpload = () => {
 
   const nextStep = () => {
     const { isValid, errors } = validateForm(formData, currentStep);
-
     if (!isValid) {
       setErrors(errors);
       return;
     }
 
-    // ✅ Auth check ONLY at step 3
+    // Gate at step 2 transition (before step 3 / review + submit)
     if (currentStep === 2) {
-      if (!hasCheckedAuth) return; // wait for auth check to complete
+      if (!hasCheckedAuth) return; // wait for auth check
 
+      // 1️⃣ Not logged in → save draft and go to login
       if (!isAuthenticated) {
-        // Save draft and redirect to login
         const { images, ...serializableData } = formData;
         localStorage.setItem("pendingUpload", JSON.stringify(serializableData));
         localStorage.setItem("redirectAfterLogin", "/sell");
         router.push("/auth/login?reason=sell");
+        return;
+      }
+
+      // 2️⃣ Logged in but no vendor subscription → save state and go to subscribe
+      if (!isVendor) {
+        const { images, ...serializableData } = formData;
+        // Keep draft so the form is still populated if they come back
+        localStorage.setItem("sellFormDraft", JSON.stringify(serializableData));
+        saveReturnState({ type: "post_product" });
+        toast.info("You need a vendor subscription to post products.");
+        router.push("/subscription");
         return;
       }
     }
@@ -169,7 +186,6 @@ const ProductUpload = () => {
 
   const prevStep = () => setCurrentStep((prev) => prev - 1);
 
-  // ✅ Show loading while auth is being checked at step 2 transition
   if (currentStep === 2 && !hasCheckedAuth) {
     return <div className="p-10 text-center">Loading...</div>;
   }

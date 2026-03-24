@@ -545,3 +545,31 @@ marketplaceSlice
 
 
   ANS3WEZPK3TC78ZTVL6U2XD1
+
+
+
+
+
+
+
+
+
+
+
+
+  subscription-system/
+├── config/pricing.js              ← Single source of truth for all prices
+├── models/
+│   ├── notification.js            ← Notification documents (7/3/1 day expiry)
+│   └── purchase.js                ← Purchase history records
+├── controllers/paymentController.js  ← All payment logic + history + notifications
+├── middleware/requireVendor.js    ← Blocks non-vendors at API level
+├── cron/subscriptionExpiry.js     ← Daily job: fires 7/3/1 day + expired alerts
+├── routes/paymentRoutes.js        ← All payment endpoints
+├── hooks/
+│   ├── useSubscriptionGuard.ts    ← Frontend: intercepts actions, saves returnUrl
+│   └── useResumeAction.ts         ← Frontend: resumes after payment success
+├── pages/
+│   ├── Subscription.tsx           ← Updated subscribe page with real API call
+│   └── PurchaseHistory.tsx        ← Customer purchase history page
+└── components/NotificationBell.tsx  ← Bell icon with unread badge + dropdown

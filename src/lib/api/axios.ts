@@ -1,37 +1,50 @@
 import axios from "axios";
-import { setAccessToken } from "../features/auth/authSlice";
 import { safeStorage } from "@/src/utils/safeStorage";
 
-
 const axiosInstance = axios.create({
-  baseURL: "/api",
+  // ✅ Point directly to Express — NOT "/api" (that's Next.js)
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/smilebaba",
   withCredentials: true,
 });
 
-
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: {
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
-    else prom.resolve(token);
+    else prom.resolve(token!);
   });
-
   failedQueue = [];
 };
 
+// ── Request interceptor ────────────────────────────────────────────────────
+// Reads the token fresh from safeStorage on every request so we always
+// send the latest token (critical after a refresh)
+axiosInstance.interceptors.request.use((config) => {
+  const token = safeStorage.get("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
+// ── Response interceptor ───────────────────────────────────────────────────
 axiosInstance.interceptors.response.use(
   (response) => response,
+
   async (error) => {
     const originalRequest = error.config;
 
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refresh")
+      !originalRequest.url?.includes("/auth/refresh")
     ) {
+      // Queue concurrent requests while refresh is in progress
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({
@@ -49,79 +62,38 @@ axiosInstance.interceptors.response.use(
 
       try {
         const res = await axiosInstance.post("/auth/refresh");
-        console.log("REFRESH RESPONSE:", res.data);
-
         const newAccessToken = res.data.accessToken;
 
+        // ✅ Save first — request interceptor will pick it up on retry
         safeStorage.set("accessToken", newAccessToken);
 
         processQueue(null, newAccessToken);
 
+        // ✅ Also set explicitly on the retried request as a safety net
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
         return axiosInstance(originalRequest);
       } catch (err) {
         processQueue(err, null);
+        safeStorage.remove("accessToken");
 
         const isProductRoute = originalRequest.url?.includes("/products");
-
         if (isProductRoute) {
-          // Save their work before redirecting
-          const formDataStr = localStorage.getItem("sellFormDraft");
-          if (formDataStr) {
-            localStorage.setItem("pendingUpload", formDataStr);
-          }
+          const draft = localStorage.getItem("sellFormDraft");
+          if (draft) localStorage.setItem("pendingUpload", draft);
           window.location.href = "/auth/login?reason=session_expired";
         } else {
           window.location.href = "/auth/login";
         }
 
         return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
       }
     }
 
     return Promise.reject(error);
   },
 );
-
-
-axiosInstance.interceptors.request.use((config) => {
-  const token = safeStorage.get("accessToken");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-
-
-// axiosInstance.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config;
-
-//     if (
-//       error.response?.status === 401 &&
-//       !originalRequest._retry &&
-//       !originalRequest.url.includes("/auth/refresh")
-//     ) {
-//       originalRequest._retry = true;
-
-//       try {
-//         await axiosInstance.post("/auth/refresh");
-        
-//         return axiosInstance(originalRequest);
-//       } catch (refreshError) {
-//         window.location.replace("/auth/login");
-//       }
-//     }
-
-//     return Promise.reject(error);
-//   },
-// );
-
-
-
 
 export default axiosInstance;
