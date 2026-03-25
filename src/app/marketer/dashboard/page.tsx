@@ -62,8 +62,7 @@ function getFirstName(name: string) {
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/smilebaba";
 
-// Plain fetch helper for marketer routes — bypasses the axiosInstance
-// request interceptor which always overwrites Authorization with the vendor token
+
 async function marketerFetch(path: string, options: RequestInit = {}) {
   const token = safeStorage.get("marketerAccessToken");
   const res = await fetch(`${API_BASE}${path}`, {
@@ -114,10 +113,10 @@ export default function MarketerDashboard() {
       setData(res);
       setPayoutForm((p) => ({
         ...p,
-        payoutMethod: res.data.marketer.payoutMethod ?? "",
-        accountName: res.data.marketer.payoutDetails?.accountName ?? "",
-        accountNumber: res.data.marketer.payoutDetails?.accountNumber ?? "",
-        bankOrNetwork: res.data.marketer.payoutDetails?.bankOrNetwork ?? "",
+        payoutMethod: res.marketer.payoutMethod ?? "",
+        accountName: res.marketer.payoutDetails?.accountName ?? "",
+        accountNumber: res.marketer.payoutDetails?.accountNumber ?? "",
+        bankOrNetwork: res.marketer.payoutDetails?.bankOrNetwork ?? "",
       }));
     } catch {
       setError("Session expired. Please log in again.");
