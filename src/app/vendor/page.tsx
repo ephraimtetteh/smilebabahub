@@ -8,7 +8,7 @@ import ProtectedRoute from '@/src/components/ProtectRoute'
 
 const page = () => {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRole="vendor">
       <div className="px-3">
         <FilterCards />
         <PerformanceMetrics />

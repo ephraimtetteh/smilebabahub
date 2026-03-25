@@ -283,3 +283,7 @@ export interface FoodDetails {
   isVegetarian?: boolean;
   ingredients?: string[];
 }
+
+
+
+
