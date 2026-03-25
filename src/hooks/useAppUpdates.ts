@@ -21,9 +21,7 @@ export function useAppUpdates() {
 
     const connect = () => {
       // EventSource doesn't support custom headers — the endpoint is public
-      const es = new EventSource(`${API_BASE}/updates/app`, {
-        withCredentials: true,
-      });
+      const es = new EventSource("/api/updates/app", { withCredentials: true });
       esRef.current = es;
 
       es.addEventListener("app-update", (event) => {

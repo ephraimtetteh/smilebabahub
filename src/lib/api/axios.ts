@@ -2,7 +2,7 @@ import axios from "axios";
 import { safeStorage } from "@/src/utils/safeStorage";
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/smilebaba",
+  baseURL: "/api",
   withCredentials: true,
 });
 
