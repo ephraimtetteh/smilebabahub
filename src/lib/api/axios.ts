@@ -2,7 +2,6 @@ import axios from "axios";
 import { safeStorage } from "@/src/utils/safeStorage";
 
 const axiosInstance = axios.create({
-  // ✅ Point directly to Express — NOT "/api" (that's Next.js)
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/smilebaba",
   withCredentials: true,
 });
@@ -22,8 +21,8 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 // ── Request interceptor ────────────────────────────────────────────────────
-// Reads the token fresh from safeStorage on every request so we always
-// send the latest token (critical after a refresh)
+// httpOnly cookies can't be read by JS in production, so we send
+// the token via Authorization header from safeStorage on every request
 axiosInstance.interceptors.request.use((config) => {
   const token = safeStorage.get("accessToken");
   if (token) {
@@ -44,7 +43,6 @@ axiosInstance.interceptors.response.use(
       !originalRequest._retry &&
       !originalRequest.url?.includes("/auth/refresh")
     ) {
-      // Queue concurrent requests while refresh is in progress
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({
@@ -62,16 +60,12 @@ axiosInstance.interceptors.response.use(
 
       try {
         const res = await axiosInstance.post("/auth/refresh");
-        const newAccessToken = res.data.accessToken;
+        const newToken = res.data.accessToken;
 
-        // ✅ Save first — request interceptor will pick it up on retry
-        safeStorage.set("accessToken", newAccessToken);
+        safeStorage.set("accessToken", newToken);
+        processQueue(null, newToken);
 
-        processQueue(null, newAccessToken);
-
-        // ✅ Also set explicitly on the retried request as a safety net
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axiosInstance(originalRequest);
       } catch (err) {
         processQueue(err, null);

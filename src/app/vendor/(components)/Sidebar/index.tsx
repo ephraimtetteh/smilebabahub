@@ -5,6 +5,7 @@ import {
   Bell,
   CircleDollarSign,
   Clipboard,
+  HistoryIcon,
   Layout,
   LucideIcon,
   Menu,
@@ -123,6 +124,12 @@ const Sidebar = () => {
           href="/vendor/subscription"
           icon={CircleDollarSign}
           label="Subscription"
+          isCollapsed={isSidebarCollapsed}
+        />
+        <SidebarLink
+          href="/vendor/history"
+          icon={HistoryIcon}
+          label="History"
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink

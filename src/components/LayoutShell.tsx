@@ -6,13 +6,11 @@ import StoreProvider, { useAppDispatch, useAppSelector } from "../app/redux";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import Script from "next/script";
-import Video from "./Video";
-import Radio from "./Radio";
 import AOS from "aos";
 import { calculateTotals } from "../lib/features/cart/cartSlice";
 import { restoreSession } from "../lib/features/auth/authActions";
 import AuthGate from "../utils/AuthGate";
-import useAutoRefresh from "../utils/useAutoRefresh";
+import { useAppUpdates } from "@/src/hooks/useAppUpdates";
 
 
 export const AppInitializer = ({ children }: { children: React.ReactNode }) => {
@@ -29,11 +27,9 @@ export const AppInitializer = ({ children }: { children: React.ReactNode }) => {
 
 const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const pathName = usePathname();
-  const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.cartItems);
   const authPath = pathName.startsWith("/auth");
   const vendor = pathName.startsWith('/vendor')
-  const hasRun = React.useRef(false);
 
 
   useEffect(() => {
@@ -43,14 +39,6 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
 
     return () => clearTimeout(timeout);
   }, [cartItems]);
-  
-
-  // useEffect(() => {
-  //   if (!hasRun.current) {
-  //     dispatch(restoreSession());
-  //     hasRun.current = true;
-  //   }
-  // }, [dispatch]);
 
 
 
@@ -76,7 +64,6 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
 
 
 const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
-  const pathName = usePathname();
 
   useEffect(() => {
     AOS.init({
@@ -85,8 +72,7 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     });
   }, []);
 
-
-
+  useAppUpdates();
 
   return (
     <>
@@ -99,30 +85,6 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                 src="https://video2.getstreamhosting.com:2020/dist/widgets.js"
                 strategy="afterInteractive"
               />
-
-              {/* {pathName !== "/" &&
-                pathName !== "/sell" &&
-                pathName !== "/auth" && (
-                  <div
-                    className="hidden md:block fixed bottom-5 left-25 z-40 rounded-2xl"
-                    data-aos="fade-up"
-                    data-aos-anchor-placement="bottom-bottom"
-                    data-aos-delay="1000"
-                  >
-                    <Video />
-                  </div>
-                )} */}
-
-              {/* {pathName !== "/sell" && pathName !== "/auth" && (
-                <div
-                  className=" fixed right-5 bottom-5 z-40 rounded-2xl"
-                  data-aos="fade-up"
-                  data-aos-anchor-placement="bottom-bottom"
-                  data-aos-delay="300"
-                >
-                  <Radio />
-                </div>
-              )} */}
           </AuthGate>
             </LayoutShell>
         </AppInitializer>

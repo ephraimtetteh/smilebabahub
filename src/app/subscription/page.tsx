@@ -10,6 +10,7 @@ import { consumeReturnState } from "@/src/hooks/useSubscriptionGuard";
 import axiosInstance from "@/src/lib/api/axios";
 import { useAppSelector } from "../redux";
 
+
 // ── Currency config ────────────────────────────────────────────────────────
 // Mirrors PRICING in config/pricing.js — keeps frontend display in sync
 const PRICES: Record<string, Record<string, Record<string, number>>> = {
@@ -46,10 +47,25 @@ const Subscription = ({
     useAppSelector((state) => state.auth.user?.currency) ?? "GHS";
   const userSymbol = CURRENCY_SYMBOLS[userCurrency] ?? "₵";
 
+  // Country-prefixed endpoint — GHS → /gh | NGN → /ng | else → /intl
+  const paymentEndpoint =
+    userCurrency === "GHS"
+      ? "/payments/gh/initialize"
+      : userCurrency === "NGN"
+        ? "/payments/ng/initialize"
+        : "/payments/intl/initialize";
+
   const [plan, setPlan] = useState<"monthly" | "yearly">("monthly");
   const [showSummary, setShowSummary] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [referralCode, setReferralCode] = useState("");
+  const [referralInfo, setReferralInfo] = useState<{
+    name: string;
+    discount: number;
+  } | null>(null);
+  const [referralError, setReferralError] = useState<string | null>(null);
+  const [checkingCode, setCheckingCode] = useState(false);
 
   const [selectedPackage, setSelectedPackage] = useState(
     selectedPlanId ?? packages.find((p) => p.popular)?.id ?? packages[0].id,
@@ -73,6 +89,30 @@ const Subscription = ({
     return `${userSymbol}${amount.toLocaleString()}`;
   };
 
+  const validateReferral = async (code: string) => {
+    if (!code.trim()) {
+      setReferralInfo(null);
+      setReferralError(null);
+      return;
+    }
+    setCheckingCode(true);
+    setReferralError(null);
+    try {
+      const res = await axiosInstance.get(
+        `/marketers/referral/${code.trim()}/validate`,
+      );
+      setReferralInfo({
+        name: res.data.marketerName,
+        discount: res.data.discount,
+      });
+    } catch {
+      setReferralInfo(null);
+      setReferralError("Invalid referral code");
+    } finally {
+      setCheckingCode(false);
+    }
+  };
+
   const handlePayNow = async () => {
     setError(null);
     setLoading(true);
@@ -80,10 +120,11 @@ const Subscription = ({
     try {
       const { returnUrl } = consumeReturnState();
 
-      const res = await axiosInstance.post("/payments/initialize", {
+      const res = await axiosInstance.post(paymentEndpoint, {
         planId: activePlanId,
         billingCycle: plan,
-        currency: userCurrency, // ✅ send user's detected currency
+        currency: userCurrency,
+        referralCode: referralCode.trim() || undefined,
         returnUrl: returnUrl ?? "/vendor/dashboard",
       });
 
@@ -209,6 +250,47 @@ const Subscription = ({
                     </div>
                   ) : null;
                 })()}
+            </div>
+
+            {/* Referral code input */}
+            <div className="mt-3">
+              <label className="block text-xs text-gray-400 mb-1.5">
+                Referral code (optional)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  value={referralCode}
+                  onChange={(e) => {
+                    setReferralCode(e.target.value.toUpperCase());
+                    if (!e.target.value) {
+                      setReferralInfo(null);
+                      setReferralError(null);
+                    }
+                  }}
+                  placeholder="e.g. SMB-KWAME-4X9Z"
+                  className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-xl px-3 py-2
+                    text-white text-xs placeholder:text-gray-600
+                    focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => validateReferral(referralCode)}
+                  disabled={checkingCode || !referralCode.trim()}
+                  className="px-3 py-2 bg-white/10 text-white text-xs rounded-xl
+                    hover:bg-white/20 transition disabled:opacity-40"
+                >
+                  {checkingCode ? "…" : "Apply"}
+                </button>
+              </div>
+              {referralInfo && (
+                <p className="text-xs text-green-400 mt-1.5">
+                  ✓ Code by {referralInfo.name} · {referralInfo.discount}%
+                  discount applied
+                </p>
+              )}
+              {referralError && (
+                <p className="text-xs text-red-400 mt-1.5">{referralError}</p>
+              )}
             </div>
 
             <div className="flex gap-3">

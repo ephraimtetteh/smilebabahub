@@ -160,7 +160,7 @@ export default function PurchaseHistoryPage() {
         {!loading && purchases.length > 0 && (
           <div className="mt-6 text-center">
             <a
-              href="/subscribe"
+              href="/subscription"
               className="inline-block px-6 py-2.5 bg-[#ffc105] text-black font-bold
                 rounded-xl hover:bg-amber-400 transition text-sm"
             >
