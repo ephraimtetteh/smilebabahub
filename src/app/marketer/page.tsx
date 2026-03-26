@@ -1,41 +1,65 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useAppSelector } from "@/src/app/redux";
 
-const BENEFITS = [
-  {
-    icon: "💰",
-    title: "20% commission",
-    desc: "Earn 20% on every subscription payment made by vendors you refer. Monthly and yearly plans both count.",
-  },
-  {
-    icon: "🔁",
-    title: "Recurring income",
-    desc: "When a vendor renews their subscription, you earn again. One referral can pay you month after month.",
-  },
-  {
-    icon: "📊",
-    title: "Live dashboard",
-    desc: "Track every referral, commission, and payout in real time from your marketer dashboard.",
-  },
-  {
-    icon: "🚀",
-    title: "Instant code",
-    desc: "Your personalised referral code is generated the moment you register. Start sharing immediately.",
-  },
-  {
-    icon: "🌍",
-    title: "Ghana & Nigeria",
-    desc: "Earn in GHS or NGN depending on the vendor's location. Payouts via Mobile Money or bank transfer.",
-  },
-  {
-    icon: "🎯",
-    title: "No cap on earnings",
-    desc: "Refer as many vendors as you want. There is no limit on how much you can earn.",
-  },
-];
+// ── Currency config ────────────────────────────────────────────────────────
+type CurrencyConfig = {
+  code: string;
+  symbol: string;
+  flag: string;
+  label: string;
+  // HappySmile plan prices
+  planMonthly: number;
+  planYearly: number;
+  // Minimum payout
+  minPayout: string;
+  // Payout methods available
+  payoutNote: string;
+};
 
+const CURRENCY: Record<string, CurrencyConfig> = {
+  GHS: {
+    code: "GHS",
+    symbol: "₵",
+    flag: "🇬🇭",
+    label: "Ghana",
+    planMonthly: 74.99,
+    planYearly: 899.99,
+    minPayout: "₵50",
+    payoutNote: "MTN MoMo, Vodafone Cash, AirtelTigo Money or bank transfer",
+  },
+  NGN: {
+    code: "NGN",
+    symbol: "₦",
+    flag: "🇳🇬",
+    label: "Nigeria",
+    planMonthly: 44999,
+    planYearly: 539994,
+    minPayout: "₦5,000",
+    payoutNote: "OPay, PalmPay or bank transfer",
+  },
+};
+
+const DEFAULT_CURRENCY = CURRENCY.GHS;
+
+function useCurrency(): CurrencyConfig {
+  const userCurrency = useAppSelector((state) => state.auth.user?.currency);
+  return CURRENCY[userCurrency ?? "GHS"] ?? DEFAULT_CURRENCY;
+}
+
+// ── Earnings rows ──────────────────────────────────────────────────────────
+function earningsRows(cfg: CurrencyConfig) {
+  const commission = 0.2;
+  return [5, 20, 50].map((n) => ({
+    referrals: n,
+    monthly: `${cfg.symbol}${(cfg.planMonthly * n * commission).toLocaleString()}`,
+    yearly: `${cfg.symbol}${(cfg.planYearly * n * commission).toLocaleString()}`,
+  }));
+}
+
+// ── Static content ─────────────────────────────────────────────────────────
 const DUTIES = [
   {
     step: "01",
@@ -64,43 +88,87 @@ const DUTIES = [
   },
 ];
 
-const FAQS = [
-  {
-    q: "When do I get paid?",
-    a: "Commissions are credited to your marketer account instantly when a referred vendor's payment is confirmed. Payouts are processed weekly to your registered Mobile Money or bank account.",
-  },
-  {
-    q: "What if a vendor doesn't use my code?",
-    a: "The vendor must enter your referral code at checkout. Make sure you give them the code before they subscribe. We cannot retrospectively apply codes.",
-  },
-  {
-    q: "Do I earn on renewals?",
-    a: "Yes. Every time a vendor you referred renews their subscription, you earn 20% of that payment.",
-  },
-  {
-    q: "Is there a minimum payout?",
-    a: "Yes — GHS 50 or NGN 5,000. Earnings below this threshold roll over to the next payout cycle.",
-  },
-  {
-    q: "Can I be both a vendor and a marketer?",
-    a: "Yes. You can hold both roles. Use a separate email for your marketer account.",
-  },
-];
-
+// ── Component ──────────────────────────────────────────────────────────────
 export default function MarketerLandingPage() {
+  const cfg = useCurrency();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Benefits and FAQs memoised so they only recompute when currency changes
+  const BENEFITS = useMemo(
+    () => [
+      {
+        icon: "💰",
+        title: "20% commission",
+        desc: `Earn 20% on every subscription payment made by vendors you refer. That's ${cfg.symbol}${(cfg.planMonthly * 0.2).toFixed(2)} per HappySmile monthly referral.`,
+      },
+      {
+        icon: "🔁",
+        title: "Recurring income",
+        desc: "When a vendor renews their subscription, you earn again. One referral can pay you month after month.",
+      },
+      {
+        icon: "📊",
+        title: "Live dashboard",
+        desc: "Track every referral, commission, and payout in real time from your marketer dashboard.",
+      },
+      {
+        icon: "🚀",
+        title: "Instant code",
+        desc: "Your personalised referral code is generated the moment you register. Start sharing immediately.",
+      },
+      {
+        icon: cfg.flag,
+        title: `Earn in ${cfg.code}`,
+        desc: `All commissions are paid in ${cfg.code} (${cfg.symbol}) directly to your ${cfg.payoutNote}.`,
+      },
+      {
+        icon: "🎯",
+        title: "No cap on earnings",
+        desc: "Refer as many vendors as you want. There is no limit on how much you can earn.",
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    ],
+    [cfg.code, cfg.symbol, cfg.planMonthly, cfg.payoutNote],
+  );
+
+  const FAQS = useMemo(
+    () => [
+      {
+        q: "When do I get paid?",
+        a: `Commissions are credited instantly when a vendor's payment is confirmed. Payouts are processed weekly to your ${cfg.payoutNote}.`,
+      },
+      {
+        q: "What if a vendor doesn't use my code?",
+        a: "The vendor must enter your referral code at checkout. Make sure you give them the code before they subscribe. We cannot retrospectively apply codes.",
+      },
+      {
+        q: "Do I earn on renewals?",
+        a: "Yes. Every time a vendor you referred renews their subscription, you earn 20% of that payment.",
+      },
+      {
+        q: "Is there a minimum payout?",
+        a: `Yes — ${cfg.minPayout}. Earnings below this threshold roll over to the next payout cycle.`,
+      },
+      {
+        q: "Can I be both a vendor and a marketer?",
+        a: "Yes. You can hold both roles. Use a separate email for your marketer account.",
+      },
+      {
+        q: "What currency are commissions paid in?",
+        a: `Commissions are paid in ${cfg.code} (${cfg.symbol}) based on your registered location. Ghana marketers earn in GHS, Nigeria marketers earn in NGN.`,
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    ],
+    [cfg.code, cfg.symbol, cfg.minPayout, cfg.payoutNote],
+  );
+
+  const rows = earningsRows(cfg);
 
   return (
     <div
       className="min-h-screen bg-[#111] text-white"
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700;800&display=swap"
-        rel="stylesheet"
-      />
-
       {/* ── Nav ── */}
       <nav className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-white/5">
         <Link href="/" className="text-lg font-bold">
@@ -109,6 +177,15 @@ export default function MarketerLandingPage() {
             Marketers
           </span>
         </Link>
+
+        {/* Currency indicator */}
+        <span
+          className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500
+          bg-white/5 border border-white/10 px-3 py-1.5 rounded-full"
+        >
+          {cfg.flag} {cfg.code}
+        </span>
+
         <div className="flex items-center gap-3">
           <Link
             href="/marketer/login"
@@ -128,7 +205,6 @@ export default function MarketerLandingPage() {
 
       {/* ── Hero ── */}
       <section className="relative px-6 sm:px-12 pt-20 pb-24 overflow-hidden">
-        {/* Background glow */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px]
           bg-[#ffc105]/10 rounded-full blur-[120px] pointer-events-none"
@@ -139,7 +215,7 @@ export default function MarketerLandingPage() {
             className="inline-flex items-center gap-2 bg-[#ffc105]/10 border border-[#ffc105]/20
             text-[#ffc105] text-xs font-semibold px-4 py-1.5 rounded-full mb-6 tracking-wide"
           >
-            🤝 Join the SmileBaba Marketer Network
+            🤝 Join the SmileBaba Marketer Network · {cfg.flag} {cfg.label}
           </div>
 
           <h1
@@ -155,7 +231,9 @@ export default function MarketerLandingPage() {
             Get your unique referral code, share it with business owners, and
             earn
             <strong className="text-white"> 20% commission</strong> on every
-            subscription — with no cap on earnings.
+            subscription — paid in{" "}
+            <strong className="text-white">{cfg.code}</strong> with no cap on
+            earnings.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -166,13 +244,13 @@ export default function MarketerLandingPage() {
             >
               Register as a marketer →
             </Link>
-            <a
+            <Link
               href="#how-it-works"
               className="px-8 py-4 bg-white/5 border border-white/10 text-white font-medium
                 rounded-2xl hover:bg-white/10 transition text-sm"
             >
               How it works
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -181,7 +259,7 @@ export default function MarketerLandingPage() {
           {[
             { value: "20%", label: "Commission per sale" },
             { value: "Weekly", label: "Payout frequency" },
-            { value: "Unlimited", label: "Referral cap" },
+            { value: cfg.code, label: "Paid in" },
           ].map((s) => (
             <div
               key={s.label}
@@ -224,13 +302,13 @@ export default function MarketerLandingPage() {
                 n: "2",
                 icon: "📣",
                 title: "Refer vendors",
-                desc: "Share your code with business owners. They enter it at checkout and get 20% off their subscription.",
+                desc: `Share your code with business owners. They enter it at checkout and get 20% off their subscription.`,
               },
               {
                 n: "3",
                 icon: "💸",
                 title: "Earn & withdraw",
-                desc: "Commissions credit instantly to your dashboard. Withdraw weekly to MoMo or bank.",
+                desc: `Commissions credit instantly to your dashboard in ${cfg.code}. Withdraw weekly via ${cfg.payoutNote}.`,
               },
             ].map((s) => (
               <div
@@ -342,15 +420,16 @@ export default function MarketerLandingPage() {
             What can you earn?
           </h2>
           <p className="text-gray-400 text-sm mb-10">
-            Based on the HappySmile plan at GHS 74.99/month (our most popular)
+            Based on the HappySmile plan at{" "}
+            <span className="text-white font-semibold">
+              {cfg.symbol}
+              {cfg.planMonthly.toLocaleString()}/{cfg.code} per month
+            </span>{" "}
+            — our most popular plan {cfg.flag}
           </p>
 
           <div className="grid grid-cols-3 gap-4">
-            {[
-              { referrals: 5, monthly: "GHS 75", yearly: "GHS 900" },
-              { referrals: 20, monthly: "GHS 300", yearly: "GHS 3,600" },
-              { referrals: 50, monthly: "GHS 750", yearly: "GHS 9,000" },
-            ].map((row) => (
+            {rows.map((row) => (
               <div
                 key={row.referrals}
                 className="bg-[#1a1a1a] border border-white/8 rounded-2xl p-5 text-center"
@@ -371,6 +450,11 @@ export default function MarketerLandingPage() {
               </div>
             ))}
           </div>
+
+          {/* Currency toggle hint */}
+          <p className="text-xs text-gray-600 mt-6">
+            {cfg.flag} Amounts shown in {cfg.code} · based on your location
+          </p>
         </div>
       </section>
 
@@ -402,14 +486,17 @@ export default function MarketerLandingPage() {
                     {faq.q}
                   </span>
                   <span
-                    className={`text-[#ffc105] text-lg flex-shrink-0 transition-transform duration-200
-                    ${openFaq === i ? "rotate-45" : ""}`}
+                    className={`text-[#ffc105] text-lg flex-shrink-0 transition-transform
+                    duration-200 ${openFaq === i ? "rotate-45" : ""}`}
                   >
                     +
                   </span>
                 </button>
                 {openFaq === i && (
-                  <div className="px-5 pb-4 text-sm text-gray-400 leading-relaxed border-t border-white/5 pt-4">
+                  <div
+                    className="px-5 pb-4 text-sm text-gray-400 leading-relaxed
+                    border-t border-white/5 pt-4"
+                  >
                     {faq.a}
                   </div>
                 )}
@@ -429,8 +516,11 @@ export default function MarketerLandingPage() {
           >
             Ready to start earning?
           </h2>
-          <p className="text-gray-400 text-sm mb-8">
+          <p className="text-gray-400 text-sm mb-2">
             Register in under 2 minutes. Your referral code is waiting.
+          </p>
+          <p className="text-xs text-gray-600 mb-8">
+            {cfg.flag} Earnings paid in {cfg.code} · {cfg.payoutNote}
           </p>
           <Link
             href="/marketer/register"
@@ -452,9 +542,15 @@ export default function MarketerLandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-white/5 px-6 sm:px-12 py-6 text-center">
+      <footer
+        className="border-t border-white/5 px-6 sm:px-12 py-6 flex flex-col sm:flex-row
+        items-center justify-between gap-2"
+      >
         <p className="text-xs text-gray-600">
           © {new Date().getFullYear()} SmileBaba Hub · All rights reserved
+        </p>
+        <p className="text-xs text-gray-600">
+          {cfg.flag} Serving Ghana & Nigeria
         </p>
       </footer>
     </div>

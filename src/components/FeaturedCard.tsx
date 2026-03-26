@@ -1,68 +1,114 @@
+"use client";
+
 import React from "react";
 import { assets } from "../assets/assets";
 import Link from "next/link";
 import Image from "next/image";
 import { CardComponentProps } from "@/src/types/types";
+import { useAppSelector } from "@/src/app/redux";
 
-
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  GHS: "₵",
+  NGN: "₦",
+};
 
 const FeaturedCard = ({ item, index }: CardComponentProps) => {
+  const userCurrency = useAppSelector((state) => state.auth.user?.currency);
+  const symbol = CURRENCY_SYMBOLS[userCurrency ?? "GHS"] ?? "₵";
+
   return (
     <Link
       href={`/product/${item.id}`}
-      key={index}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="relative lg:max-w-70 max-w-55 w-full rounded-xl shrink-0 bg-transparent border-white/20 border text-white shadow"
+      className="relative w-full rounded-xl bg-white border border-gray-100
+        shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
     >
-      <Image
-        src={item.images?.[0] || assets.upload_area}
-        alt={""}
-        width={280}
-        height={200}
-        className="rounded lg:w-280 w-220"
-      />
+      {/* Image */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden">
+        <Image
+          src={item.images?.[0] || assets.upload_area}
+          alt={item.title ?? "product"}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+        />
 
-      {index % 2 === 0 && (
-        <p className="px-3 py-1 absolute top-3 left-3 text-xs bg-white text-gray-800 font-medium rounded-full">
-          Best Seller
-        </p>
-      )}
+        {/* Best seller badge */}
+        {index % 2 === 0 && (
+          <span
+            className="absolute top-2 left-2 px-2.5 py-1 text-[11px] bg-white
+            text-gray-800 font-semibold rounded-full shadow-sm"
+          >
+            🏆 Best Seller
+          </span>
+        )}
+      </div>
 
-      <div className="p-2 pt-3">
-        <div className="flex items-center justify-between">
-          <p className="font-playfair lg:text-lg text-[14px] lg:font-medium text-black">
-            {item.seller?.name || "unkwon"}
+      {/* Content */}
+      <div className="p-3">
+        {/* Seller + rating */}
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">
+            {item.seller?.name || "Unknown"}
           </p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Image
               src={assets.starIconFilled}
               alt="rating"
-              width={16}
-              height={16}
+              width={12}
+              height={12}
             />
-            4.5
+            <span className="text-xs text-gray-600 font-medium">4.5</span>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 mt-1">
+
+        {/* Location */}
+        <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-2">
           <Image
             src={assets.locationIcon}
             alt="location"
-            width={14}
-            height={14}
+            width={11}
+            height={11}
           />
-          <span>{item.location?.city}</span>
+          <span className="truncate">{item.location?.city ?? "—"}</span>
         </div>
-        <div className="flex items-center justify-between mt-3">
-          <p className="text-sm text-gray-600">
-            $
-            <span className="text-lg font-semibold text-black ml-1">
-              {item.price}
-            </span>
-          </p>
-        </div>
+
+        {/* Price */}
+        <p className="text-xs text-gray-400">
+          {symbol}
+          <span className="text-base font-bold text-gray-900 ml-0.5">
+            {Number(item.price).toLocaleString()}
+          </span>
+        </p>
       </div>
     </Link>
   );
 };
+
+// ── 7-grid container ───────────────────────────────────────────────────────
+// Breakpoints:
+//   mobile (default) : 2 columns
+//   sm  (640px+)     : 3 columns
+//   md  (768px+)     : 4 columns
+//   lg  (1024px+)    : 5 columns
+//   xl  (1280px+)    : 7 columns  ← full 7-per-row on large screens
+//
+// Usage:
+//   <FeaturedGrid items={products.slice(0, 7)} />
+
+export function FeaturedGrid({
+  items,
+}: {
+  items: CardComponentProps["item"][];
+}) {
+  const capped = items;
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4 w-full">
+      {capped.map((item, i) => (
+        <FeaturedCard key={item.id ?? i} item={item} index={i} />
+      ))}
+    </div>
+  );
+}
 
 export default FeaturedCard;
