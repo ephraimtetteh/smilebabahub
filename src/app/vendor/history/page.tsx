@@ -85,7 +85,7 @@ export default function PurchaseHistoryPage() {
               Subscribe to a plan to start selling on Smilebaba
             </p>
             <a
-              href="/subscribe"
+              href="/subscription"
               className="inline-block mt-5 px-6 py-2.5 bg-[#ffc105] text-black font-bold
                 rounded-xl hover:bg-amber-400 transition text-sm"
             >
