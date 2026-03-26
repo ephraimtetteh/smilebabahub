@@ -131,7 +131,7 @@ const VendorBoost = () => {
                   bg-[#ffc105] text-black text-[11px] font-black px-3 py-0.5
                   rounded-full whitespace-nowrap shadow-sm"
                 >
-                  Most Popular
+                  ⭐ Most Popular
                 </div>
               )}
 
@@ -252,7 +252,7 @@ const VendorBoost = () => {
                     text-sm font-bold rounded-xl hover:bg-amber-50 transition text-center
                     active:scale-95"
                 >
-                  Ad
+                  📣 Ad
                 </Link>
               </div>
             </div>

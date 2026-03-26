@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { useAppSelector } from "@/src/app/redux";
+import { useAppSelector } from "../redux";
 
-// ── Currency config ────────────────────────────────────────────────────────
+
+// ── Currency config 
 type CurrencyConfig = {
   code: string;
   symbol: string;
@@ -25,8 +26,8 @@ const CURRENCY: Record<string, CurrencyConfig> = {
     symbol: "₵",
     flag: "🇬🇭",
     label: "Ghana",
-    planMonthly: 74.99,
-    planYearly: 899.99,
+    planMonthly: 249.99, // HappySmile monthly
+    planYearly: 2999.88, // HappySmile yearly
     minPayout: "₵50",
     payoutNote: "MTN MoMo, Vodafone Cash, AirtelTigo Money or bank transfer",
   },
@@ -35,8 +36,8 @@ const CURRENCY: Record<string, CurrencyConfig> = {
     symbol: "₦",
     flag: "🇳🇬",
     label: "Nigeria",
-    planMonthly: 44999,
-    planYearly: 539994,
+    planMonthly: 1800000, // HappySmile monthly
+    planYearly: 21600000, // HappySmile yearly
     minPayout: "₦5,000",
     payoutNote: "OPay, PalmPay or bank transfer",
   },
