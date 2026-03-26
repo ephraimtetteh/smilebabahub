@@ -6,8 +6,11 @@
 
 import { useEffect, useRef } from "react";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/smilebaba";
+// SSE must connect directly to the backend — Next.js rewrite proxies
+// cannot forward long-lived streaming connections.
+// NEXT_PUBLIC_API_BASE_URL is set in Render env vars.
+const SSE_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001/smilebaba";
 
 // Stored in sessionStorage so we only reload ONCE per version per tab
 const SEEN_VERSION_KEY = "smilebaba_app_version";
@@ -16,12 +19,12 @@ export function useAppUpdates() {
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    // SSE is not available in SSR
     if (typeof window === "undefined") return;
 
     const connect = () => {
-      // EventSource doesn't support custom headers — the endpoint is public
-      const es = new EventSource("/api/updates/app", { withCredentials: true });
+      const es = new EventSource(`${SSE_BASE}/updates/app`, {
+        withCredentials: true,
+      });
       esRef.current = es;
 
       es.addEventListener("app-update", (event) => {
@@ -32,14 +35,10 @@ export function useAppUpdates() {
           };
           const seenVer = sessionStorage.getItem(SEEN_VERSION_KEY);
 
-          if (seenVer === data.version) return; // already reloaded for this version
+          if (seenVer === data.version) return;
 
           sessionStorage.setItem(SEEN_VERSION_KEY, data.version);
-
           console.info(`[SmileBaba] New version ${data.version} — reloading`);
-
-          // Give the user a moment before hard-reloading
-          // Hard reload bypasses the browser cache
           setTimeout(() => window.location.reload(), 1500);
         } catch {
           // malformed message — ignore
@@ -47,8 +46,8 @@ export function useAppUpdates() {
       });
 
       es.onerror = () => {
-        // Reconnect after 5s on error
         es.close();
+        // Reconnect after 5s — stops the flood of errors in the console
         setTimeout(connect, 5_000);
       };
     };

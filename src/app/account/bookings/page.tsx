@@ -65,7 +65,7 @@ export default function BookingsPage() {
       {!loading && nextBooking && (
         <div
           className="bg-gradient-to-r from-blue-500/10 to-blue-400/5
-          border border-blue-200/40 rounded-2xl p-4 sm:p-5 mb-5 flex items-center gap-4 mt-10"
+          border border-blue-200/40 rounded-2xl p-4 sm:p-5 mb-5 flex items-center gap-4 mt-20"
         >
           <div className="text-3xl flex-shrink-0">🏡</div>
           <div className="min-w-0">

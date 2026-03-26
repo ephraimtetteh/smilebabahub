@@ -11,7 +11,7 @@ export function Skeleton() {
         <div
           key={i}
           className="bg-white rounded-2xl p-4 sm:p-5 animate-pulse
-          border border-gray-100 shadow-sm"
+          border border-gray-100 shadow-sm pt-10"
         >
           <div className="flex gap-3 items-center">
             <div className="w-11 h-11 bg-gray-100 rounded-xl flex-shrink-0" />
@@ -36,7 +36,7 @@ export function Empty({ type }: { type: "orders" | "bookings" }) {
   return (
     <div
       className="bg-white rounded-2xl p-10 sm:p-16 text-center
-      border border-gray-100 shadow-sm"
+      border border-gray-100 shadow-sm pt-20"
     >
       <p className="text-4xl mb-3">{isOrders ? "🛍️" : "🏡"}</p>
       <p className="text-gray-700 font-semibold text-sm mb-1">

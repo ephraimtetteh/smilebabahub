@@ -59,10 +59,14 @@ function getFirstName(name: string) {
   return name.split(" ")[0];
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/smilebaba";
+// Use the Next.js rewrite proxy (/api → backend) so the hardcoded
+// localhost URL never leaks into the production bundle.
+// marketerFetch bypasses axiosInstance (which overwrites the Authorization
+// header with the vendor token) but still routes through the same proxy.
+const API_BASE = "/api";
 
-
+// Plain fetch helper for marketer routes — bypasses the axiosInstance
+// request interceptor which always overwrites Authorization with the vendor token
 async function marketerFetch(path: string, options: RequestInit = {}) {
   const token = safeStorage.get("marketerAccessToken");
   const res = await fetch(`${API_BASE}${path}`, {
@@ -134,7 +138,13 @@ export default function MarketerDashboard() {
     const token = safeStorage.get("marketerAccessToken");
     if (!token) return;
 
-    const es = new EventSource(`${API_BASE}/marketers/stream`, {
+    // SSE needs the direct backend URL — it's a long-lived stream that
+    // Next.js rewrites can't proxy. Use NEXT_PUBLIC_API_BASE_URL which
+    // is set in Render env vars to the actual backend domain.
+    const sseBase =
+      process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001/smilebaba";
+
+    const es = new EventSource(`${sseBase}/marketers/stream`, {
       withCredentials: true,
     });
     esRef.current = es;
