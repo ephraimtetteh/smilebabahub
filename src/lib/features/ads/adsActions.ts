@@ -14,11 +14,23 @@ import {
 // ── Fetch public ad feed ───────────────────────────────────────────────────
 export const fetchAds = createAsyncThunk<GetAdsResponse, AdFilters>(
   "ads/fetchAds",
-  async (filters, { rejectWithValue }) => {
+  async (filters, { rejectWithValue, getState }) => {
     try {
-      // Strip undefined values before sending
+      const state = getState() as any;
+      const country = filters.country ?? state.auth?.user?.country;
+
+      // Never fetch without a country — backend returns empty without it
+      if (!country) {
+        return {
+          ads: [],
+          meta: { total: 0, page: 1, limit: 20, totalPages: 0, hasNext: false },
+        } as GetAdsResponse;
+      }
+
       const params = Object.fromEntries(
-        Object.entries(filters).filter(([, v]) => v !== undefined && v !== ""),
+        Object.entries({ ...filters, country }).filter(
+          ([, v]) => v !== undefined && v !== "",
+        ),
       );
       const res = await axiosInstance.get("/ads", { params });
       return res.data as GetAdsResponse;

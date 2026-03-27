@@ -11,10 +11,22 @@ import {
 export const fetchProducts = createAsyncThunk<
   GetProductsResponse,
   ProductFilters
->("products/fetchProducts", async (filters, { rejectWithValue }) => {
+>("products/fetchProducts", async (filters, { rejectWithValue, getState }) => {
   try {
+    const state = getState() as any;
+    const country = filters.country ?? state.auth?.user?.country;
+
+    // Never fetch without a country — backend returns empty without it anyway
+    if (!country)
+      return {
+        products: [],
+        meta: { total: 0, page: 1, limit: 20, totalPages: 0, hasNext: false },
+      } as any;
+
     const params = Object.fromEntries(
-      Object.entries(filters).filter(([, v]) => v !== undefined && v !== ""),
+      Object.entries({ ...filters, country }).filter(
+        ([, v]) => v !== undefined && v !== "",
+      ),
     );
     const res = await axiosInstance.get("/products", { params });
     return res.data as GetProductsResponse;
@@ -31,13 +43,25 @@ export const fetchFeaturedProducts = createAsyncThunk<
   { country?: string; category?: string; limit?: number }
 >(
   "products/fetchFeaturedProducts",
-  async ({ country, category = "all", limit = 7 }, { rejectWithValue }) => {
+  async (
+    { country, category = "all", limit = 7 },
+    { rejectWithValue, getState },
+  ) => {
     try {
-      const params: Record<string, unknown> = { limit };
-      if (country) params.country = country;
+      const state = getState() as any;
+      const resolvedCountry = country ?? state.auth?.user?.country;
+
+      // Don't fetch without a country — shows nothing rather than wrong country data
+      if (!resolvedCountry) {
+        return { category, products: [] };
+      }
+
+      const params: Record<string, unknown> = {
+        country: resolvedCountry,
+        limit,
+        sort: "newest",
+      };
       if (category && category !== "all") params.category = category;
-      // "newest" works even with no view data; switch to "popular" once you have traffic
-      params.sort = "newest";
 
       const res = await axiosInstance.get("/products", { params });
       return {

@@ -13,8 +13,7 @@ import AdGrid from "./(components)/AdGrid";
 import AdsPagination from "./(components)/AdsPagination";
 import PostAdCTA from "./(components)/PostAdCTA";
 import { SORT_OPTIONS } from "./(components)/ad.constants";
-
-// app/ads/page.tsx
+import { useAppSelector } from "../redux";
 
 export default function AdsLandingPage() {
   const searchParams = useSearchParams();
@@ -29,6 +28,8 @@ export default function AdsLandingPage() {
     userCurrency,
     userCountry,
   } = useAds();
+
+  const hasCheckedAuth = useAppSelector((s) => s.auth.hasCheckedAuth);
 
   // Local filter state — NOT sourced from Redux to avoid stale filter bleed
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
@@ -70,8 +71,9 @@ export default function AdsLandingPage() {
     ],
   );
 
-  // Initial load
+  // Wait for session restore before fetching — ensures userCountry is populated
   useEffect(() => {
+    if (!hasCheckedAuth) return;
     loadAds({
       country: userCountry as any,
       currency: userCurrency as AdCurrency,
@@ -80,7 +82,7 @@ export default function AdsLandingPage() {
       limit: 24,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userCountry]);
+  }, [hasCheckedAuth, userCountry]);
 
   const handleSearch = useCallback(() => {
     loadAds(buildParams());
@@ -143,6 +145,26 @@ export default function AdsLandingPage() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {/* Country filter indicator */}
+        {userCountry && (
+          <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+            <span className="text-base">
+              {userCountry === "Ghana"
+                ? "🇬🇭"
+                : userCountry === "Nigeria"
+                  ? "🇳🇬"
+                  : "🌍"}
+            </span>
+            <span>
+              Showing ads in{" "}
+              <strong className="text-gray-700">{userCountry}</strong>
+            </span>
+            <span className="text-gray-300">·</span>
+            <span className="text-gray-400">
+              Prices in {userCurrency === "NGN" ? "₦ NGN" : "₵ GHS"}
+            </span>
+          </div>
+        )}
         <CategoryTabs
           active={category}
           onChange={handleCategoryChange}
