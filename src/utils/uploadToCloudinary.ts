@@ -1,13 +1,10 @@
-// src/utils/uploadToCloudinary.ts
-// Uploads a single File to Cloudinary using an unsigned upload preset.
-// Returns { url, publicId } on success.
+// src/lib/uploadToCloudinary.ts
+// Uploads images directly from the browser to Cloudinary (unsigned preset).
+// No file ever passes through your Express server.
 //
-// Setup:
-//   1. In Cloudinary dashboard → Settings → Upload → Upload presets
-//      Create an "unsigned" preset named e.g. "smilebaba_ads"
-//   2. Add to frontend .env.local:
-//      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME = your_cloud_name
-//      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET = smilebaba_ads
+// Required in .env.local:
+//   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME   = dsp3guzpl
+//   NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET = smilebaba_ads  (must be UNSIGNED in dashboard)
 
 export type CloudinaryResult = {
   url: string;
@@ -23,17 +20,28 @@ export async function uploadToCloudinary(
   const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
-  if (!cloud || !preset) {
+  // ── Env check ──────────────────────────────────────────────────────────
+  if (!cloud) {
     throw new Error(
-      "Missing NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME or NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in .env.local",
+      "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is not set in .env.local",
+    );
+  }
+  if (!preset) {
+    throw new Error(
+      "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET is not set in .env.local",
     );
   }
 
+  // ── Build FormData ─────────────────────────────────────────────────────
+  // NOTE: Only append what Cloudinary unsigned presets allow.
+  // "folder" is fine for unsigned presets — it scopes where files are stored.
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", preset);
+  // folder is optional — remove this line if you get "folder not allowed" errors
   formData.append("folder", "smilebaba/ads");
 
+  // ── Upload via XHR for real progress events ────────────────────────────
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
@@ -49,29 +57,48 @@ export async function uploadToCloudinary(
         resolve({
           url: data.secure_url,
           publicId: data.public_id,
-          width: data.width,
-          height: data.height,
+          width: data.width ?? 0,
+          height: data.height ?? 0,
         });
       } else {
+        // Parse the Cloudinary error body for the real reason
+        let reason = `${xhr.status} ${xhr.statusText}`;
+        try {
+          const body = JSON.parse(xhr.responseText);
+          reason = body?.error?.message ?? reason;
+        } catch {}
+
+        console.error(
+          "Cloudinary upload failed:",
+          reason,
+          "\nResponse:",
+          xhr.responseText,
+        );
+
         reject(
           new Error(
-            `Cloudinary upload failed: ${xhr.status} ${xhr.statusText}`,
+            reason.includes("preset")
+              ? `Upload preset "${preset}" not found or not set to unsigned. ` +
+                  `Go to Cloudinary → Settings → Upload → Upload presets and create an unsigned preset named "${preset}".`
+              : `Cloudinary upload failed: ${reason}`,
           ),
         );
       }
     });
 
     xhr.addEventListener("error", () =>
-      reject(new Error("Network error during upload")),
+      reject(new Error("Network error — check your internet connection")),
     );
-    xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
+    xhr.addEventListener("abort", () =>
+      reject(new Error("Upload was cancelled")),
+    );
 
     xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloud}/image/upload`);
     xhr.send(formData);
   });
 }
 
-// Upload multiple files in parallel, returning results in order
+// ── Upload multiple in parallel ────────────────────────────────────────────
 export async function uploadManyToCloudinary(
   files: File[],
   onProgress?: (overallPct: number) => void,
@@ -80,10 +107,10 @@ export async function uploadManyToCloudinary(
 
   const progresses = new Array(files.length).fill(0);
 
-  const updateOverall = () => {
+  const reportOverall = () => {
     if (!onProgress) return;
     const overall = Math.round(
-      progresses.reduce((sum, p) => sum + p, 0) / files.length,
+      progresses.reduce((a, b) => a + b, 0) / files.length,
     );
     onProgress(overall);
   };
@@ -92,7 +119,7 @@ export async function uploadManyToCloudinary(
     files.map((file, i) =>
       uploadToCloudinary(file, (pct) => {
         progresses[i] = pct;
-        updateOverall();
+        reportOverall();
       }),
     ),
   );
