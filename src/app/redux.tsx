@@ -19,6 +19,7 @@ import { useRef } from "react";
 import authReducer from "@/src/lib/features/auth/authSlice";
 import cartReducer from '@/src/lib/features/cart/cartSlice'
 import globalReducer from '@/src/lib'
+import adsReducer from "@/src/lib/features/ads/adsSlice";
 import { api } from "../lib/api/api";
 
 // REDUX PERSISTENECE
@@ -43,13 +44,14 @@ const storage = typeof window === 'undefined'
 const persistConfig = {
   key: "rook",
   storage,
-  whitelist: ["auth", "global", "cart"],
+  whitelist: ["auth", "global", "cart", "ads"],
 };
 
 const rootReducer = combineReducers({
   auth: authReducer,
   global: globalReducer,
   cart: cartReducer,
+  ads: adsReducer,
   [api.reducerPath]: api.reducer
 })
 
