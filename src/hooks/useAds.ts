@@ -29,7 +29,7 @@ import {
   clearMutateError,
   patchAd,
   removeAd,
-} from "@/src/lib//features/ads/adsSlice";
+} from "@/src/lib/features/ads/adsSlice";
 import type {
   AdFilters,
   CreateAdPayload,
@@ -65,10 +65,10 @@ export function useAds() {
   const userCurrency = useAppSelector((s) => s.auth.user?.currency ?? "GHS");
   const userCountry = useAppSelector((s) => s.auth.user?.country);
 
-  // ── Actions ───────────────────────────────────────────────────────────
+  // Actions — each call takes EXPLICIT params, never auto-merges stale Redux filters
   const loadAds = useCallback(
-    (f?: Partial<AdFilters>) => dispatch(fetchAds({ ...filters, ...f })),
-    [dispatch, filters],
+    (f: Partial<AdFilters> = {}) => dispatch(fetchAds(f)),
+    [dispatch],
   );
 
   const loadAdById = useCallback(

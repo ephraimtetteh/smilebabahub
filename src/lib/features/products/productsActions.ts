@@ -36,9 +36,8 @@ export const fetchFeaturedProducts = createAsyncThunk<
       const params: Record<string, unknown> = { limit };
       if (country) params.country = country;
       if (category && category !== "all") params.category = category;
-      // Only request featured=true if your backend supports it;
-      // otherwise all products in the category are shown
-      params.sort = "popular";
+      // "newest" works even with no view data; switch to "popular" once you have traffic
+      params.sort = "newest";
 
       const res = await axiosInstance.get("/products", { params });
       return {

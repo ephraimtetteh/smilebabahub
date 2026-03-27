@@ -132,6 +132,10 @@ export const productsSlice = createSlice({
       .addCase(fetchFeaturedProducts.fulfilled, (state, action) => {
         state.featuredLoading = false;
         const { category, products } = action.payload;
+        // Guard: initialise the object if somehow undefined (stale local slice)
+        if (!state.featuredByCategory) {
+          state.featuredByCategory = {};
+        }
         state.featuredByCategory[category] = products;
       })
       .addCase(fetchFeaturedProducts.rejected, (state, action) => {

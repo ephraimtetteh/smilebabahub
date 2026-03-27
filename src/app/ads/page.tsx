@@ -12,23 +12,25 @@ import BestsellersRow from "./(components)/BestSellingAd";
 import AdGrid from "./(components)/AdGrid";
 import AdsPagination from "./(components)/AdsPagination";
 import PostAdCTA from "./(components)/PostAdCTA";
+import { SORT_OPTIONS } from "./(components)/ad.constants";
 
+// app/ads/page.tsx
 
 export default function AdsLandingPage() {
   const searchParams = useSearchParams();
+
   const {
     ads,
     meta,
     feedLoading,
     feedError,
     loadAds,
-    applyFilters,
     goToPage,
-    filters,
     userCurrency,
     userCountry,
   } = useAds();
 
+  // Local filter state — NOT sourced from Redux to avoid stale filter bleed
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [category, setCategory] = useState(
     searchParams.get("category") ?? "all",
@@ -41,7 +43,34 @@ export default function AdsLandingPage() {
 
   const sym = userCurrency === "NGN" ? "₦" : "₵";
 
-  // Initial load filtered to user's country
+  // Build a clean params object from local state — never spreads stale Redux filters
+  const buildParams = useCallback(
+    (overrides: Record<string, unknown> = {}) => ({
+      country: userCountry as any,
+      currency: userCurrency as AdCurrency,
+      sort: sort as any,
+      page: 1,
+      limit: 24,
+      ...(search.trim() && { search: search.trim() }),
+      ...(category !== "all" && { category }),
+      ...(condition !== "all" && { condition: condition as AdCondition }),
+      ...(minPrice && { minPrice: Number(minPrice) }),
+      ...(maxPrice && { maxPrice: Number(maxPrice) }),
+      ...overrides,
+    }),
+    [
+      userCountry,
+      userCurrency,
+      sort,
+      search,
+      category,
+      condition,
+      minPrice,
+      maxPrice,
+    ],
+  );
+
+  // Initial load
   useEffect(() => {
     loadAds({
       country: userCountry as any,
@@ -54,40 +83,29 @@ export default function AdsLandingPage() {
   }, [userCountry]);
 
   const handleSearch = useCallback(() => {
-    loadAds({
-      search: search.trim() || undefined,
-      category: category === "all" ? undefined : category,
-      condition: condition === "all" ? undefined : (condition as AdCondition),
-      sort: sort as any,
-      minPrice: minPrice ? Number(minPrice) : undefined,
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
-      country: userCountry as any,
-      page: 1,
-    });
-  }, [
-    search,
-    category,
-    condition,
-    sort,
-    minPrice,
-    maxPrice,
-    userCountry,
-    loadAds,
-  ]);
+    loadAds(buildParams());
+  }, [buildParams, loadAds]);
 
+  // Category change resets all other filters
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
+    setCondition("all");
+    setMinPrice("");
+    setMaxPrice("");
+    setSearch("");
     loadAds({
-      category: cat === "all" ? undefined : cat,
       country: userCountry as any,
+      currency: userCurrency as AdCurrency,
+      category: cat === "all" ? undefined : cat,
       sort: sort as any,
       page: 1,
+      limit: 24,
     });
   };
 
   const handleSortChange = (s: string) => {
     setSort(s);
-    loadAds({ ...filters, sort: s as any, page: 1 });
+    loadAds(buildParams({ sort: s, page: 1 }));
   };
 
   const handleClearFilters = () => {
@@ -95,16 +113,24 @@ export default function AdsLandingPage() {
     setMinPrice("");
     setMaxPrice("");
     setSort("newest");
-    loadAds({ country: userCountry as any, sort: "newest", page: 1 });
+    setSearch("");
+    loadAds({
+      country: userCountry as any,
+      currency: userCurrency as AdCurrency,
+      sort: "newest",
+      page: 1,
+      limit: 24,
+    });
   };
 
   const handlePage = (page: number) => {
     goToPage(page);
-    loadAds({ ...filters, page });
+    loadAds(buildParams({ page }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Non-boosted ads for the main grid
+  // Boosted ads for bestsellers, non-boosted for main grid
+  const boostedAds = ads.filter((a) => a.boost?.isBoosted);
   const mainAds = ads.filter((a) => !a.boost?.isBoosted);
 
   return (
@@ -141,10 +167,12 @@ export default function AdsLandingPage() {
           />
         )}
 
-        {/* Boosted ads shown first */}
-        {!feedLoading && <BestsellersRow ads={ads} />}
+        {/* Boosted ads from the current page — shown separately at the top */}
+        {!feedLoading && boostedAds.length > 0 && (
+          <BestsellersRow ads={boostedAds} />
+        )}
 
-        {/* Results count + sort */}
+        {/* Results header */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-500">
             {feedLoading
@@ -157,12 +185,7 @@ export default function AdsLandingPage() {
             className="text-xs border border-gray-200 rounded-xl px-3 py-1.5
               text-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white"
           >
-            {[
-              { id: "newest", label: "Newest first" },
-              { id: "price_asc", label: "Price: Low → High" },
-              { id: "price_desc", label: "Price: High → Low" },
-              { id: "popular", label: "Most viewed" },
-            ].map((s) => (
+            {SORT_OPTIONS.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
               </option>

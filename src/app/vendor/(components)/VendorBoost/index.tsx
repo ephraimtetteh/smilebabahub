@@ -55,7 +55,9 @@ const VendorBoost = () => {
     guard({ type: "boost_product", payload: { productId } }, async () => {
       try {
         setBoostingId(productId);
-        await axiosInstance.post(`/listings/${productId}/boost`);
+        await axiosInstance.post(`/ads/${productId}/boost`, {
+          tier: "standard",
+        });
         toast.success(
           "Product boosted! 🚀 It will now appear higher in search results.",
         );
