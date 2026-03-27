@@ -1,6 +1,15 @@
 "use client";
 
 // src/components/ads/AdForm.tsx
+// Shared multi-step form — create ad (/sell) and edit ad (/ads/:id/edit)
+//
+// IMAGE FLOW (Cloudinary-first):
+//   1. User picks images → stored as File objects in local state
+//   2. On submit: all new Files are uploaded to Cloudinary → get {url, publicId}
+//   3. Existing images (edit mode) are kept as-is (already uploaded)
+//   4. onSubmit(uploadedImages: AdImage[], data: AdFormData) is called
+//   5. Caller (SellPage / EditAdPage) dispatches to Redux with images included
+
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,8 +20,10 @@ import {
   Negotiable,
   DeliveryOption,
   AdCurrency,
+  AdImage,
 } from "@/src/types/ad.types";
 import { useAppSelector } from "@/src/app/redux";
+import { uploadManyToCloudinary } from "@/src/utils/uploadToCloudinary";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const STEPS = [
@@ -63,7 +74,6 @@ const CONDITIONS: { id: AdCondition; label: string; icon: string }[] = [
   { id: "refurbished", label: "Refurbished", icon: "🔧" },
 ];
 
-// Ghana regions
 const GH_REGIONS = [
   "Greater Accra",
   "Ashanti",
@@ -82,7 +92,6 @@ const GH_REGIONS = [
   "North East",
   "Savannah",
 ];
-// Nigeria states
 const NG_STATES = [
   "Lagos",
   "Abuja FCT",
@@ -131,6 +140,7 @@ const inputError = `${inputBase} border-red-400 focus:ring-2 focus:ring-red-300 
 const labelCls = "block text-xs font-semibold text-gray-500 mb-1.5";
 const errMsg = "flex items-center gap-1 text-xs text-red-500 mt-1";
 
+// ── Field wrapper ──────────────────────────────────────────────────────────
 const Field = memo(function Field({
   label,
   error,
@@ -225,7 +235,6 @@ function ImageSlot({
   const ref = useRef<HTMLInputElement>(null);
   const [objUrl, setObjUrl] = useState<string | null>(null);
 
-  // Revoke old object URL when file changes
   useEffect(() => {
     if (!file) {
       setObjUrl(null);
@@ -294,13 +303,19 @@ function ImageSlot({
   );
 }
 
-// ── Upload progress bar ────────────────────────────────────────────────────
-function UploadProgress({ progress }: { progress: number }) {
+// ── Progress bar ───────────────────────────────────────────────────────────
+function UploadProgress({
+  progress,
+  label,
+}: {
+  progress: number;
+  label: string;
+}) {
   if (progress === 0) return null;
   return (
     <div className="mt-4">
       <div className="flex justify-between text-xs text-gray-500 mb-1">
-        <span>Posting ad…</span>
+        <span>{label}</span>
         <span>{progress}%</span>
       </div>
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -331,17 +346,24 @@ function SuccessScreen({
       </div>
       <h2 className="text-2xl font-black text-gray-900 mb-2">Ad posted!</h2>
       <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-        Your ad is now under review and will go live once approved. You'll see
-        it in your listings shortly.
+        Your ad is now under review and will go live once approved.
       </p>
-
       <div className="flex flex-col gap-3 max-w-xs mx-auto">
+        {adId !== "pending" && (
+          <Link
+            href={`/ads/${adId}`}
+            className="w-full py-3 bg-yellow-400 text-black font-black rounded-2xl
+              text-sm hover:bg-yellow-300 transition active:scale-[0.99]"
+          >
+            View my ad →
+          </Link>
+        )}
         <Link
-          href={`/ads/${adId}`}
-          className="w-full py-3 bg-yellow-400 text-black font-black rounded-2xl
-            text-sm hover:bg-yellow-300 transition active:scale-[0.99]"
+          href="/ads/my"
+          className="w-full py-3 bg-white border border-gray-200 text-gray-700
+            font-semibold rounded-2xl text-sm hover:bg-gray-50 transition"
         >
-          View my ad →
+          My ads dashboard
         </Link>
         <Link
           href="/ads"
@@ -361,12 +383,23 @@ function SuccessScreen({
   );
 }
 
-// ── Main AdForm ────────────────────────────────────────────────────────────
+// ── Card wrapper — defined OUTSIDE AdForm so it never remounts on re-render ──
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 space-y-5">
+      {children}
+    </div>
+  );
+}
+
+// ── AdForm props ───────────────────────────────────────────────────────────
 interface AdFormProps {
   initialValues?: Partial<AdFormData>;
-  existingImageUrls?: string[];
+  // For edit mode: existing uploaded image URLs [{url, publicId, isCover}]
+  existingImages?: AdImage[];
+  // Called after Cloudinary upload with the final image array + form data
   onSubmit: (
-    form: FormData,
+    images: AdImage[],
     data: AdFormData,
   ) => Promise<{ adId?: string } | void>;
   submitLabel?: string;
@@ -374,9 +407,10 @@ interface AdFormProps {
   mode?: "create" | "edit";
 }
 
+// ── Main component ─────────────────────────────────────────────────────────
 export default function AdForm({
   initialValues,
-  existingImageUrls = [],
+  existingImages = [],
   onSubmit,
   submitLabel = "Post ad",
   loading = false,
@@ -389,11 +423,12 @@ export default function AdForm({
 
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false); // local flag — prevents double submit
+  const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
   const [successAdId, setSuccessAdId] = useState<string | null>(null);
-
-  const submitRef = useRef(false); // hard ref guard — survives re-renders
+  const submitRef = useRef(false);
+  const errorsRef = useRef<Record<string, string>>({});
 
   const emptyForm: AdFormData = {
     ...EMPTY_AD_FORM,
@@ -407,8 +442,7 @@ export default function AdForm({
     ...initialValues,
   });
 
-  const errorsRef = useRef<Record<string, string>>({});
-
+  // ── Single updater — clears error in ref, one setState per keystroke ───
   const set = <K extends keyof AdFormData>(k: K, v: AdFormData[K]) => {
     if (errorsRef.current[k as string]) {
       delete errorsRef.current[k as string];
@@ -431,18 +465,22 @@ export default function AdForm({
       return { ...p, images: imgs };
     });
 
-  // ── Draft persistence (create mode only) ──────────────────────────────────
+  // Draft persistence (create mode only)
   useEffect(() => {
     if (mode !== "create") return;
     const t = setTimeout(() => {
-      const { images, ...rest } = form;
+      const { images: _, ...rest } = form;
       localStorage.setItem("adFormDraft", JSON.stringify(rest));
     }, 800);
     return () => clearTimeout(t);
   }, [form, mode]);
 
   useEffect(() => {
-    if (mode !== "create" || initialValues) return;
+    if (
+      mode !== "create" ||
+      (initialValues && Object.keys(initialValues).length)
+    )
+      return;
     const saved = localStorage.getItem("adFormDraft");
     if (saved) {
       try {
@@ -452,10 +490,9 @@ export default function AdForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Validation — syncs errorsRef then flushes to state ───────────────────
+  // ── Validation ─────────────────────────────────────────────────────────
   const validate = (s: number): boolean => {
     const e: Record<string, string> = {};
-
     if (s === 1) {
       if (!form.title.trim() || form.title.trim().length < 5)
         e.title = "Title must be at least 5 characters";
@@ -463,19 +500,16 @@ export default function AdForm({
       if (!form.description.trim() || form.description.trim().length < 20)
         e.description = "Description must be at least 20 characters";
     }
-
     if (s === 2) {
-      const hasImage =
-        form.images.some(Boolean) || existingImageUrls.length > 0;
-      if (!hasImage) e.images = "Add at least one photo";
+      const hasNew = form.images.some(Boolean);
+      const hasExisting = existingImages.length > 0;
+      if (!hasNew && !hasExisting) e.images = "Add at least one photo";
     }
-
     if (s === 3) {
       const p = Number(form.price);
       if (!form.price || isNaN(p) || p <= 0)
         e.price = "Enter a valid price greater than 0";
     }
-
     if (s === 4) {
       if (!form.region) e.region = "Select your region";
       if (!form.name.trim()) e.name = "Your name is required";
@@ -483,16 +517,14 @@ export default function AdForm({
       else if (form.phone.replace(/\D/g, "").length < 9)
         e.phone = "Enter a valid phone number";
     }
-
     errorsRef.current = e;
     setErrors(e);
-
     if (Object.keys(e).length > 0) {
-      // Tell the user exactly what's wrong via toast
-      const firstError = Object.values(e)[0];
-      toast.error(firstError, { toastId: "validation-error", autoClose: 3000 });
+      toast.error(Object.values(e)[0], {
+        toastId: "validation-error",
+        autoClose: 3000,
+      });
     }
-
     return Object.keys(e).length === 0;
   };
 
@@ -502,90 +534,63 @@ export default function AdForm({
   const back = () => {
     setStep((s) => Math.max(s - 1, 1));
     setErrors({});
+    errorsRef.current = {};
   };
 
-  // ── Submit — with double-post guard ──────────────────────────────────────
+  // ── Submit — Cloudinary upload first, then onSubmit ────────────────────
   const handleSubmit = useCallback(async () => {
     if (!validate(4)) return;
-    if (submitRef.current) return; // hard guard — already in flight
-    if (submitting) return; // state guard
+    if (submitRef.current) return;
+    if (submitting) return;
 
     submitRef.current = true;
     setSubmitting(true);
-    setProgress(10);
-
-    // Simulate progress ticks while waiting for response
-    const ticker = setInterval(() => {
-      setProgress((p) => (p < 85 ? p + 5 : p));
-    }, 400);
-
-    const fd = new FormData();
-    fd.append("title", form.title);
-    fd.append("description", form.description);
-    fd.append(
-      "category",
-      JSON.stringify({
-        main: form.category,
-        sub: form.subcategory,
-        leaf: form.type,
-        path: [form.category, form.subcategory, form.type]
-          .filter(Boolean)
-          .join(" > "),
-      }),
-    );
-    fd.append(
-      "price",
-      JSON.stringify({ amount: Number(form.price), currency: form.currency }),
-    );
-    fd.append("negotiable", form.negotiable || "not_sure");
-    fd.append("condition", form.condition || "not_applicable");
-    fd.append(
-      "location",
-      JSON.stringify({
-        country: user?.country ?? "Ghana",
-        countryCode: user?.currency === "NGN" ? "NG" : "GH",
-        region: form.region,
-        city: form.city,
-        address: form.address,
-      }),
-    );
-    fd.append(
-      "contact",
-      JSON.stringify({
-        name: form.name,
-        phone: form.phone,
-        whatsapp: form.whatsapp || null,
-        showPhone: form.showPhone,
-      }),
-    );
-    fd.append(
-      "delivery",
-      JSON.stringify({
-        available: form.delivery,
-        option: form.deliveryOption || "pickup_only",
-        fee: Number(form.deliveryFee) || 0,
-        note: form.deliveryNote || null,
-      }),
-    );
-    fd.append(
-      "tags",
-      form.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean)
-        .join(","),
-    );
-    if (form.attributes.length)
-      fd.append("attributes", JSON.stringify(form.attributes));
-    if (form.videoUrl) fd.append("videoUrl", form.videoUrl);
-    form.images
-      .filter((f): f is File => f !== null)
-      .forEach((f) => fd.append("images", f));
 
     try {
-      const result = await onSubmit(fd, form);
-      clearInterval(ticker);
+      // ── Step 1: Upload new images to Cloudinary ────────────────────────
+      const newFiles = form.images.filter((f): f is File => f !== null);
+      let uploadedImages: AdImage[] = [];
+
+      if (newFiles.length > 0) {
+        setProgressLabel("Uploading photos…");
+        setProgress(5);
+
+        const results = await uploadManyToCloudinary(newFiles, (pct) => {
+          // Scale cloudinary progress to 5-70%
+          setProgress(5 + Math.round(pct * 0.65));
+        });
+
+        uploadedImages = results.map((r, i) => ({
+          url: r.url,
+          publicId: r.publicId,
+          isCover: i === 0 && existingImages.length === 0, // first new image is cover only if no existing
+        }));
+      }
+
+      // ── Step 2: Merge with existing images (edit mode) ─────────────────
+      // existingImages are already on Cloudinary — keep them as-is
+      // New uploads are appended after existing, unless no existing (create mode)
+      const finalImages: AdImage[] =
+        mode === "edit"
+          ? [
+              // Keep existing images, re-mark cover
+              ...existingImages.map((img, i) => ({
+                ...img,
+                isCover: i === 0 && uploadedImages.length === 0,
+              })),
+              // Append new uploads (not cover since existing image is cover)
+              ...uploadedImages.map((img) => ({ ...img, isCover: false })),
+            ]
+          : uploadedImages.map((img, i) => ({ ...img, isCover: i === 0 }));
+
+      // ── Step 3: Call parent with final image array + form data ─────────
+      setProgressLabel("Saving your ad…");
+      setProgress(75);
+
+      const result = await onSubmit(finalImages, form);
+
       setProgress(100);
+      setProgressLabel("");
 
       toast.success(
         mode === "edit"
@@ -596,27 +601,25 @@ export default function AdForm({
 
       localStorage.removeItem("adFormDraft");
 
-      // Show success screen for create, redirect handled by caller for edit
       if (mode === "create") {
-        const adId = (result as any)?.adId ?? "new";
+        // Use the _id from the returned ad object
+        const adId = (result as any)?._id ?? (result as any)?.adId ?? "pending";
         setSuccessAdId(adId);
       }
     } catch (err: any) {
-      clearInterval(ticker);
       setProgress(0);
-
+      setProgressLabel("");
       const msg =
         err?.response?.data?.message ??
         err?.message ??
         "Something went wrong. Please try again.";
-
       toast.error(msg, { toastId: "ad-error", autoClose: 5000 });
     } finally {
       setSubmitting(false);
       submitRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form, mode, onSubmit, submitting, user]);
+  }, [form, mode, onSubmit, submitting, existingImages]);
 
   const handlePostAnother = useCallback(() => {
     setSuccessAdId(null);
@@ -630,18 +633,11 @@ export default function AdForm({
 
   const isSubmitting = submitting || loading;
 
-  // ── Success screen ────────────────────────────────────────────────────────
   if (successAdId) {
     return (
       <SuccessScreen adId={successAdId} onPostAnother={handlePostAnother} />
     );
   }
-
-  const Card = ({ children }: { children: React.ReactNode }) => (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 space-y-5">
-      {children}
-    </div>
-  );
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6">
@@ -657,8 +653,6 @@ export default function AdForm({
             hint={`${form.title.length}/120 characters`}
           >
             <input
-              type="text"
-              name="title"
               value={form.title}
               maxLength={120}
               placeholder="e.g. iPhone 15 Pro Max 256GB — Barely used"
@@ -740,7 +734,6 @@ export default function AdForm({
             <textarea
               rows={4}
               maxLength={5000}
-              name="description"
               value={form.description}
               placeholder="Describe your item — condition, features, what's included, reason for selling…"
               className={`${errors.description ? inputError : inputNormal} resize-none`}
@@ -750,11 +743,9 @@ export default function AdForm({
 
           <Field
             label="Tags"
-            hint="Comma-separated — helps buyers find you in search"
+            hint="Comma-separated — helps buyers find your ad"
           >
             <input
-              type="text"
-              name="tags"
               value={form.tags}
               placeholder="e.g. iphone, apple, phone, accra, 256gb"
               className={inputNormal}
@@ -773,26 +764,64 @@ export default function AdForm({
             error={errors.images}
             hint="First photo is the cover shown in search results. Up to 5 photos."
           >
+            {/* Show existing images in edit mode */}
+            {mode === "edit" && existingImages.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs text-gray-500 mb-2">
+                  Current photos ({existingImages.length}) — add new ones below
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {existingImages.map((img, i) => (
+                    <div
+                      key={img.publicId ?? i}
+                      className="relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden
+                        border-2 border-yellow-400"
+                    >
+                      <Image
+                        src={img.url}
+                        alt={`existing ${i + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                      {img.isCover && (
+                        <span
+                          className="absolute bottom-0 left-0 right-0 text-[9px] font-bold
+                          bg-yellow-400 text-black text-center py-0.5"
+                        >
+                          Cover
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  To replace photos, add new ones below. New photos will be
+                  appended.
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-2 mt-1">
               {form.images.map((file, i) => (
                 <ImageSlot
                   key={i}
                   file={file}
-                  previewUrl={existingImageUrls[i] ?? null}
+                  previewUrl={null}
                   index={i}
                   onChange={setImage}
                   onRemove={removeImage}
                 />
               ))}
             </div>
-          </Field>
 
-          {form.images.filter(Boolean).length > 0 && (
-            <p className="text-xs text-green-600 font-medium">
-              ✓ {form.images.filter(Boolean).length} photo
-              {form.images.filter(Boolean).length !== 1 ? "s" : ""} selected
-            </p>
-          )}
+            {form.images.filter(Boolean).length > 0 && (
+              <p className="text-xs text-green-600 font-medium mt-2">
+                ✓ {form.images.filter(Boolean).length} new photo
+                {form.images.filter(Boolean).length !== 1 ? "s" : ""} ready to
+                upload
+              </p>
+            )}
+          </Field>
 
           <Field
             label="Video URL"
@@ -825,7 +854,6 @@ export default function AdForm({
                   min="0"
                   inputMode="decimal"
                   value={form.price}
-                  name="price"
                   placeholder="0.00"
                   className={`${errors.price ? inputError : inputNormal} pl-7`}
                   onChange={(e) => set("price", e.target.value)}
@@ -861,7 +889,7 @@ export default function AdForm({
               />
               <div>
                 <p className="text-sm font-semibold text-gray-800">
-                  Offer delivery
+                  Offer delivery 🚚
                 </p>
                 <p className="text-xs text-gray-400">
                   Let buyers know you can deliver
@@ -880,17 +908,13 @@ export default function AdForm({
                     set("deliveryOption", e.target.value as DeliveryOption)
                   }
                 >
-                  <option value="both">Both delivery & pickup</option>
+                  <option value="both">Both delivery &amp; pickup</option>
                   <option value="delivery_only">Delivery only</option>
                   <option value="pickup_only">Pickup only</option>
                 </select>
               </Field>
-
               <div className="grid grid-cols-2 gap-3">
-                <Field
-                  label={`Delivery fee (${sym})`}
-                  hint="Enter 0 for free delivery"
-                >
+                <Field label={`Delivery fee (${sym})`} hint="Enter 0 for free">
                   <div className="relative">
                     <span
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400
@@ -903,19 +927,15 @@ export default function AdForm({
                       min="0"
                       inputMode="decimal"
                       value={form.deliveryFee}
-                      name="deliveryFee"
                       placeholder="0"
                       className={`${inputNormal} pl-7`}
                       onChange={(e) => set("deliveryFee", e.target.value)}
                     />
                   </div>
                 </Field>
-
                 <Field label="Delivery note">
                   <input
-                    type="text"
                     value={form.deliveryNote}
-                    name="deliveryNote"
                     placeholder="e.g. Free in Accra"
                     className={inputNormal}
                     onChange={(e) => set("deliveryNote", e.target.value)}
@@ -945,12 +965,9 @@ export default function AdForm({
                 ))}
               </select>
             </Field>
-
             <Field label="City / Area">
               <input
-                type="text"
                 value={form.city}
-                name="city"
                 placeholder="e.g. Tema, Labone"
                 className={inputNormal}
                 onChange={(e) => set("city", e.target.value)}
@@ -960,12 +977,10 @@ export default function AdForm({
 
           <Field
             label="Street address"
-            hint="Optional — helps buyers know the pickup point"
+            hint="Optional — helps buyers find pickup point"
           >
             <input
-              type="text"
               value={form.address}
-              name="address"
               placeholder="e.g. Near Accra Mall, Spintex Road"
               className={inputNormal}
               onChange={(e) => set("address", e.target.value)}
@@ -976,24 +991,19 @@ export default function AdForm({
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
               Contact details
             </p>
-
             <div className="grid grid-cols-2 gap-3">
               <Field label="Your name" required error={errors.name}>
                 <input
-                type="text"
                   value={form.name}
-                  name="name"
                   placeholder="Full name"
                   className={errors.name ? inputError : inputNormal}
                   onChange={(e) => set("name", e.target.value)}
                   autoComplete="name"
                 />
               </Field>
-
               <Field label="Phone number" required error={errors.phone}>
                 <input
                   value={form.phone}
-                  name="phone"
                   type="tel"
                   inputMode="tel"
                   placeholder="+233 244 000 000"
@@ -1003,7 +1013,6 @@ export default function AdForm({
                 />
               </Field>
             </div>
-
             <Field label="WhatsApp number" hint="Leave blank if same as phone">
               <input
                 value={form.whatsapp}
@@ -1014,7 +1023,6 @@ export default function AdForm({
                 onChange={(e) => set("whatsapp", e.target.value)}
               />
             </Field>
-
             <label
               className="flex items-center gap-3 cursor-pointer mt-3 p-3 rounded-xl
               border border-gray-100 hover:border-yellow-300 hover:bg-yellow-50 transition"
@@ -1038,8 +1046,7 @@ export default function AdForm({
         </Card>
       )}
 
-      {/* ── Upload progress ── */}
-      <UploadProgress progress={progress} />
+      <UploadProgress progress={progress} label={progressLabel} />
 
       {/* ── Navigation ── */}
       <div className="flex gap-3 mt-5">
@@ -1078,7 +1085,7 @@ export default function AdForm({
                   className="w-4 h-4 border-2 border-black/30 border-t-black
                     rounded-full animate-spin inline-block"
                 />
-                {mode === "edit" ? "Saving…" : "Posting…"}
+                {progressLabel || (mode === "edit" ? "Saving…" : "Posting…")}
               </span>
             ) : (
               submitLabel

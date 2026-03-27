@@ -1,9 +1,6 @@
 "use client";
 
 // src/app/sell/page.tsx
-// Replaces the old ProductUpload page.
-// Uses AdForm (the shared create/edit form) wired to the ads backend.
-
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -11,8 +8,12 @@ import { useAds } from "@/src/hooks/useAds";
 import { useAppSelector } from "@/src/app/redux";
 import { saveReturnState } from "@/src/hooks/useSubscriptionGuard";
 import { AdFormData } from "@/src/types/adForm.types";
-import { AdCondition, Negotiable, DeliveryOption } from "@/src/types/ad.types";
-import axiosInstance from "@/src/lib/api/axios";
+import {
+  AdImage,
+  AdCondition,
+  Negotiable,
+  DeliveryOption,
+} from "@/src/types/ad.types";
 import AdForm from "../ads/(components)/AdForm";
 
 export default function SellPage() {
@@ -21,18 +22,13 @@ export default function SellPage() {
     (s) => s.auth,
   );
   const isVendor = isAuthenticated && user?.role === "vendor";
+  const { submitCreateAd, mutating, mutateError } = useAds();
 
-  const { lastCreated } = useAds();
-
-  // Redirect to the new ad after creation
   useEffect(() => {
-    if (lastCreated) {
-      toast.success("Ad posted successfully! 🎉");
-      router.push(`/ads/${lastCreated._id}`);
-    }
-  }, [lastCreated, router]);
+    if (mutateError) toast.error(mutateError);
+  }, [mutateError]);
 
-  // Guard: not logged in → save state and redirect to login
+  // Auth + vendor guard
   useEffect(() => {
     if (!hasCheckedAuth) return;
     if (!isAuthenticated) {
@@ -56,65 +52,57 @@ export default function SellPage() {
     );
   }
 
-  if (!isVendor) return null; // redirect in progress
+  if (!isVendor) return null;
 
-  const handleCreate = async (fd: FormData, data: AdFormData) => {
-    try {
-      // The AdForm builds the FormData payload — send it directly
-      // axiosInstance handles auth headers
-      await axiosInstance.post("/ads", {
-        title: data.title,
-        description: data.description,
-        category: {
-          main: data.category,
-          sub: data.subcategory,
-          leaf: data.type,
-          path: [data.category, data.subcategory, data.type]
-            .filter(Boolean)
-            .join(" > "),
-        },
-        price: { amount: Number(data.price), currency: data.currency },
-        negotiable: data.negotiable || "not_sure",
-        condition: data.condition || "not_applicable",
-        location: {
-          country: user?.country ?? "Ghana",
-          countryCode: user?.currency === "NGN" ? "NG" : "GH",
-          region: data.region,
-          city: data.city,
-          address: data.address,
-        },
-        contact: {
-          name: data.name,
-          phone: data.phone,
-          whatsapp: data.whatsapp || null,
-          showPhone: data.showPhone,
-        },
-        delivery: {
-          available: data.delivery,
-          option: data.deliveryOption || "pickup_only",
-          fee: Number(data.deliveryFee) || 0,
-          note: data.deliveryNote || null,
-        },
-        tags: data.tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        attributes: data.attributes,
-        // Note: images are handled via Cloudinary upload separately
-        // (AdForm shows previews; real upload happens here or in the controller)
-      });
+  // onSubmit receives already-uploaded Cloudinary images + form data
+  // Returns { adId } so AdForm can build the "View my ad" link in success screen
+  const handleCreate = async (images: AdImage[], data: AdFormData) => {
+    const result = await submitCreateAd({
+      title: data.title,
+      description: data.description,
+      category: {
+        main: data.category,
+        sub: data.subcategory || undefined,
+        leaf: data.type || undefined,
+        path: [data.category, data.subcategory, data.type]
+          .filter(Boolean)
+          .join(" > "),
+      },
+      images, // ← already uploaded to Cloudinary by AdForm
+      price: { amount: Number(data.price), currency: data.currency },
+      negotiable: (data.negotiable || "not_sure") as Negotiable,
+      condition: (data.condition || "not_applicable") as AdCondition,
+      location: {
+        country: (user?.country ?? "Ghana") as any,
+        countryCode: (user?.currency === "NGN" ? "NG" : "GH") as any,
+        region: data.region,
+        city: data.city || undefined,
+        address: data.address || undefined,
+      },
+      contact: {
+        name: data.name,
+        phone: data.phone,
+        whatsapp: data.whatsapp || null,
+        showPhone: data.showPhone,
+      },
+      delivery: {
+        available: data.delivery,
+        option: (data.deliveryOption || "pickup_only") as DeliveryOption,
+        fee: Number(data.deliveryFee) || 0,
+        feeCurrency: data.currency,
+        note: data.deliveryNote || null,
+      },
+      tags: data.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      attributes: data.attributes,
+      videoUrl: data.videoUrl || null,
+    });
 
-      localStorage.removeItem("adFormDraft");
-    } catch (error: any) {
-      if (error?.response?.data?.code === "SUBSCRIPTION_REQUIRED") {
-        toast.info("A vendor subscription is required to post ads.");
-        saveReturnState({ type: "post_product" });
-        router.push("/subscribe");
-      } else {
-        toast.error("Failed to post ad. Please try again.");
-      }
-      throw error;
-    }
+    // Return the new ad's _id so AdForm can show "View my ad" button
+    const ad = (result as any)?.payload;
+    return { adId: ad?._id ?? ad?.id ?? "pending" };
   };
 
   return (
@@ -127,8 +115,12 @@ export default function SellPage() {
           </p>
         </div>
       </div>
-
-      <AdForm onSubmit={handleCreate} submitLabel="Post ad" />
+      <AdForm
+        onSubmit={handleCreate}
+        submitLabel="Post ad"
+        loading={mutating}
+        mode="create"
+      />
     </div>
   );
 }

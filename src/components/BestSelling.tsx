@@ -2,9 +2,9 @@
 
 import React from "react";
 import Title from '@/src/components/Title'
-import FeaturedCard from "./FeaturedCard";
 import { useRouter } from 'next/navigation.js';
 import { Products } from "../constants/data";
+import OldFeaturedCard from "./OldFeatureCard";
 
 interface FeaturedProps {
   className?: string
@@ -29,7 +29,7 @@ const BestSelling = ({className}: FeaturedProps) => {
         style={{ maxWidth: "100%" }}
       >
         {Products.slice(0, 20).map((item, index) => (
-          <FeaturedCard key={item.id} item={item} index={index} />
+          <OldFeaturedCard key={item.id} item={item} index={index} />
         ))}
       </div>
     </div>

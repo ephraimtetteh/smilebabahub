@@ -1,10 +1,11 @@
 import Hero from "@/src/components/Hero";
-import Restate from "@/src/components/RestateComponent";
-import FoodAds from "@/src/components/FoodComponent";
 import Video from "@/src/components/Video";
 import React from "react";
 import AppDownload from "@/src/components/App";
 import FeaturedProducts from "../components/FeaturedProducts";
+import OldRestate from "../components/OldGridLayout/OldRestateComponent";
+import OldMarket from "../components/OldGridLayout/OldMarketComponent";
+import OldFoodComponents from "../components/OldGridLayout/OldFoodComponent";
 
 const HomePage = () => {
   return (
@@ -15,7 +16,7 @@ const HomePage = () => {
       {/* Scrollable content — sits on top of the fixed hero via z-10 + white bg */}
       <div className="max-sm:relative w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
         <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
-          <Restate />
+          <OldRestate />
           <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
             <div className="w-full">
               <h1 className="lg:text-4xl font-bold py-12 capitalize text-center">
@@ -24,8 +25,11 @@ const HomePage = () => {
               <Video />
             </div>
           </div>
-          <FoodAds />
-          <FeaturedProducts />
+          <OldFoodComponents />
+          <OldMarket />
+          <FeaturedProducts category="food" />
+          <FeaturedProducts category="apartments" />
+          <FeaturedProducts category="marketplace" />
         </div>
         <AppDownload />
       </div>

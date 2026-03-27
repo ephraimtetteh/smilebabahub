@@ -2,16 +2,16 @@
 
 import React from "react";
 import Title from '@/src/components/Title'
-import { FeaturedGrid } from "./FeaturedCard";
 import { useRouter } from 'next/navigation.js';
-import { Products } from "../constants/data";
+import { FeaturedGrid } from "../OldFeatureCard";
+import { Products } from "@/src/constants/data";
 
 interface FeaturedProps {
   className?: string
 }
 
 
-const Restate = ({className}: FeaturedProps) => {
+const OldRestate = ({className}: FeaturedProps) => {
   const router = useRouter()
   
   const navigate = ( path:string) => {
@@ -38,9 +38,9 @@ const Restate = ({className}: FeaturedProps) => {
       </div>
 
       {/* 7-grid */}
-      <FeaturedGrid items={restate.slice(0, 14)} />
+      <FeaturedGrid items={restate.slice(0, 10)} />
     </div>
   );
 };
 
-export default Restate;
+export default OldRestate;

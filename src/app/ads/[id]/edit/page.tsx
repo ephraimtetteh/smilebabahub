@@ -9,17 +9,15 @@ import { useAds } from "@/src/hooks/useAds";
 import { useAppSelector } from "@/src/app/redux";
 import { AdFormData } from "@/src/types/adForm.types";
 import {
+  AdImage,
   AdCondition,
   Negotiable,
   DeliveryOption,
-  AdCurrency,
 } from "@/src/types/ad.types";
 import AdForm from "../../(components)/AdForm";
 
-// ── Map the Ad model shape back to AdFormData for pre-filling the form ──────
-function adToFormData(
-  ad: NonNullable<ReturnType<typeof useAds>["current"]>,
-): Partial<AdFormData> {
+// Map Ad model → AdFormData for pre-filling the form
+function adToFormData(ad: any): Partial<AdFormData> {
   return {
     title: ad.title ?? "",
     description: ad.description ?? "",
@@ -30,10 +28,10 @@ function adToFormData(
       | AdCondition
       | "",
     negotiable: (ad.negotiable ?? "") as Negotiable | "",
-    tags: ad.tags?.join(", ") ?? "",
+    tags: Array.isArray(ad.tags) ? ad.tags.join(", ") : "",
     videoUrl: ad.videoUrl ?? "",
     price: String(ad.price?.amount ?? ""),
-    currency: (ad.price?.currency ?? "GHS") as AdCurrency,
+    currency: ad.price?.currency ?? "GHS",
     delivery: ad.delivery?.available ?? false,
     deliveryOption: (ad.delivery?.option ?? "") as DeliveryOption | "",
     deliveryFee: String(ad.delivery?.fee ?? ""),
@@ -67,12 +65,10 @@ export default function EditAdPage() {
     if (id) loadAdById(id);
   }, [id]);
 
-  // ── Guard: only owner can edit ──────────────────────────────────────────
   const isOwner = Boolean(
-    user && ad && String(ad.postedBy?._id) === String(user._id),
+    user && ad && String(ad.postedBy?._id ?? ad.postedBy) === String(user._id),
   );
 
-  // ── Loading ──────────────────────────────────────────────────────────────
   if (currentLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -84,7 +80,6 @@ export default function EditAdPage() {
     );
   }
 
-  // ── Error / not found ────────────────────────────────────────────────────
   if (currentError || !ad) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -93,8 +88,8 @@ export default function EditAdPage() {
           <p className="text-gray-700 font-semibold">Ad not found</p>
           <Link
             href="/ads/my"
-            className="mt-4 inline-block px-5 py-2.5 bg-yellow-400 text-black
-              font-bold rounded-xl text-sm"
+            className="mt-4 inline-block px-5 py-2.5 bg-yellow-400
+            text-black font-bold rounded-xl text-sm"
           >
             ← My ads
           </Link>
@@ -103,7 +98,6 @@ export default function EditAdPage() {
     );
   }
 
-  // ── Not owner ────────────────────────────────────────────────────────────
   if (!isOwner) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -114,8 +108,8 @@ export default function EditAdPage() {
           </p>
           <Link
             href={`/ads/${id}`}
-            className="mt-4 inline-block px-5 py-2.5 bg-yellow-400 text-black
-              font-bold rounded-xl text-sm"
+            className="mt-4 inline-block px-5 py-2.5 bg-yellow-400
+            text-black font-bold rounded-xl text-sm"
           >
             View ad
           </Link>
@@ -124,21 +118,29 @@ export default function EditAdPage() {
     );
   }
 
-  // ── Existing image URLs for preview in the photo step ───────────────────
-  const existingImageUrls = ad.images?.map((img) => img.url) ?? [];
+  // Pass the full AdImage objects (with url + publicId) to AdForm
+  // AdForm shows them as existing and won't re-upload them
+  const existingImages: AdImage[] =
+    ad.images?.map((img: any) => ({
+      url: img.url,
+      publicId: img.publicId ?? null,
+      isCover: img.isCover ?? false,
+    })) ?? [];
 
-  const handleUpdate = async (_fd: FormData, data: AdFormData) => {
+  // onSubmit receives merged images (existing + new uploads) + form data
+  const handleUpdate = async (images: AdImage[], data: AdFormData) => {
     const result = await submitUpdateAd(id, {
       title: data.title,
       description: data.description,
       category: {
         main: data.category,
-        sub: data.subcategory,
-        leaf: data.type,
+        sub: data.subcategory || undefined,
+        leaf: data.type || undefined,
         path: [data.category, data.subcategory, data.type]
           .filter(Boolean)
           .join(" > "),
       },
+      images, // ← merged array from AdForm (existing + newly uploaded)
       price: { amount: Number(data.price), currency: data.currency },
       negotiable: (data.negotiable || "not_sure") as Negotiable,
       condition: (data.condition || "not_applicable") as AdCondition,
@@ -146,8 +148,8 @@ export default function EditAdPage() {
         country: (user?.country ?? "Ghana") as any,
         countryCode: (user?.currency === "NGN" ? "NG" : "GH") as any,
         region: data.region,
-        city: data.city,
-        address: data.address,
+        city: data.city || undefined,
+        address: data.address || undefined,
       },
       contact: {
         name: data.name,
@@ -159,6 +161,7 @@ export default function EditAdPage() {
         available: data.delivery,
         option: (data.deliveryOption || "pickup_only") as DeliveryOption,
         fee: Number(data.deliveryFee) || 0,
+        feeCurrency: data.currency,
         note: data.deliveryNote || null,
       },
       tags: data.tags
@@ -166,19 +169,21 @@ export default function EditAdPage() {
         .map((t) => t.trim())
         .filter(Boolean),
       attributes: data.attributes,
+      videoUrl: data.videoUrl || null,
     });
 
-    if ((result as any)?.meta?.requestStatus === "fulfilled") {
-      toast.success("Ad updated successfully");
+    // Check if update succeeded
+    const updatedAd = (result as any)?.payload;
+    if (updatedAd?._id) {
+      toast.success("Ad updated successfully ✓");
       router.push(`/ads/${id}`);
     } else {
-      toast.error("Failed to update ad");
+      toast.error("Failed to update ad. Please try again.");
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4">
         <div className="max-w-xl mx-auto flex items-center justify-between">
           <div>
@@ -198,10 +203,11 @@ export default function EditAdPage() {
 
       <AdForm
         initialValues={adToFormData(ad)}
-        existingImageUrls={existingImageUrls}
+        existingImages={existingImages}
         onSubmit={handleUpdate}
         submitLabel="Save changes"
         loading={mutating}
+        mode="edit"
       />
     </div>
   );

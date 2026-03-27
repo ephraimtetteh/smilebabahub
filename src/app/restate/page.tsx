@@ -1,7 +1,9 @@
 'use client'
 
-import FeaturedCard from '@/src/components/FeaturedCard';
+
+import FeaturedProducts from '@/src/components/FeaturedProducts';
 import NewLayout from '@/src/components/NewLayout';
+import OldFeaturedCard from '@/src/components/OldFeatureCard';
 import Radio from '@/src/components/Radio';
 import Video from '@/src/components/Video';
 import { Products } from '@/src/constants/data';
@@ -16,9 +18,12 @@ return (
   <div className="w-full flex flex-col items-center mt-20 px-4">
     <div className="py-15 w-full max-w-7xl">
       <NewLayout />
-      <div className='pt-10'>
+      <div className="pt-10">
         <Radio />
       </div>
+    </div>
+    <div>
+      <FeaturedProducts category="apartments" />
     </div>
 
     <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -28,7 +33,7 @@ return (
         </p>
       ) : (
         restate.map((item, index) => (
-          <FeaturedCard key={item.id} item={item} index={index} />
+          <OldFeaturedCard key={item.id} item={item} index={index} />
         ))
       )}
     </div>

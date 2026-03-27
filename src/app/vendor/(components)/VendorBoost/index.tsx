@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Products } from "@/src/constants/data";
 import { packages } from "@/src/constants/subscription";
 import { useAppSelector } from "@/src/app/redux";
 import { useSubscriptionGuard } from "@/src/hooks/useSubscriptionGuard";
 import axiosInstance from "@/src/lib/api/axios";
 import { assets } from "@/src/assets/assets";
+import { useProducts } from "@/src/hooks/useProducts";
+import { getCoverImage } from "@/src/types/product.types";
 import { toast } from "react-toastify";
 
 // ── Currency config ────────────────────────────────────────────────────────
@@ -39,6 +40,15 @@ const VendorBoost = () => {
   const sym = CURRENCY_SYMBOLS[userCurrency] ?? "₵";
 
   const { guard, handleApiError } = useSubscriptionGuard();
+
+  const { myProducts, myLoading, loadMyProducts, formatProductPrice } =
+    useProducts();
+
+  // Load vendor's own products on mount
+  useEffect(() => {
+    loadMyProducts({ limit: 9 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Boost handler ──────────────────────────────────────────────────────
   const handleBoost = (productId: string) => {
@@ -211,69 +221,98 @@ const VendorBoost = () => {
         </Link>
       </div>
 
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {Products.slice(0, 9).map((item) => (
-          <div
-            key={item.id}
-            className="bg-white shadow-sm border border-gray-100 rounded-2xl
-              overflow-hidden hover:shadow-md transition-shadow"
-          >
-            {/* Image */}
-            <div className="relative w-full h-44">
-              <Image
-                src={item.images?.[0] || assets.upload_area}
-                fill
-                alt={item.title ?? "product"}
-                className="object-cover"
-              />
-            </div>
-
-            {/* Info */}
-            <div className="p-4">
-              <h3 className="font-semibold text-gray-900 text-sm truncate mb-0.5">
-                {item.title}
-              </h3>
-              <p className="text-sm font-bold text-gray-900 mb-4">
-                {sym}
-                {Number(item.price).toLocaleString()}
-              </p>
-
-              <div className="flex gap-2">
-                {/* Boost */}
-                <button
-                  onClick={() => handleBoost(String(item.id))}
-                  disabled={boostingId === String(item.id)}
-                  className="flex-1 py-2 bg-[#ffc105] text-black text-sm font-bold
-                    rounded-xl hover:bg-amber-400 transition disabled:opacity-50
-                    active:scale-95"
-                >
-                  {boostingId === String(item.id) ? (
-                    <span className="flex items-center justify-center gap-1">
-                      <span
-                        className="w-3 h-3 border-2 border-black/30 border-t-black
-                          rounded-full animate-spin inline-block"
-                      />
-                      Boosting…
-                    </span>
-                  ) : (
-                    "🚀 Boost"
-                  )}
-                </button>
-
-                {/* Promote */}
-                <Link
-                  href={`/vendor/settings?tab=promotion&product=${item.id}`}
-                  className="flex-1 py-2 bg-transparent border border-[#ffc105]
-                    text-amber-600 text-sm font-bold rounded-xl hover:bg-amber-50
-                    transition text-center active:scale-95"
-                >
-                  📣 Ad
-                </Link>
+      {myLoading && (
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl border border-gray-100 animate-pulse"
+            >
+              <div className="h-44 bg-gray-100 rounded-t-2xl" />
+              <div className="p-4 space-y-2">
+                <div className="h-4 bg-gray-100 rounded w-3/4" />
+                <div className="h-4 bg-gray-100 rounded w-1/2" />
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {!myLoading && myProducts.length === 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
+          <p className="text-3xl mb-3">📦</p>
+          <p className="text-gray-600 font-medium text-sm">No products yet</p>
+          <p className="text-xs text-gray-400 mt-1 mb-4">
+            Post your first ad to start selling
+          </p>
+        </div>
+      )}
+
+      {!myLoading && myProducts.length > 0 && (
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {myProducts.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white shadow-sm border border-gray-100 rounded-2xl
+              overflow-hidden hover:shadow-md transition-shadow"
+            >
+              {/* Image */}
+              <div className="relative w-full h-44">
+                <Image
+                  src={getCoverImage(item) || assets.upload_area}
+                  fill
+                  alt={item.title ?? "product"}
+                  className="object-cover"
+                />
+              </div>
+
+              {/* Info */}
+              <div className="p-4">
+                <h3 className="font-semibold text-gray-900 text-sm truncate mb-0.5">
+                  {item.title}
+                </h3>
+                <p className="text-sm font-bold text-gray-900 mb-4">
+                  {sym}
+                  {Number(item.price).toLocaleString()}
+                </p>
+
+                <div className="flex gap-2">
+                  {/* Boost */}
+                  <button
+                    onClick={() => handleBoost(String(item._id ?? item.id))}
+                    disabled={boostingId === String(item._id ?? item.id)}
+                    className="flex-1 py-2 bg-[#ffc105] text-black text-sm font-bold
+                    rounded-xl hover:bg-amber-400 transition disabled:opacity-50
+                    active:scale-95"
+                  >
+                    {boostingId === String(item._id ?? item.id) ? (
+                      <span className="flex items-center justify-center gap-1">
+                        <span
+                          className="w-3 h-3 border-2 border-black/30 border-t-black
+                          rounded-full animate-spin inline-block"
+                        />
+                        Boosting…
+                      </span>
+                    ) : (
+                      "🚀 Boost"
+                    )}
+                  </button>
+
+                  {/* Promote */}
+                  <Link
+                    href={`/vendor/settings?tab=promotion&product=${item._id ?? item.id}`}
+                    className="flex-1 py-2 bg-transparent border border-[#ffc105]
+                    text-amber-600 text-sm font-bold rounded-xl hover:bg-amber-50
+                    transition text-center active:scale-95"
+                  >
+                    📣 Ad
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

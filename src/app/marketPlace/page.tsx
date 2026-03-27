@@ -23,7 +23,7 @@ const MarketPlace = () => {
         <section className="flex flex-col gap-6">
           <h2 className="text-xl font-semibold">Featured Products</h2>
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <FeaturedProducts />
+            <FeaturedProducts category="marketplace" />
           </div>
         </section>
 

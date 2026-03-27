@@ -7,6 +7,18 @@ import React from "react";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { setIsDarkMode, setIsSidebarCollapsed } from "@/src/lib";
 import { assets } from "@/src/assets/assets";
+import NotificationBell from "../Notification";
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  Ghana: "🇬🇭",
+  Nigeria: "🇳🇬",
+};
+
+function getFirstName(username: string = ''): string {
+  const clean = username.replace(/_/g, "").trim();
+  const first = clean.split(" ")[0]
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
+}
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
@@ -14,6 +26,11 @@ const Navbar = () => {
     (state) => state.global.isSidebarCollapsed,
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
+  const { user } = useAppSelector((state) => state.auth)
+  const flag = COUNTRY_FLAGS[user?.country ?? ""] ?? "";
+  const firstName = getFirstName(user?.username)
+  const countryCode =
+    user?.currency === "NGN" ? "NG" : user?.currency === "GHS" ? "GH" : null;
 
   const toggleSidebarCollapsed = () => {
     dispatch(setIsSidebarCollapsed(!isSidebarCollapsed));
@@ -57,10 +74,11 @@ const Navbar = () => {
 
           {/* notifications */}
           <div className="relative">
-            <Bell className="cursor-pointer text-gray-500" size={22} />
+            {/* <Bell className="cursor-pointer text-gray-500" size={22} />
             <span className="absolute -top-2 -right-2 px-[0.4rem] py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
               0
-            </span>
+            </span> */}
+            <NotificationBell />
           </div>
 
           <hr className="h-6 border-gray-300" />
@@ -70,12 +88,20 @@ const Navbar = () => {
             <div className="w-9 h-9">
               <Image src={assets.profile_icon} alt="profile" />
             </div>
-            <span className="font-semibold">Ephraim</span>
+            <span className="font-semibold">{firstName}</span>
+            {countryCode && (
+              <span
+                className="hidden sm:inline text-[10px] bg-white/15 border border-white/20
+                px-1.5 py-0.5 rounded-full font-semibold tracking-wide"
+              >
+                {flag} {countryCode}
+              </span>
+            )}
           </div>
         </div>
 
         {/* settings */}
-        <Link href={"/settings"}>
+        <Link href={"/vendor/settings"}>
           <Settings className="cursor-pointer text-gray-500" size={24} />
         </Link>
       </div>

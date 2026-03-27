@@ -122,8 +122,23 @@ export const boostAd = createAsyncThunk<
   { id: string; tier?: "standard" | "featured" | "premium" }
 >("ads/boostAd", async ({ id, tier = "standard" }, { rejectWithValue }) => {
   try {
-    const res = await axiosInstance.post(`/ads/${id}/boost`, { tier });
-    return { id, boost: res.data.boost as AdBoost };
+    await axiosInstance.post(`/ads/${id}/boost`, { tier });
+    // Backend only returns a message — construct the boost object locally
+    const days: Record<string, number> = {
+      standard: 7,
+      featured: 14,
+      premium: 30,
+    };
+    const d = days[tier] ?? 7;
+    return {
+      id,
+      boost: {
+        isBoosted: true,
+        boostedAt: new Date().toISOString(),
+        boostedUntil: new Date(Date.now() + d * 86400000).toISOString(),
+        boostTier: tier,
+      } as AdBoost,
+    };
   } catch (err: any) {
     return rejectWithValue(
       err?.response?.data?.message ?? "Failed to boost ad",

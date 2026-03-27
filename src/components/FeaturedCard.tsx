@@ -1,114 +1,157 @@
 "use client";
 
-import React from "react";
-import { assets } from "../assets/assets";
-import Link from "next/link";
+import React, { memo } from "react";
 import Image from "next/image";
-import { CardComponentProps } from "@/src/types/types";
+import Link from "next/link";
 import { useAppSelector } from "@/src/app/redux";
+import { Product, getCoverImage } from "@/src/types/product.types";
+
+// Supports the old CardComponentProps shape AND the new Product type
+type FeaturedCardItem =
+  | Product
+  | {
+      id?: string | number;
+      _id?: string;
+      title?: string;
+      images?: (string | { url: string; isCover?: boolean })[];
+      price?: number;
+      currency?: string;
+      location?: { city?: string; region?: string };
+      seller?: { name?: string };
+    };
+
+interface CardComponentProps {
+  item: FeaturedCardItem;
+  index: number;
+}
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   GHS: "₵",
   NGN: "₦",
 };
 
-const FeaturedCard = ({ item, index }: CardComponentProps) => {
+// Normalise item to consistent shape regardless of source
+function normalise(item: FeaturedCardItem) {
+  const id = (item as any)._id ?? String((item as any).id ?? "");
+  const title = (item as any).title ?? "";
+  const price = Number((item as any).price ?? 0);
+  const currency = (item as any).currency ?? "GHS";
+  const city = (item as any).location?.city ?? "";
+  const region = (item as any).location?.region ?? "";
+  const seller =
+    (item as any).seller?.name ?? (item as any).seller?.username ?? "";
+
+  // Image normalisation — handles string[], {url}[] or mixed
+  const rawImages: (string | { url: string })[] = (item as any).images ?? [];
+  const coverUrl = (() => {
+    if (!rawImages.length) return "";
+    const cover = rawImages.find(
+      (img) => typeof img === "object" && (img as any).isCover,
+    );
+    const first = cover ?? rawImages[0];
+    return typeof first === "string" ? first : ((first as any).url ?? "");
+  })();
+
+  return { id, title, price, currency, city, region, seller, coverUrl };
+}
+
+const FeaturedCard = memo(function FeaturedCard({
+  item,
+  index,
+}: CardComponentProps) {
   const userCurrency = useAppSelector((state) => state.auth.user?.currency);
-  const symbol = CURRENCY_SYMBOLS[userCurrency ?? "GHS"] ?? "₵";
+  const { id, title, price, currency, city, region, seller, coverUrl } =
+    normalise(item);
+  const sym = CURRENCY_SYMBOLS[userCurrency ?? currency ?? "GHS"] ?? "₵";
 
   return (
     <Link
-      href={`/product/${item.id}`}
+      href={`/product/${id}`}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="relative w-full rounded-xl bg-white border border-gray-100
-        shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
+      className="group relative w-full rounded-2xl bg-white border border-gray-100
+        shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
     >
       {/* Image */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden">
-        <Image
-          src={item.images?.[0] || assets.upload_area}
-          alt={item.title ?? "product"}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-100">
+        {coverUrl ? (
+          <Image
+            src={coverUrl}
+            alt={title}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 20vw, 14vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-3xl text-gray-200">
+            🖼️
+          </div>
+        )}
 
         {/* Best seller badge */}
         {index % 2 === 0 && (
           <span
-            className="absolute top-2 left-2 px-2.5 py-1 text-[11px] bg-white
-            text-gray-800 font-semibold rounded-full shadow-sm"
+            className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold
+            bg-white text-gray-800 rounded-full shadow-sm"
           >
             🏆 Best Seller
           </span>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-3">
+      {/* Body */}
+      <div className="p-3 flex flex-col flex-1">
         {/* Seller + rating */}
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">
-            {item.seller?.name || "Unknown"}
+        <div className="flex items-center justify-between gap-1 mb-1">
+          <p className="text-xs font-semibold text-gray-800 truncate">
+            {seller || "Seller"}
           </p>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <Image
-              src={assets.starIconFilled}
-              alt="rating"
-              width={12}
-              height={12}
-            />
-            <span className="text-xs text-gray-600 font-medium">4.5</span>
-          </div>
+          <span className="text-[10px] text-gray-500 flex-shrink-0">
+            ⭐ 4.5
+          </span>
         </div>
 
-        {/* Location */}
-        <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-2">
-          <Image
-            src={assets.locationIcon}
-            alt="location"
-            width={11}
-            height={11}
-          />
-          <span className="truncate">{item.location?.city ?? "—"}</span>
-        </div>
+        {/* Title */}
+        <p className="text-xs text-gray-500 line-clamp-1 mb-1">{title}</p>
 
         {/* Price */}
-        <p className="text-xs text-gray-400">
-          {symbol}
-          <span className="text-base font-bold text-gray-900 ml-0.5">
-            {Number(item.price).toLocaleString()}
-          </span>
+        <p className="text-sm font-black text-gray-900 mt-auto">
+          {sym}
+          {price.toLocaleString()}
         </p>
+
+        {/* Location */}
+        {(city || region) && (
+          <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1">
+            <span>📍</span>
+            <span className="truncate">
+              {[city, region].filter(Boolean).join(", ")}
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );
-};
+});
 
-// ── 7-grid container ───────────────────────────────────────────────────────
-// Breakpoints:
-//   mobile (default) : 2 columns
-//   sm  (640px+)     : 3 columns
-//   md  (768px+)     : 4 columns
-//   lg  (1024px+)    : 5 columns
-//   xl  (1280px+)    : 7 columns  ← full 7-per-row on large screens
-//
-// Usage:
-//   <FeaturedGrid items={products.slice(0, 7)} />
+export default FeaturedCard;
 
-export function FeaturedGrid({
+// ── 7-column grid ────────────────────────────────────────────────────────────
+export const FeaturedGrid = memo(function FeaturedGrid({
   items,
 }: {
-  items: CardComponentProps["item"][];
+  items: FeaturedCardItem[];
 }) {
-  const capped = items;
+  const capped = items.slice(0, 7);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4 w-full">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3 sm:gap-4 w-full">
       {capped.map((item, i) => (
-        <FeaturedCard key={item.id ?? i} item={item} index={i} />
+        <FeaturedCard
+          key={(item as any)._id ?? (item as any).id ?? i}
+          item={item}
+          index={i}
+        />
       ))}
     </div>
   );
-}
-
-export default FeaturedCard;
+});

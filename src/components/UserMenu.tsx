@@ -17,6 +17,7 @@ import { useAppDispatch, useAppSelector } from "../app/redux";
 import { useRouter } from "next/navigation";
 import { logout } from "../lib/features/auth/authActions";
 import { safeStorage } from "@/src/utils/safeStorage";
+import { MdAdsClick } from "react-icons/md";
 
 const COUNTRY_FLAGS: Record<string, string> = {
   Ghana: "🇬🇭",
@@ -163,6 +164,13 @@ export default function UserMenu() {
                     {badge.label}
                   </span>
                 )}
+
+                <MenuItem
+                  href="/ads"
+                  icon={<MdAdsClick size={15} />}
+                  label="Ads"
+                  onClick={close}
+                />
               </div>
 
               {/* ── Menu items — change per role ── */}

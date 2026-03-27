@@ -6,7 +6,7 @@ import {
   setUser,
   setMessage,
 } from "./authSlice";
-import axiosInstance from "../../api/axios";
+import axiosInstance from "@/src/lib/api/axios";
 import getErrorMessage from "@/src/utils/getErrorMessage";
 import {
   LoginResponseProp,

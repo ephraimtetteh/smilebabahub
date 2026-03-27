@@ -20,6 +20,8 @@ import authReducer from "@/src/lib/features/auth/authSlice";
 import cartReducer from '@/src/lib/features/cart/cartSlice'
 import globalReducer from '@/src/lib'
 import adsReducer from "@/src/lib/features/ads/adsSlice";
+import productsReducer from "@/src/lib/features/products/productsSlice";
+
 import { api } from "../lib/api/api";
 
 // REDUX PERSISTENECE
@@ -44,7 +46,7 @@ const storage = typeof window === 'undefined'
 const persistConfig = {
   key: "rook",
   storage,
-  whitelist: ["auth", "global", "cart", "ads"],
+  whitelist: ["auth", "global", "cart", "ads", "products"],
 };
 
 const rootReducer = combineReducers({
@@ -52,8 +54,9 @@ const rootReducer = combineReducers({
   global: globalReducer,
   cart: cartReducer,
   ads: adsReducer,
-  [api.reducerPath]: api.reducer
-})
+  products: productsReducer,
+  [api.reducerPath]: api.reducer,
+});
 
 const persistedReducer = persistReducer(persistConfig, rootReducer)
 

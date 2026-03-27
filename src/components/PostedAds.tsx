@@ -2,10 +2,9 @@
 
 import React from "react";
 import Title from "@/src/components/Title";
-import FeaturedCard from "./FeaturedCard";
 import { usePathname, useRouter } from "next/navigation.js";
-import { products } from "../utils/data/generateProducts";
 import { Products } from "../constants/data";
+import OldFeaturedCard from "./OldFeatureCard";
 
 interface FeaturedProps {
   className?: string;
@@ -44,7 +43,7 @@ interface FeaturedProps {
         style={{ maxWidth: "100%" }}
       >
         {Products.map((item, index) => (
-          <FeaturedCard key={item.id} item={item} index={index} />
+          <OldFeaturedCard key={item.id} item={item} index={index} />
         ))}
       </div>
     </div>

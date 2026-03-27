@@ -3,7 +3,6 @@
 
 import React from 'react'
 import CardComponent from '../CardComponent'
-import { products } from '@/src/utils/data/generateProducts'
 import { Products } from '@/src/constants/data'
 
 

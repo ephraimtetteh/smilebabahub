@@ -20,7 +20,6 @@ import Card from "@/src/components/Card";
 import { safetyTips } from "@/src/constants/safetyTips";
 import Socials from "@/src/components/Socials";
 import { MdOutlineLocalOffer } from "react-icons/md";
-import RelatedAds from "@/src/components/FoodComponent";
 import ChatRoom from "@/src/components/ChatRoom";
 import Offer from "@/src/components/Offer";
 import Profile from "@/src/components/Profile";
@@ -28,7 +27,6 @@ import { ApartmentDetails, FoodDetails, MarketplaceDetails, ProductProps } from 
 import { Products } from "@/src/constants/data";
 import { useAppDispatch, useAppSelector } from "../../redux";
 import { addToCart } from "@/src/lib/features/cart/cartSlice";
-import Restate from "@/src/components/RestateComponent";
 
 const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
@@ -301,9 +299,8 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
         </div>
 
         <div className="mt-4 w-full">
-          <FeaturedProducts />
-          <RelatedAds />
-          <Restate/>
+          <FeaturedProducts category="food" />
+          <FeaturedProducts category="apartments" />
         </div>
       </div>
     )
