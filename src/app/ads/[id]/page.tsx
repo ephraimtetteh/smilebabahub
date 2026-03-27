@@ -327,6 +327,7 @@ export default function AdDetailPage() {
 
       {boostModal && (
         <BoostModal
+          adId={ad._id}
           mutating={mutating}
           onBoost={handleBoost}
           onClose={() => setBoostModal(false)}

@@ -657,6 +657,8 @@ export default function AdForm({
             hint={`${form.title.length}/120 characters`}
           >
             <input
+              type="text"
+              name="title"
               value={form.title}
               maxLength={120}
               placeholder="e.g. iPhone 15 Pro Max 256GB — Barely used"
@@ -738,6 +740,7 @@ export default function AdForm({
             <textarea
               rows={4}
               maxLength={5000}
+              name="description"
               value={form.description}
               placeholder="Describe your item — condition, features, what's included, reason for selling…"
               className={`${errors.description ? inputError : inputNormal} resize-none`}
@@ -750,6 +753,8 @@ export default function AdForm({
             hint="Comma-separated — helps buyers find you in search"
           >
             <input
+              type="text"
+              name="tags"
               value={form.tags}
               placeholder="e.g. iphone, apple, phone, accra, 256gb"
               className={inputNormal}
@@ -820,6 +825,7 @@ export default function AdForm({
                   min="0"
                   inputMode="decimal"
                   value={form.price}
+                  name="price"
                   placeholder="0.00"
                   className={`${errors.price ? inputError : inputNormal} pl-7`}
                   onChange={(e) => set("price", e.target.value)}
@@ -855,7 +861,7 @@ export default function AdForm({
               />
               <div>
                 <p className="text-sm font-semibold text-gray-800">
-                  Offer delivery 🚚
+                  Offer delivery
                 </p>
                 <p className="text-xs text-gray-400">
                   Let buyers know you can deliver
@@ -897,6 +903,7 @@ export default function AdForm({
                       min="0"
                       inputMode="decimal"
                       value={form.deliveryFee}
+                      name="deliveryFee"
                       placeholder="0"
                       className={`${inputNormal} pl-7`}
                       onChange={(e) => set("deliveryFee", e.target.value)}
@@ -906,7 +913,9 @@ export default function AdForm({
 
                 <Field label="Delivery note">
                   <input
+                    type="text"
                     value={form.deliveryNote}
+                    name="deliveryNote"
                     placeholder="e.g. Free in Accra"
                     className={inputNormal}
                     onChange={(e) => set("deliveryNote", e.target.value)}
@@ -939,7 +948,9 @@ export default function AdForm({
 
             <Field label="City / Area">
               <input
+                type="text"
                 value={form.city}
+                name="city"
                 placeholder="e.g. Tema, Labone"
                 className={inputNormal}
                 onChange={(e) => set("city", e.target.value)}
@@ -952,7 +963,9 @@ export default function AdForm({
             hint="Optional — helps buyers know the pickup point"
           >
             <input
+              type="text"
               value={form.address}
+              name="address"
               placeholder="e.g. Near Accra Mall, Spintex Road"
               className={inputNormal}
               onChange={(e) => set("address", e.target.value)}
@@ -967,7 +980,9 @@ export default function AdForm({
             <div className="grid grid-cols-2 gap-3">
               <Field label="Your name" required error={errors.name}>
                 <input
+                type="text"
                   value={form.name}
+                  name="name"
                   placeholder="Full name"
                   className={errors.name ? inputError : inputNormal}
                   onChange={(e) => set("name", e.target.value)}
@@ -978,6 +993,7 @@ export default function AdForm({
               <Field label="Phone number" required error={errors.phone}>
                 <input
                   value={form.phone}
+                  name="phone"
                   type="tel"
                   inputMode="tel"
                   placeholder="+233 244 000 000"

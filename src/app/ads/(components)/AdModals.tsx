@@ -1,22 +1,102 @@
 "use client";
 
 // src/components/ads/AdModals.tsx
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { BoostTier } from "@/src/types/ad.types";
+import axiosInstance from "@/src/lib/api/axios";
+import { useAppSelector } from "../../redux";
 import { BOOST_TIERS } from "./ad.constants";
+
+// ── Boost tier with real price from backend ────────────────────────────────
+type PricedTier = {
+  id: BoostTier;
+  label: string;
+  desc: string;
+  days: number;
+  display: string;
+  icon: string;
+};
 
 // ── Boost modal ────────────────────────────────────────────────────────────
 interface BoostModalProps {
+  adId: string;
   mutating: boolean;
   onBoost: (tier: BoostTier) => void;
   onClose: () => void;
 }
 
 export const BoostModal = memo(function BoostModal({
+  adId,
   mutating,
   onBoost,
   onClose,
 }: BoostModalProps) {
+  const userCurrency = useAppSelector((s) => s.auth.user?.currency ?? "GHS");
+  const [tiers, setTiers] = useState<PricedTier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState<BoostTier | null>(null);
+
+  // Fetch real prices from backend
+  useEffect(() => {
+    axiosInstance
+      .get(`/payments/boost/pricing?currency=${userCurrency}`)
+      .then((res) => {
+        // Merge backend prices with frontend icons
+        const iconMap: Record<string, string> = {
+          standard: "🔶",
+          featured: "🔵",
+          premium: "⭐",
+        };
+        setTiers(
+          (res.data.tiers as PricedTier[]).map((t) => ({
+            ...t,
+            icon: iconMap[t.id] ?? "🚀",
+          })),
+        );
+      })
+      .catch(() => {
+        // Fallback to static config if pricing endpoint fails
+        setTiers(
+          BOOST_TIERS.map((b) => ({
+            id: b.tier,
+            label: b.label,
+            desc: b.desc,
+            days: b.days,
+            display: "—",
+            icon: b.icon,
+          })),
+        );
+      })
+      .finally(() => setLoading(false));
+  }, [userCurrency]);
+
+  const handleBoostPay = async (tier: BoostTier) => {
+    setPaying(tier);
+    try {
+      // Determine country endpoint
+      const endpoint =
+        userCurrency === "NGN"
+          ? `/payments/boost/ng/initialize`
+          : `/payments/boost/gh/initialize`;
+
+      const res = await axiosInstance.post(endpoint, {
+        adId,
+        tier,
+        returnUrl: window.location.pathname,
+      });
+
+      // Redirect to Flutterwave payment page
+      if (res.data.paymentLink) {
+        window.location.href = res.data.paymentLink;
+      }
+    } catch (err: any) {
+      // Fallback: let parent handle (free boost for now)
+      onBoost(tier);
+    } finally {
+      setPaying(null);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center
@@ -28,25 +108,52 @@ export const BoostModal = memo(function BoostModal({
           Choose a boost tier to increase visibility and reach more buyers.
         </p>
 
-        <div className="space-y-3 mb-5">
-          {BOOST_TIERS.map((b) => (
-            <button
-              key={b.tier}
-              onClick={() => onBoost(b.tier)}
-              disabled={mutating}
-              className="w-full flex items-start gap-3 p-4 bg-gray-50 border-2
-                border-gray-100 rounded-2xl hover:border-yellow-400 transition
-                text-left disabled:opacity-50 active:scale-[0.99]"
-            >
-              <span className="text-2xl flex-shrink-0">{b.icon}</span>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-gray-900">{b.label}</p>
-                <p className="text-xs text-gray-500">{b.desc}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{b.days} days</p>
-              </div>
-            </button>
-          ))}
-        </div>
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-20 bg-gray-100 rounded-2xl animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3 mb-5">
+            {tiers.map((b) => (
+              <button
+                key={b.id}
+                onClick={() => handleBoostPay(b.id)}
+                disabled={mutating || paying !== null}
+                className="w-full flex items-start gap-3 p-4 bg-gray-50 border-2
+                  border-gray-100 rounded-2xl hover:border-yellow-400 transition
+                  text-left disabled:opacity-50 active:scale-[0.99]"
+              >
+                <span className="text-2xl flex-shrink-0">{b.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-gray-900">{b.label}</p>
+                    <p className="text-sm font-black text-yellow-600">
+                      {paying === b.id ? (
+                        <span className="flex items-center gap-1">
+                          <span
+                            className="w-3 h-3 border-2 border-yellow-400
+                              border-t-transparent rounded-full animate-spin inline-block"
+                          />
+                        </span>
+                      ) : (
+                        b.display
+                      )}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500">{b.desc}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {b.days} days · one-time payment
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
 
         <button
           onClick={onClose}

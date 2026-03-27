@@ -30,6 +30,7 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const cartItems = useAppSelector((state) => state.cart.cartItems);
   const authPath = pathName.startsWith("/auth");
   const vendor = pathName.startsWith('/vendor')
+  const marketer = pathName.startsWith('/marketer')
 
 
   useEffect(() => {
@@ -47,6 +48,8 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
     switch (true) {
       case pathName.startsWith("/vendor"):
         return !authPath;
+      case pathName.startsWith("/marketer"):
+        return !marketer;
 
       default:
         return !authPath ? <Navbar /> : null;

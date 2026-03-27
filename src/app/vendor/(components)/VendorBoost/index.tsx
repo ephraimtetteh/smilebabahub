@@ -9,6 +9,7 @@ import { useAppSelector } from "@/src/app/redux";
 import { useSubscriptionGuard } from "@/src/hooks/useSubscriptionGuard";
 import axiosInstance from "@/src/lib/api/axios";
 import { assets } from "@/src/assets/assets";
+import { toast } from "react-toastify";
 
 // ── Currency config ────────────────────────────────────────────────────────
 const PRICES: Record<string, Record<string, Record<string, number>>> = {
@@ -45,7 +46,7 @@ const VendorBoost = () => {
       try {
         setBoostingId(productId);
         await axiosInstance.post(`/listings/${productId}/boost`);
-        alert(
+        toast.success(
           "Product boosted! 🚀 It will now appear higher in search results.",
         );
       } catch (err) {
@@ -55,7 +56,7 @@ const VendorBoost = () => {
             payload: { productId },
           })
         ) {
-          alert("Failed to boost product. Please try again.");
+          toast.error("Failed to boost product. Please try again.");
         }
       } finally {
         setBoostingId(null);
@@ -69,7 +70,7 @@ const VendorBoost = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-            Subscription & Boost
+            Subscription &amp; Boost
           </h1>
           <p className="text-sm text-gray-400 mt-0.5">
             Manage your plan and boost products to reach more buyers
@@ -91,7 +92,11 @@ const VendorBoost = () => {
               key={b}
               onClick={() => setBilling(b)}
               className={`px-5 py-2 rounded-full text-sm font-semibold transition capitalize
-                ${billing === b ? "bg-[#ffc105] text-black shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                ${
+                  billing === b
+                    ? "bg-[#ffc105] text-black shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
             >
               {b}
               {b === "yearly" && (
@@ -131,7 +136,7 @@ const VendorBoost = () => {
                   bg-[#ffc105] text-black text-[11px] font-black px-3 py-0.5
                   rounded-full whitespace-nowrap shadow-sm"
                 >
-                  Most Popular
+                  ⭐ Most Popular
                 </div>
               )}
 
@@ -242,17 +247,27 @@ const VendorBoost = () => {
                     rounded-xl hover:bg-amber-400 transition disabled:opacity-50
                     active:scale-95"
                 >
-                  {boostingId === String(item.id) ? "…" : "🚀 Boost"}
+                  {boostingId === String(item.id) ? (
+                    <span className="flex items-center justify-center gap-1">
+                      <span
+                        className="w-3 h-3 border-2 border-black/30 border-t-black
+                          rounded-full animate-spin inline-block"
+                      />
+                      Boosting…
+                    </span>
+                  ) : (
+                    "🚀 Boost"
+                  )}
                 </button>
 
-                {/* Promote (video ad) */}
+                {/* Promote */}
                 <Link
                   href={`/vendor/settings?tab=promotion&product=${item.id}`}
-                  className="flex-1 py-2 bg-transparent border border-[#ffc105] text-amber-600
-                    text-sm font-bold rounded-xl hover:bg-amber-50 transition text-center
-                    active:scale-95"
+                  className="flex-1 py-2 bg-transparent border border-[#ffc105]
+                    text-amber-600 text-sm font-bold rounded-xl hover:bg-amber-50
+                    transition text-center active:scale-95"
                 >
-                  Ad
+                  📣 Ad
                 </Link>
               </div>
             </div>

@@ -201,6 +201,7 @@ const AdManageCard = memo(function AdManageCard({
       {/* Boost modal */}
       {boostOpen && (
         <BoostModal
+          adId={ad._id}
           mutating={mutating}
           onBoost={handleBoost}
           onClose={() => setBoostOpen(false)}
