@@ -19,7 +19,7 @@ type Notification = {
   title: string;
   message: string;
   isRead: boolean;
-  actionUrl?: string;
+  actionUrl?: '/vendor';
   actionLabel?: string;
   createdAt: string;
 };
@@ -183,11 +183,11 @@ export default function NotificationBell() {
                     <span className="text-[11px] text-gray-400">
                       {timeAgo(n.createdAt)}
                     </span>
-                    {n.actionLabel && (
+                    {/* {n.actionLabel && (
                       <span className="text-[11px] text-amber-600 font-semibold hover:underline">
                         {n.actionLabel} →
                       </span>
-                    )}
+                    )} */}
                   </div>
                 </div>
                 {!n.isRead && (
