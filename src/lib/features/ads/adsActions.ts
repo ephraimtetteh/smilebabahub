@@ -1,16 +1,28 @@
 // src/lib/features/ads/adsActions.ts
-// Async thunks for ads. Place this file at src/lib/features/ads/adsActions.ts
 
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/src/lib/api/axios";
 
+// Always resolve to a valid country — never send empty string to backend.
+function resolveCountry(explicit: string | undefined, state: any): string {
+  return (
+    explicit ||
+    state?.auth?.user?.country ||
+    state?.auth?.guestCountry ||
+    "Ghana"
+  );
+}
+
 // ── Fetch public feed ─────────────────────────────────────────────────────────
 export const fetchAds = createAsyncThunk(
   "ads/fetchAds",
-  async (filters: Record<string, any>, { rejectWithValue }) => {
+  async (filters: Record<string, any>, { rejectWithValue, getState }) => {
     try {
+      const country = resolveCountry(filters.country, getState());
       const params = Object.fromEntries(
-        Object.entries(filters).filter(([, v]) => v !== undefined && v !== ""),
+        Object.entries({ ...filters, country }).filter(
+          ([, v]) => v !== undefined && v !== "",
+        ),
       );
       const res = await axiosInstance.get("/ads", { params });
       return res.data;
@@ -159,7 +171,7 @@ export const togglePause = createAsyncThunk(
   },
 );
 
-// ── Record contact click (analytics, fire-and-forget) ─────────────────────────
+// ── Record contact click ───────────────────────────────────────────────────────
 export const recordContactClick = createAsyncThunk(
   "ads/recordContactClick",
   async (id: string) => {
@@ -169,7 +181,7 @@ export const recordContactClick = createAsyncThunk(
   },
 );
 
-// ── Moderate ad (manual admin flag/reject — ads are auto-approved on post) ────
+// ── Moderate ad (manual admin flag only — ads auto-approve on post) ────────────
 export const moderateAd = createAsyncThunk(
   "ads/moderateAd",
   async (

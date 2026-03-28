@@ -72,12 +72,13 @@ export function useProducts() {
     (country?: string, category = "all") =>
       dispatch(
         fetchFeaturedProducts({
-          country: country ?? userCountry,
+          // Pass undefined if empty so thunk reads from Redux state directly
+          country: country || undefined,
           category,
           limit: 7,
         }),
       ),
-    [dispatch, userCountry],
+    [dispatch],
   );
 
   const loadProductById = useCallback(

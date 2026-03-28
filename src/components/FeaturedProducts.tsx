@@ -70,7 +70,10 @@ const FeaturedProducts = ({
   //   2. guestCountry      — if guest + GuestLocationDetector ran
   //   3. "Ghana"           — safe fallback (always produces results)
   useEffect(() => {
-    loadFeatured(userCountry, category);
+    // Pass country as undefined if empty — the thunk resolves it from Redux state
+    // (user.country → guestCountry → "Ghana"). This ensures logged-in users
+    // whose user.country field is empty still get results.
+    loadFeatured(userCountry || undefined, category);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userCountry, category]);
 

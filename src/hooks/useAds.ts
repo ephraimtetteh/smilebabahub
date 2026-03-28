@@ -71,7 +71,13 @@ export function useAds() {
   // ── Actions ───────────────────────────────────────────────────────────────
   const loadAds = useCallback(
     (f: Partial<AdFilters> = {}) =>
-      dispatch(fetchAds({ country: userCountry, ...f } as AdFilters)),
+      // Pass country as undefined if empty — thunk reads from Redux state
+      dispatch(
+        fetchAds({
+          country: f.country || userCountry || undefined,
+          ...f,
+        } as AdFilters),
+      ),
     [dispatch, userCountry],
   );
 
