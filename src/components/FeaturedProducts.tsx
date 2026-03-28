@@ -1,5 +1,13 @@
 "use client";
 
+// src/components/FeaturedProducts.tsx
+// Loads featured products for a category. Works for ALL visitors:
+// logged-in users, guests, and unauthenticated visitors.
+//
+// NO auth gate — fetches immediately on mount using country from Redux
+// (user.country for logged-in, guestCountry for guests, "Ghana" as fallback).
+// Re-fetches whenever userCountry changes (e.g. after GuestLocationDetector runs).
+
 import React, { useEffect } from "react";
 import Title from "@/src/components/Title";
 import { FeaturedGrid } from "./FeaturedCard";
@@ -21,7 +29,6 @@ const CATEGORY_DEFAULTS: Record<string, { title: string; href: string }> = {
   all: { title: "Browse our marketplace", href: "/marketPlace" },
 };
 
-// ── Skeleton ──────────────────────────────────────────────────────────────
 function FeaturedSkeleton({ className }: { className?: string }) {
   return (
     <div className={`${className} flex flex-col px-3 sm:px-6`}>
@@ -47,7 +54,6 @@ function FeaturedSkeleton({ className }: { className?: string }) {
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
 const FeaturedProducts = ({
   className,
   category = "all",
@@ -55,20 +61,20 @@ const FeaturedProducts = ({
   viewAllHref,
   viewAllLabel = "View all →",
 }: FeaturedProps) => {
-  const {
-    featured, // Record<string, Product[]>
-    featuredLoading,
-    loadFeatured,
-    userCountry,
-  } = useProducts();
+  const { featured, featuredLoading, loadFeatured, userCountry } =
+    useProducts();
 
-  // Fetch this category on mount (or when country changes)
+  // Fetch on mount and whenever the country changes.
+  // userCountry resolves to:
+  //   1. user.country      — if logged in
+  //   2. guestCountry      — if guest + GuestLocationDetector ran
+  //   3. "Ghana"           — safe fallback (always produces results)
   useEffect(() => {
     loadFeatured(userCountry, category);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userCountry, category]);
 
-  const items = featured[category] ?? [];
+  const items = (featured ?? {})[category] ?? [];
   const defaults = CATEGORY_DEFAULTS[category] ?? CATEGORY_DEFAULTS.all;
 
   if (featuredLoading && !items.length) {
@@ -90,7 +96,6 @@ const FeaturedProducts = ({
           {viewAllLabel}
         </Link>
       </div>
-
       <FeaturedGrid items={items} />
     </div>
   );

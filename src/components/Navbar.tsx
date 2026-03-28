@@ -89,7 +89,7 @@ function NavDropdown({ cat }: { cat: NavCategory }) {
             className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold
               text-gray-800 hover:bg-yellow-50 hover:text-yellow-700 transition"
           >
-            <span>{cat.icon}</span>
+            <span className="text-gray-500">{cat.icon}</span>
             All {cat.label}
           </Link>
           <div className="border-t border-gray-100 my-1" />
@@ -101,7 +101,7 @@ function NavDropdown({ cat }: { cat: NavCategory }) {
               className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600
                 hover:bg-gray-50 hover:text-gray-900 transition"
             >
-              <span className="text-base">{child.icon}</span>
+              <span className="text-gray-400">{child.icon}</span>
               {child.label}
             </Link>
           ))}
@@ -128,7 +128,7 @@ function MobileNavItem({
         onClick={onNavigate}
         className="flex items-center gap-2 text-lg text-white hover:text-yellow-400 transition"
       >
-        <span>{cat.icon}</span>
+        <span className="text-white/70">{cat.icon}</span>
         {cat.label}
         {cat.badge && (
           <span
@@ -150,7 +150,7 @@ function MobileNavItem({
           hover:text-yellow-400 transition"
       >
         <span className="flex items-center gap-2">
-          <span>{cat.icon}</span>
+          <span className="text-white/70">{cat.icon}</span>
           {cat.label}
         </span>
         <ChevronDown
@@ -176,7 +176,7 @@ function MobileNavItem({
               className="flex items-center gap-2 text-sm text-white/70
                 hover:text-yellow-400 transition py-1"
             >
-              <span>{child.icon}</span>
+              <span className="text-white/50">{child.icon}</span>
               {child.label}
             </Link>
           ))}
@@ -270,13 +270,13 @@ export default function Navbar() {
                 transition font-medium border border-yellow-400/30 px-3 py-1 rounded-full
                 hover:bg-yellow-400/10 text-sm"
             >
-              <span className="text-xs">{MARKETER_LINK.icon}</span>
+              {MARKETER_LINK.icon}
               {MARKETER_LINK.label}
             </Link>
           </div>
 
           {/* ── Search ── */}
-          {/* <div
+          <div
             className="hidden md:flex items-center bg-white/10 border border-white/20
             rounded-full px-3 py-1.5 gap-2 min-w-0"
           >
@@ -295,7 +295,7 @@ export default function Navbar() {
               className="bg-transparent outline-none text-white text-sm w-32 lg:w-48
                 placeholder:text-white/40"
             />
-          </div> */}
+          </div>
 
           {/* ── Right actions ── */}
           <div className="flex items-center gap-2 sm:gap-3">

@@ -1,11 +1,10 @@
 // src/hooks/useAds.ts
-// Convenience hook — wraps all ads Redux state and actions in one place.
-// Import this in any component that needs to work with ads.
-
 "use client";
 
 import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
+
+// Thunks — real project path
 import {
   fetchAds,
   fetchAdById,
@@ -18,8 +17,9 @@ import {
   markAsSold,
   togglePause,
   recordContactClick,
-  moderateAd,
 } from "@/src/lib/features/ads/adsActions";
+
+// Slice actions — real project path
 import {
   setFilters,
   resetFilters,
@@ -27,9 +27,8 @@ import {
   setMyAdsStatus,
   clearCurrent,
   clearMutateError,
-  patchAd,
-  removeAd,
 } from "@/src/lib/features/ads/adsSlice";
+
 import type {
   AdFilters,
   CreateAdPayload,
@@ -39,140 +38,116 @@ import type {
 export function useAds() {
   const dispatch = useAppDispatch();
 
-  // ── Selectors ─────────────────────────────────────────────────────────
-  const ads = useAppSelector((s) => s.ads.ads);
-  const meta = useAppSelector((s) => s.ads.meta);
-  const filters = useAppSelector((s) => s.ads.filters);
-  const feedLoading = useAppSelector((s) => s.ads.feedLoading);
-  const feedError = useAppSelector((s) => s.ads.feedError);
+  // ── State ─────────────────────────────────────────────────────────────────
+  const ads = useAppSelector((s) => s.ads?.ads ?? []);
+  const meta = useAppSelector((s) => s.ads?.meta ?? null);
+  const filters = useAppSelector((s) => s.ads?.filters ?? {});
+  const feedLoading = useAppSelector((s) => s.ads?.feedLoading ?? false);
+  const feedError = useAppSelector((s) => s.ads?.feedError ?? null);
 
-  const current = useAppSelector((s) => s.ads.current);
-  const currentLoading = useAppSelector((s) => s.ads.currentLoading);
-  const currentError = useAppSelector((s) => s.ads.currentError);
+  const current = useAppSelector((s) => s.ads?.current ?? null);
+  const currentLoading = useAppSelector((s) => s.ads?.currentLoading ?? false);
+  const currentError = useAppSelector((s) => s.ads?.currentError ?? null);
 
-  const myAds = useAppSelector((s) => s.ads.myAds);
-  const myAdsMeta = useAppSelector((s) => s.ads.myAdsMeta);
-  const myAdsStats = useAppSelector((s) => s.ads.myAdsStats);
-  const myAdsLoading = useAppSelector((s) => s.ads.myAdsLoading);
-  const myAdsError = useAppSelector((s) => s.ads.myAdsError);
-  const myAdsStatus = useAppSelector((s) => s.ads.myAdsStatus);
+  const myAds = useAppSelector((s) => s.ads?.myAds ?? []);
+  const myAdsMeta = useAppSelector((s) => s.ads?.myAdsMeta ?? null);
+  const myAdsStats = useAppSelector((s) => s.ads?.myAdsStats ?? null);
+  const myAdsLoading = useAppSelector((s) => s.ads?.myAdsLoading ?? false);
+  const myAdsError = useAppSelector((s) => s.ads?.myAdsError ?? null);
+  const myAdsStatus = useAppSelector((s) => s.ads?.myAdsStatus ?? "all");
 
-  const mutating = useAppSelector((s) => s.ads.mutating);
-  const mutateError = useAppSelector((s) => s.ads.mutateError);
-  const lastCreated = useAppSelector((s) => s.ads.lastCreated);
+  const mutating = useAppSelector((s) => s.ads?.mutating ?? false);
+  const mutateError = useAppSelector((s) => s.ads?.mutateError ?? null);
+  const lastCreated = useAppSelector((s) => s.ads?.lastCreated ?? null);
 
-  // Also pull currency for price display
-  const userCurrency = useAppSelector((s) => s.auth.user?.currency ?? "GHS");
-  const userCountry = useAppSelector((s) => s.auth.user?.country);
+  // Country/currency: logged-in user first, then guest detection, then Ghana
+  const userCountry = useAppSelector(
+    (s) => s.auth?.user?.country ?? (s.auth as any)?.guestCountry ?? "Ghana",
+  );
+  const userCurrency = useAppSelector(
+    (s) => s.auth?.user?.currency ?? (s.auth as any)?.guestCurrency ?? "GHS",
+  );
 
-  // Actions — each call takes EXPLICIT params, never auto-merges stale Redux filters
+  // ── Actions ───────────────────────────────────────────────────────────────
   const loadAds = useCallback(
-    (f: Partial<AdFilters> = {}) => dispatch(fetchAds(f)),
-    [dispatch],
+    (f: Partial<AdFilters> = {}) =>
+      dispatch(fetchAds({ country: userCountry, ...f } as AdFilters)),
+    [dispatch, userCountry],
   );
 
   const loadAdById = useCallback(
     (id: string) => dispatch(fetchAdById(id)),
     [dispatch],
   );
-
   const loadAdBySlug = useCallback(
     (slug: string) => dispatch(fetchAdBySlug(slug)),
     [dispatch],
   );
 
   const loadMyAds = useCallback(
-    (params?: { status?: string; page?: number }) =>
+    (params?: { status?: string; page?: number; limit?: number }) =>
       dispatch(fetchMyAds(params ?? {})),
     [dispatch],
   );
 
   const submitCreateAd = useCallback(
-    (payload: CreateAdPayload) => dispatch(createAd(payload)),
+    (p: CreateAdPayload) => dispatch(createAd(p)),
     [dispatch],
   );
-
   const submitUpdateAd = useCallback(
-    (id: string, payload: UpdateAdPayload) =>
-      dispatch(updateAd({ id, payload })),
+    (id: string, p: UpdateAdPayload) => dispatch(updateAd({ id, payload: p })),
     [dispatch],
   );
-
   const submitDeleteAd = useCallback(
     (id: string) => dispatch(deleteAd(id)),
     [dispatch],
   );
-
   const submitBoostAd = useCallback(
-    (id: string, tier?: "standard" | "featured" | "premium") =>
-      dispatch(boostAd({ id, tier })),
+    (id: string, tier?: string) => dispatch(boostAd({ id, tier })),
     [dispatch],
   );
-
   const submitMarkSold = useCallback(
     (id: string) => dispatch(markAsSold(id)),
     [dispatch],
   );
-
   const submitTogglePause = useCallback(
     (id: string) => dispatch(togglePause(id)),
     [dispatch],
   );
-
-  const submitModerate = useCallback(
-    (
-      id: string,
-      status: "approved" | "rejected" | "flagged",
-      rejectReason?: string,
-    ) => dispatch(moderateAd({ id, status, rejectReason })),
-    [dispatch],
-  );
-
   const logContactClick = useCallback(
     (id: string) => dispatch(recordContactClick(id)),
     [dispatch],
   );
 
-  // ── Filter helpers ────────────────────────────────────────────────────
+  // ── Filter helpers ────────────────────────────────────────────────────────
   const applyFilters = useCallback(
     (f: Partial<AdFilters>) => dispatch(setFilters(f)),
     [dispatch],
   );
-
   const clearFilters = useCallback(() => dispatch(resetFilters()), [dispatch]);
-
-  const goToPage = useCallback(
-    (page: number) => dispatch(setPage(page)),
-    [dispatch],
-  );
-
+  const goToPage = useCallback((p: number) => dispatch(setPage(p)), [dispatch]);
   const changeMyAdsStatus = useCallback(
-    (status: typeof myAdsStatus) => dispatch(setMyAdsStatus(status)),
+    (s: any) => dispatch(setMyAdsStatus(s)),
     [dispatch],
   );
-
   const clearCurrentAd = useCallback(
     () => dispatch(clearCurrent()),
     [dispatch],
   );
-
   const clearError = useCallback(
     () => dispatch(clearMutateError()),
     [dispatch],
   );
 
-  // ── Price display helper ───────────────────────────────────────────────
   const formatPrice = useCallback(
     (amount: number, currency?: string) => {
-      const c = currency ?? userCurrency;
-      const sym = c === "NGN" ? "₦" : "₵";
+      const sym = (currency ?? userCurrency) === "NGN" ? "₦" : "₵";
       return `${sym}${Number(amount).toLocaleString()}`;
     },
     [userCurrency],
   );
 
   return {
-    // State
     ads,
     meta,
     filters,
@@ -192,8 +167,6 @@ export function useAds() {
     lastCreated,
     userCurrency,
     userCountry,
-
-    // Actions
     loadAds,
     loadAdById,
     loadAdBySlug,
@@ -204,18 +177,13 @@ export function useAds() {
     submitBoostAd,
     submitMarkSold,
     submitTogglePause,
-    submitModerate,
     logContactClick,
-
-    // Filter helpers
     applyFilters,
     clearFilters,
     goToPage,
     changeMyAdsStatus,
     clearCurrentAd,
     clearError,
-
-    // Utils
     formatPrice,
   };
 }

@@ -3,6 +3,8 @@
 
 import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
+
+// Thunks — real project path
 import {
   fetchProducts,
   fetchFeaturedProducts,
@@ -10,6 +12,8 @@ import {
   fetchMyProducts,
   deleteProduct,
 } from "@/src/lib/features/products/productsActions";
+
+// Slice actions — real project path
 import {
   setProductFilters,
   resetProductFilters,
@@ -17,17 +21,16 @@ import {
   clearCurrentProduct,
   clearProductMutateError,
 } from "@/src/lib/features/products/productsSlice";
+
 import type { ProductFilters } from "@/src/types/product.types";
 
 export function useProducts() {
   const dispatch = useAppDispatch();
 
-  // ── Selectors ──────────────────────────────────────────────────────────
+  // ── State ─────────────────────────────────────────────────────────────────
   const products = useAppSelector((s) => s.products?.products ?? []);
   const meta = useAppSelector((s) => s.products?.meta ?? null);
-  const filters = useAppSelector(
-    (s) => s.products?.filters ?? { sort: "newest", page: 1, limit: 20 },
-  );
+  const filters = useAppSelector((s) => s.products?.filters ?? {});
   const feedLoading = useAppSelector((s) => s.products?.feedLoading ?? false);
   const feedError = useAppSelector((s) => s.products?.feedError ?? null);
 
@@ -50,14 +53,19 @@ export function useProducts() {
   const mutating = useAppSelector((s) => s.products?.mutating ?? false);
   const mutateError = useAppSelector((s) => s.products?.mutateError ?? null);
 
-  const userCurrency = useAppSelector((s) => s.auth.user?.currency ?? "GHS");
-  const userCountry = useAppSelector((s) => s.auth.user?.country);
+  // Country/currency: logged-in user first, then guest detection, then Ghana
+  const userCurrency = useAppSelector(
+    (s) => s.auth?.user?.currency ?? (s.auth as any)?.guestCurrency ?? "GHS",
+  );
+  const userCountry = useAppSelector(
+    (s) => s.auth?.user?.country ?? (s.auth as any)?.guestCountry ?? "Ghana",
+  );
 
-  // ── Actions ────────────────────────────────────────────────────────────
+  // ── Actions ───────────────────────────────────────────────────────────────
   const loadProducts = useCallback(
     (f?: Partial<ProductFilters>) =>
-      dispatch(fetchProducts({ ...filters, ...f })),
-    [dispatch, filters],
+      dispatch(fetchProducts({ country: userCountry, ...filters, ...f })),
+    [dispatch, filters, userCountry],
   );
 
   const loadFeatured = useCallback(
@@ -88,44 +96,37 @@ export function useProducts() {
     [dispatch],
   );
 
-  // ── Filter helpers ─────────────────────────────────────────────────────
+  // ── Filter helpers ────────────────────────────────────────────────────────
   const applyProductFilters = useCallback(
     (f: Partial<ProductFilters>) => dispatch(setProductFilters(f)),
     [dispatch],
   );
-
   const clearProductFilters = useCallback(
     () => dispatch(resetProductFilters()),
     [dispatch],
   );
-
   const goToProductPage = useCallback(
-    (page: number) => dispatch(setProductPage(page)),
+    (p: number) => dispatch(setProductPage(p)),
     [dispatch],
   );
-
   const clearProduct = useCallback(
     () => dispatch(clearCurrentProduct()),
     [dispatch],
   );
-
   const clearError = useCallback(
     () => dispatch(clearProductMutateError()),
     [dispatch],
   );
 
-  // ── Price display helper ───────────────────────────────────────────────
   const formatProductPrice = useCallback(
     (amount: number, currency?: string) => {
-      const c = currency ?? userCurrency;
-      const sym = c === "NGN" ? "₦" : "₵";
+      const sym = (currency ?? userCurrency) === "NGN" ? "₦" : "₵";
       return `${sym}${Number(amount).toLocaleString()}`;
     },
     [userCurrency],
   );
 
   return {
-    // State
     products,
     meta,
     filters,
@@ -144,22 +145,16 @@ export function useProducts() {
     mutateError,
     userCurrency,
     userCountry,
-
-    // Actions
     loadProducts,
     loadFeatured,
     loadProductById,
     loadMyProducts,
     removeProduct,
-
-    // Filters
     applyProductFilters,
     clearProductFilters,
     goToProductPage,
     clearProduct,
     clearError,
-
-    // Utils
     formatProductPrice,
   };
 }

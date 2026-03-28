@@ -14,7 +14,6 @@ import {
   Flame,
   Clock,
   Tag,
-  Globe,
   Car,
   Smartphone,
   Shirt,
@@ -64,25 +63,21 @@ export function CountryChip({
   currency?: string;
   label?: string;
 }) {
-  if (!country) return null;
-
-  // Country flags are still fine as text (they're flag emoji, universally supported)
-  const flag = country === "Ghana" ? "🇬🇭" : country === "Nigeria" ? "🇳🇬" : null;
+  // Always show — default to Ghana / GHS for unauthenticated guests
+  const displayCountry = country || "Ghana";
+  const displayCurrency = currency || "GHS";
+  const flag = displayCountry === "Nigeria" ? "🇳🇬" : "🇬🇭";
 
   return (
     <div className="flex items-center gap-2 text-sm text-gray-500 -mb-4">
-      {flag ? (
-        <span className="text-base leading-none">{flag}</span>
-      ) : (
-        <Globe size={14} className="text-gray-400" />
-      )}
+      <span className="text-base leading-none">{flag}</span>
       <span>
         {label ?? "Listings"} in{" "}
-        <strong className="text-gray-700">{country}</strong>
+        <strong className="text-gray-700">{displayCountry}</strong>
       </span>
       <span className="text-gray-300">·</span>
       <span className="text-gray-400">
-        {currency === "NGN" ? "₦ NGN" : "₵ GHS"}
+        {displayCurrency === "NGN" ? "₦ NGN" : "₵ GHS"}
       </span>
     </div>
   );
@@ -372,10 +367,11 @@ export function CategoryLandingLayout({
   } = config;
 
   const { ads, feedLoading, loadAds, userCountry, userCurrency } = useAds();
-  const hasCheckedAuth = useAppSelector((s) => s.auth.hasCheckedAuth);
 
+  // Fetch on mount and whenever country changes — no auth gate.
+  // userCountry always resolves to something (Ghana fallback) so this
+  // fires immediately for every visitor regardless of login state.
   useEffect(() => {
-    if (!hasCheckedAuth) return;
     loadAds({
       country: userCountry as any,
       category,
@@ -384,7 +380,7 @@ export function CategoryLandingLayout({
       limit: 24,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasCheckedAuth, userCountry]);
+  }, [userCountry]);
 
   const bestSelling = [...ads]
     .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
@@ -398,11 +394,11 @@ export function CategoryLandingLayout({
     .slice(0, 7);
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 pt-20">
+    <div className="w-full min-h-screen bg-gray-50">
       {showRadio && <Radio />}
 
       <div
-        className="w-full 
+        className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12
         flex flex-col gap-10 py-10"
       >
         <CountryChip

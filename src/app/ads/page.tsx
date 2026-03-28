@@ -71,9 +71,9 @@ export default function AdsLandingPage() {
     ],
   );
 
-  // Wait for session restore before fetching — ensures userCountry is populated
+  // Fetch whenever country resolves — fires for guests (Ghana fallback) AND
+  // logged-in users (user.country). No auth gate needed.
   useEffect(() => {
-    if (!hasCheckedAuth) return;
     loadAds({
       country: userCountry as any,
       currency: userCurrency as AdCurrency,
@@ -145,26 +145,20 @@ export default function AdsLandingPage() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {/* Country filter indicator */}
-        {userCountry && (
-          <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
-            <span className="text-base">
-              {userCountry === "Ghana"
-                ? "🇬🇭"
-                : userCountry === "Nigeria"
-                  ? "🇳🇬"
-                  : "🌍"}
-            </span>
-            <span>
-              Showing ads in{" "}
-              <strong className="text-gray-700">{userCountry}</strong>
-            </span>
-            <span className="text-gray-300">·</span>
-            <span className="text-gray-400">
-              Prices in {userCurrency === "NGN" ? "₦ NGN" : "₵ GHS"}
-            </span>
-          </div>
-        )}
+        {/* Country filter indicator — always shown (defaults to Ghana for guests) */}
+        <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+          <span className="text-base">
+            {userCountry === "Nigeria" ? "🇳🇬" : "🇬🇭"}
+          </span>
+          <span>
+            Showing ads in{" "}
+            <strong className="text-gray-700">{userCountry || "Ghana"}</strong>
+          </span>
+          <span className="text-gray-300">·</span>
+          <span className="text-gray-400">
+            Prices in {userCurrency === "NGN" ? "₦ NGN" : "₵ GHS"}
+          </span>
+        </div>
         <CategoryTabs
           active={category}
           onChange={handleCategoryChange}

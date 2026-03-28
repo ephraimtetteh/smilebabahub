@@ -3,8 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  CheckCircle2,
+  Package,
+  Zap,
+  BarChart2,
+  Megaphone,
+  Globe,
+} from "lucide-react";
 import { useResumeAction } from "@/src/hooks/useResumeAction";
-import { useAppSelector } from "../redux";
+import { useAppSelector } from "@/src/app/redux";
 
 // Confetti burst — pure CSS, no library needed
 function Confetti() {
@@ -76,9 +84,9 @@ export default function PaymentSuccessPage() {
         ) {
           router.push("/sell");
         } else if (action.type === "boost_product") {
-          router.push("/vendor/boost");
-        } else {
           router.push("/vendor");
+        } else {
+          router.push("/vendor/dashboard");
         }
       }, 2000);
     },
@@ -94,9 +102,9 @@ export default function PaymentSuccessPage() {
         {/* Success icon */}
         <div
           className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center
-          text-5xl mx-auto mb-6 shadow-lg shadow-green-100 animate-bounce-once"
+          mx-auto mb-6 shadow-lg shadow-green-100 animate-bounce-once"
         >
-          🎉
+          <CheckCircle2 size={44} className="text-green-600" />
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-2">
@@ -114,20 +122,41 @@ export default function PaymentSuccessPage() {
           </p>
           <div className="space-y-3">
             {[
-              { icon: "📦", label: "Post unlimited listings" },
-              { icon: "🚀", label: "Boost products to top results" },
-              { icon: "📊", label: "Full dashboard & analytics" },
-              { icon: "📣", label: "Submit promotional videos" },
-              { icon: "🌍", label: "Reach buyers in Ghana & Nigeria" },
+              {
+                icon: <Package size={14} className="text-blue-600" />,
+                label: "Post unlimited listings",
+              },
+              {
+                icon: <Zap size={14} className="text-yellow-600" />,
+                label: "Boost products to top results",
+              },
+              {
+                icon: <BarChart2 size={14} className="text-purple-600" />,
+                label: "Full dashboard & analytics",
+              },
+              {
+                icon: <Megaphone size={14} className="text-pink-600" />,
+                label: "Submit promotional videos",
+              },
+              {
+                icon: <Globe size={14} className="text-green-600" />,
+                label: "Reach buyers in Ghana & Nigeria",
+              },
             ].map((f) => (
               <div key={f.label} className="flex items-center gap-3">
-                <span className="text-lg flex-shrink-0">{f.icon}</span>
+                <span
+                  className="w-6 h-6 bg-gray-50 rounded-lg flex items-center
+                  justify-center flex-shrink-0"
+                >
+                  {f.icon}
+                </span>
                 <span className="text-sm text-gray-700 font-medium">
                   {f.label}
                 </span>
-                <span className="ml-auto text-green-500 text-sm font-bold">
-                  ✓
-                </span>
+                <CheckCircle2
+                  size={14}
+                  className="ml-auto text-green-500 flex-shrink-0"
+                />
               </div>
             ))}
           </div>
@@ -151,7 +180,7 @@ export default function PaymentSuccessPage() {
         {!resuming && (
           <div className="flex flex-col gap-3">
             <Link
-              href="/vendor"
+              href="/vendor/dashboard"
               className="w-full py-3 bg-[#ffc105] text-black font-black rounded-2xl
                 hover:bg-amber-400 transition active:scale-[0.99] text-sm"
             >

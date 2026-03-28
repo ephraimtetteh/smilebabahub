@@ -1,72 +1,47 @@
-// src/store/productsActions.ts
+// src/lib/features/products/productsActions.ts
+// Async thunks for products. Place at src/lib/features/products/productsActions.ts
+
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/src/lib/api/axios";
-import {
-  Product,
-  ProductFilters,
-  GetProductsResponse,
-} from "@/src/types/product.types";
 
-// ── Fetch product feed ─────────────────────────────────────────────────────
-export const fetchProducts = createAsyncThunk<
-  GetProductsResponse,
-  ProductFilters
->("products/fetchProducts", async (filters, { rejectWithValue, getState }) => {
-  try {
-    const state = getState() as any;
-    const country = filters.country ?? state.auth?.user?.country;
+// ── Fetch product feed ────────────────────────────────────────────────────────
+export const fetchProducts = createAsyncThunk(
+  "products/fetchProducts",
+  async (filters: Record<string, any>, { rejectWithValue }) => {
+    try {
+      const params = Object.fromEntries(
+        Object.entries(filters).filter(([, v]) => v !== undefined && v !== ""),
+      );
+      const res = await axiosInstance.get("/products", { params });
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message ?? "Failed to load products",
+      );
+    }
+  },
+);
 
-    // Never fetch without a country — backend returns empty without it anyway
-    if (!country)
-      return {
-        products: [],
-        meta: { total: 0, page: 1, limit: 20, totalPages: 0, hasNext: false },
-      } as any;
-
-    const params = Object.fromEntries(
-      Object.entries({ ...filters, country }).filter(
-        ([, v]) => v !== undefined && v !== "",
-      ),
-    );
-    const res = await axiosInstance.get("/products", { params });
-    return res.data as GetProductsResponse;
-  } catch (err: any) {
-    return rejectWithValue(
-      err?.response?.data?.message ?? "Failed to load products",
-    );
-  }
-});
-
-// ── Fetch featured products by category (homepage sections) ───────────────
-export const fetchFeaturedProducts = createAsyncThunk<
-  { category: string; products: Product[] },
-  { country?: string; category?: string; limit?: number }
->(
+// ── Fetch featured products by category (homepage) ────────────────────────────
+export const fetchFeaturedProducts = createAsyncThunk(
   "products/fetchFeaturedProducts",
   async (
-    { country, category = "all", limit = 7 },
-    { rejectWithValue, getState },
+    {
+      country,
+      category = "all",
+      limit = 7,
+    }: { country?: string; category?: string; limit?: number },
+    { rejectWithValue },
   ) => {
     try {
-      const state = getState() as any;
-      const resolvedCountry = country ?? state.auth?.user?.country;
-
-      // Don't fetch without a country — shows nothing rather than wrong country data
-      if (!resolvedCountry) {
-        return { category, products: [] };
-      }
-
-      const params: Record<string, unknown> = {
-        country: resolvedCountry,
-        limit,
-        sort: "newest",
-      };
+      const params: Record<string, any> = { limit, sort: "newest" };
+      if (country) params.country = country;
       if (category && category !== "all") params.category = category;
 
       const res = await axiosInstance.get("/products", { params });
       return {
         category,
-        products: (res.data.products ?? res.data) as Product[],
+        products: res.data.products ?? res.data ?? [],
       };
     } catch (err: any) {
       return rejectWithValue(
@@ -76,13 +51,13 @@ export const fetchFeaturedProducts = createAsyncThunk<
   },
 );
 
-// ── Fetch single product ───────────────────────────────────────────────────
-export const fetchProductById = createAsyncThunk<Product, string>(
+// ── Fetch single product by ID ────────────────────────────────────────────────
+export const fetchProductById = createAsyncThunk(
   "products/fetchProductById",
-  async (id, { rejectWithValue }) => {
+  async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(`/products/${id}`);
-      return (res.data.product ?? res.data) as Product;
+      return res.data.product ?? res.data;
     } catch (err: any) {
       return rejectWithValue(
         err?.response?.data?.message ?? "Product not found",
@@ -91,25 +66,25 @@ export const fetchProductById = createAsyncThunk<Product, string>(
   },
 );
 
-// ── Fetch vendor's own products ────────────────────────────────────────────
-export const fetchMyProducts = createAsyncThunk<
-  GetProductsResponse,
-  { page?: number; limit?: number }
->("products/fetchMyProducts", async (params, { rejectWithValue }) => {
-  try {
-    const res = await axiosInstance.get("/products/my", { params });
-    return res.data as GetProductsResponse;
-  } catch (err: any) {
-    return rejectWithValue(
-      err?.response?.data?.message ?? "Failed to load your products",
-    );
-  }
-});
+// ── Fetch vendor's own products ───────────────────────────────────────────────
+export const fetchMyProducts = createAsyncThunk(
+  "products/fetchMyProducts",
+  async (params: { page?: number; limit?: number }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/products/my", { params });
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message ?? "Failed to load your products",
+      );
+    }
+  },
+);
 
-// ── Delete product ─────────────────────────────────────────────────────────
-export const deleteProduct = createAsyncThunk<string, string>(
+// ── Delete product ────────────────────────────────────────────────────────────
+export const deleteProduct = createAsyncThunk(
   "products/deleteProduct",
-  async (id, { rejectWithValue }) => {
+  async (id: string, { rejectWithValue }) => {
     try {
       await axiosInstance.delete(`/products/${id}`);
       return id;

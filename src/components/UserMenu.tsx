@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Star,
   Megaphone,
+  Zap,
   Globe,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -18,7 +19,6 @@ import { useAppDispatch, useAppSelector } from "../app/redux";
 import { useRouter } from "next/navigation";
 import { logout } from "../lib/features/auth/authActions";
 import { safeStorage } from "@/src/utils/safeStorage";
-import { MdAdsClick } from "react-icons/md";
 
 const COUNTRY_FLAGS: Record<string, string> = {
   Ghana: "🇬🇭",
@@ -32,16 +32,25 @@ function getFirstName(username: string = ""): string {
 }
 
 // Role-based badge config
-const ROLE_BADGE: Record<string, { label: string; cls: string }> = {
+const ROLE_BADGE: Record<
+  string,
+  { label: string; cls: string; icon: React.ReactNode }
+> = {
   vendor: {
-    label: "✓ Vendor",
+    label: "Vendor",
     cls: "bg-amber-50 text-amber-700 border-amber-200",
+    icon: <Star size={10} className="fill-amber-500 text-amber-500" />,
   },
   admin: {
     label: "Admin",
     cls: "bg-purple-50 text-purple-700 border-purple-200",
+    icon: <Zap size={10} className="text-purple-500" />,
   },
-  guest: { label: "Guest", cls: "bg-gray-50 text-gray-500 border-gray-200" },
+  guest: {
+    label: "Guest",
+    cls: "bg-gray-50 text-gray-500 border-gray-200",
+    icon: <User size={10} className="text-gray-400" />,
+  },
 };
 
 export default function UserMenu() {
@@ -57,7 +66,7 @@ export default function UserMenu() {
   );
 
   const firstName = getFirstName(user?.username);
-  const flag = COUNTRY_FLAGS[user?.country ?? ""] ?? <Globe size={12} />;
+  const flag = COUNTRY_FLAGS[user?.country ?? ""] ?? null;
   const countryCode =
     user?.currency === "NGN" ? "NG" : user?.currency === "GHS" ? "GH" : null;
   const role = user?.role ?? "guest";
@@ -111,7 +120,7 @@ export default function UserMenu() {
                 className="hidden sm:inline text-[10px] bg-white/15 border border-white/20
                 px-1.5 py-0.5 rounded-full font-semibold tracking-wide"
               >
-                {flag} {countryCode}
+                {flag ? `${flag} ${countryCode}` : countryCode}
               </span>
             )}
             <ChevronDown
@@ -150,7 +159,8 @@ export default function UserMenu() {
                   <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-500">
                     <MapPin size={11} className="flex-shrink-0" />
                     <span className="truncate">
-                      {flag} {user.city ? `${user.city}, ` : ""}
+                      {flag && <span className="mr-0.5">{flag}</span>}
+                      {user.city ? `${user.city}, ` : ""}
                       {user.country}
                     </span>
                   </div>
@@ -162,16 +172,10 @@ export default function UserMenu() {
                     className={`inline-flex items-center gap-1 mt-2 text-[10px]
                     border px-2 py-0.5 rounded-full font-semibold ${badge.cls}`}
                   >
+                    {badge.icon}
                     {badge.label}
                   </span>
                 )}
-
-                <MenuItem
-                  href="/ads"
-                  icon={<MdAdsClick size={15} />}
-                  label="Ads"
-                  onClick={close}
-                />
               </div>
 
               {/* ── Menu items — change per role ── */}
@@ -210,7 +214,7 @@ export default function UserMenu() {
                       onClick={close}
                     />
                     <Link
-                      href="/subscription"
+                      href="/subscribe"
                       onClick={close}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm
                         text-amber-600 hover:bg-amber-50 transition font-medium"

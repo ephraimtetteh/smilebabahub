@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/src/components/Button";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { packages } from "@/src/constants/subscription";
 import SubscriptionComponent from "@/src/components/SubscriptionComponent";
 import { SubscriptionPlanProps } from "@/src/types/types";
@@ -148,8 +149,9 @@ const Subscription = ({
       {/* Heading */}
       <div className="flex flex-col items-center mx-auto text-center">
         {isRenew && (
-          <div className="mb-4 px-4 py-2 bg-amber-100 border border-amber-300 rounded-xl text-sm text-amber-800 font-medium">
-            ⚠️ Your subscription has expired. Renew to reactivate your listings.
+          <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-amber-100 border border-amber-300 rounded-xl text-sm text-amber-800 font-medium">
+            <AlertTriangle size={15} className="flex-shrink-0" />
+            Your subscription has expired. Renew to reactivate your listings.
           </div>
         )}
 
@@ -243,8 +245,9 @@ const Subscription = ({
                     PRICES[activePlanId]?.yearly?.[userCurrency] ?? 0;
                   const saving = monthly * 12 - yearly;
                   return saving > 0 ? (
-                    <div className="text-xs text-green-400 bg-green-900/30 rounded-lg px-3 py-2">
-                      🎉 You save {userSymbol}
+                    <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-900/30 rounded-lg px-3 py-2">
+                      <CheckCircle2 size={12} />
+                      You save {userSymbol}
                       {saving.toLocaleString()} with yearly billing
                     </div>
                   ) : null;

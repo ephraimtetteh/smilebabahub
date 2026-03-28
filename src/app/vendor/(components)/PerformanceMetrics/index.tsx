@@ -70,9 +70,7 @@ function EmptyChart({ message }: { message: string }) {
   return (
     <div className="w-full h-[280px] flex items-center justify-center">
       <div className="text-center">
-        <p className="text-4xl mb-2">
-          <BarChart2 size={44} className="text-gray-200 mx-auto mb-2" />
-        </p>
+        <BarChart2 size={44} className="text-gray-200 mx-auto mb-2" />
         <p className="text-sm text-gray-400">{message}</p>
       </div>
     </div>

@@ -11,6 +11,7 @@ import { assets } from "@/src/assets/assets";
 import { useProducts } from "@/src/hooks/useProducts";
 import { getCoverImage } from "@/src/types/product.types";
 import { toast } from "react-toastify";
+import { Star, Package, Zap, Megaphone } from "lucide-react";
 
 // ── Currency config ────────────────────────────────────────────────────────
 const PRICES: Record<string, Record<string, Record<string, number>>> = {
@@ -59,7 +60,7 @@ const VendorBoost = () => {
           tier: "standard",
         });
         toast.success(
-          "Product boosted! 🚀 It will now appear higher in search results.",
+          "Product boosted! It will now appear higher in search results.",
         );
       } catch (err) {
         if (
@@ -145,10 +146,10 @@ const VendorBoost = () => {
               {isPopular && (
                 <div
                   className="absolute -top-3 left-1/2 -translate-x-1/2
-                  bg-[#ffc105] text-black text-[11px] font-black px-3 py-0.5
-                  rounded-full whitespace-nowrap shadow-sm"
+                  flex items-center gap-1 bg-[#ffc105] text-black text-[11px] font-black
+                  px-3 py-0.5 rounded-full whitespace-nowrap shadow-sm"
                 >
-                  ⭐ Most Popular
+                  <Star size={10} className="fill-black" /> Most Popular
                 </div>
               )}
 
@@ -242,7 +243,7 @@ const VendorBoost = () => {
 
       {!myLoading && myProducts.length === 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
-          <p className="text-3xl mb-3">📦</p>
+          <Package size={40} className="text-gray-200 mx-auto mb-3" />
           <p className="text-gray-600 font-medium text-sm">No products yet</p>
           <p className="text-xs text-gray-400 mt-1 mb-4">
             Post your first ad to start selling
@@ -296,18 +297,20 @@ const VendorBoost = () => {
                         Boosting…
                       </span>
                     ) : (
-                      "🚀 Boost"
+                      <>
+                        <Zap size={13} /> Boost
+                      </>
                     )}
                   </button>
 
                   {/* Promote */}
                   <Link
                     href={`/vendor/settings?tab=promotion&product=${item._id ?? item.id}`}
-                    className="flex-1 py-2 bg-transparent border border-[#ffc105]
-                    text-amber-600 text-sm font-bold rounded-xl hover:bg-amber-50
-                    transition text-center active:scale-95"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2
+                    bg-transparent border border-[#ffc105] text-amber-600 text-sm
+                    font-bold rounded-xl hover:bg-amber-50 transition active:scale-95"
                   >
-                    📣 Ad
+                    <Megaphone size={13} /> Ad
                   </Link>
                 </div>
               </div>

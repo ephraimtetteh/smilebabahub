@@ -15,6 +15,8 @@ interface AuthState {
   accessToken: null | string;
   user: UserProp | null;
   message: Message;
+  guestCountry: string; // "Ghana" | "Nigeria" — detected from IP for unauthenticated visitors
+  guestCurrency: string;
 }
 
 const initialState: AuthState = {
@@ -24,6 +26,8 @@ const initialState: AuthState = {
   accessToken: null,
   user: null,
   message: { type: "", message: "" },
+  guestCountry: "Ghana", // default until IP detection resolves
+  guestCurrency: "GHS",
 };
 
 export const authSlice = createSlice({
@@ -44,6 +48,13 @@ export const authSlice = createSlice({
     },
     setMessage: (state, action: PayloadAction<Message>) => {
       state.message = action.payload;
+    },
+    setGuestLocation: (
+      state,
+      action: PayloadAction<{ country: string; currency: string }>,
+    ) => {
+      state.guestCountry = action.payload.country;
+      state.guestCurrency = action.payload.currency;
     },
   },
 
@@ -72,6 +83,7 @@ export const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.hasCheckedAuth = true;
+        // guestCountry remains as-is — GuestLocationDetector will update it via IP
       })
 
       // ── Login ──
@@ -108,6 +120,7 @@ export const {
   setAccessToken,
   setUser,
   setMessage,
+  setGuestLocation,
 } = authSlice.actions;
 
 const authReducer = authSlice.reducer;

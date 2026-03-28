@@ -1,45 +1,55 @@
 "use client";
 
-// src/app/vendor/purchase-history/page.tsx
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  Receipt,
-  Calendar,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  CreditCard,
-  RefreshCw,
-  ExternalLink,
-  ChevronRight,
-  Sparkles,
-  Smile,
-  Zap,
-  Star,
-  Crown,
-} from "lucide-react";
 import axiosInstance from "@/src/lib/api/axios";
+import {
+  LayoutList,
+  Star,
+  ShoppingBag,
+  Home,
+  MapPin,
+  ChevronDown,
+  Receipt,
+} from "lucide-react";
 import { useResumeAction } from "@/src/hooks/useResumeAction";
 import { useAppSelector } from "@/src/app/redux";
 
 // ── Types ──────────────────────────────────────────────────────────────────
+type PurchaseType = "subscription" | "order" | "booking";
+
 type Purchase = {
   _id: string;
-  title: string;
-  planId: string;
-  billingCycle: string;
+  type: PurchaseType;
+  // Subscription fields
+  title?: string;
+  planId?: string;
+  billingCycle?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  // Order fields
+  items?: { name: string; qty: number; price: number }[];
+  vendor?: string;
+  deliveryAddress?: string;
+  // Booking fields
+  propertyName?: string;
+  propertyType?: string;
+  checkIn?: string;
+  checkOut?: string;
+  guests?: number;
+  // Shared
   amount: number;
   currency: string;
-  periodStart: string;
-  periodEnd: string;
+  status: string;
   createdAt: string;
-  txRef: string;
+  txRef?: string;
 };
 
+type TabType = "all" | "subscriptions" | "orders" | "bookings";
+
 // ── Helpers ────────────────────────────────────────────────────────────────
+const CURRENCY_SYMBOLS: Record<string, string> = { GHS: "₵", NGN: "₦" };
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GH", {
     day: "numeric",
@@ -55,380 +65,469 @@ function daysLeft(iso: string) {
   );
 }
 
-function formatAmount(amount: number, currency: string) {
-  const sym =
-    currency === "NGN" ? "₦" : currency === "GHS" ? "₵" : currency + " ";
-  return `${sym}${Number(amount).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+function nights(a: string, b: string) {
+  return Math.max(
+    1,
+    Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000),
+  );
 }
 
-const PLAN_ICONS: Record<string, React.ReactNode> = {
-  Basic: <Smile size={14} className="text-green-600" />,
-  standard: <Zap size={14} className="text-blue-600" />,
-  popular: <Star size={14} className="text-yellow-500 fill-yellow-400" />,
-  premium: <Crown size={14} className="text-purple-600" />,
+const STATUS_STYLE: Record<string, string> = {
+  active: "bg-green-100 text-green-600",
+  expiring: "bg-orange-100 text-orange-600",
+  expired: "bg-gray-100 text-gray-500",
+  delivered: "bg-green-100 text-green-600",
+  confirmed: "bg-blue-100 text-blue-700",
+  pending: "bg-yellow-100 text-yellow-700",
+  cancelled: "bg-red-100 text-red-500",
+  checked_out: "bg-gray-100 text-gray-500",
+  checked_in: "bg-green-100 text-green-600",
 };
 
-// ── Skeleton card ──────────────────────────────────────────────────────────
-function PurchaseSkeleton() {
-  return (
-    <div
-      className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5
-      animate-pulse flex gap-4"
-    >
-      <div className="w-11 h-11 bg-gray-100 rounded-xl flex-shrink-0" />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 bg-gray-100 rounded w-2/3" />
-        <div className="h-3 bg-gray-100 rounded w-1/3" />
-        <div className="h-3 bg-gray-100 rounded w-1/2" />
-      </div>
-      <div className="flex flex-col items-end gap-2">
-        <div className="h-4 bg-gray-100 rounded w-20" />
-        <div className="h-6 bg-gray-100 rounded-full w-24" />
-      </div>
-    </div>
-  );
-}
+const TYPE_CONFIG: Record<
+  PurchaseType,
+  { icon: React.ReactNode; bg: string; label: string }
+> = {
+  subscription: {
+    icon: <Star size={16} className="text-amber-500 fill-amber-400" />,
+    bg: "bg-amber-50 border-amber-100",
+    label: "Subscription",
+  },
+  order: {
+    icon: <ShoppingBag size={16} className="text-orange-500" />,
+    bg: "bg-orange-50 border-orange-100",
+    label: "Order",
+  },
+  booking: {
+    icon: <Home size={16} className="text-blue-500" />,
+    bg: "bg-blue-50 border-blue-100",
+    label: "Booking",
+  },
+};
 
-// ── Status badge ───────────────────────────────────────────────────────────
-function StatusBadge({ remaining }: { remaining: number }) {
-  if (remaining === 0) {
-    return (
-      <span
-        className="inline-flex items-center gap-1.5 text-xs font-semibold
-        px-2.5 py-1 rounded-full bg-gray-100 text-gray-500"
-      >
-        <XCircle size={11} /> Expired
-      </span>
-    );
-  }
-  if (remaining <= 3) {
-    return (
-      <span
-        className="inline-flex items-center gap-1.5 text-xs font-semibold
-        px-2.5 py-1 rounded-full bg-red-100 text-red-600"
-      >
-        <AlertCircle size={11} />
-        {remaining === 1 ? "Expires tomorrow" : `${remaining} days left`}
-      </span>
-    );
-  }
+// ── Skeleton ──────────────────────────────────────────────────────────────
+function Skeleton() {
   return (
-    <span
-      className="inline-flex items-center gap-1.5 text-xs font-semibold
-      px-2.5 py-1 rounded-full bg-green-100 text-green-600"
-    >
-      <CheckCircle2 size={11} /> {remaining} days left
-    </span>
-  );
-}
-
-// ── Single purchase card ───────────────────────────────────────────────────
-function PurchaseCard({ p }: { p: Purchase }) {
-  const remaining = daysLeft(p.periodEnd);
-  const isActive = remaining > 0;
-  const planIcon = PLAN_ICONS[p.planId] ?? (
-    <Receipt size={14} className="text-gray-400" />
-  );
-
-  return (
-    <div
-      className={`bg-white rounded-2xl border shadow-sm p-4 sm:p-5
-      transition-shadow hover:shadow-md
-      ${isActive ? "border-gray-100" : "border-gray-100 opacity-75"}`}
-    >
-      <div className="flex items-start gap-3">
-        {/* Icon */}
+    <div className="space-y-3">
+      {[1, 2, 3, 4].map((i) => (
         <div
-          className={`w-11 h-11 rounded-xl flex items-center justify-center
-          text-xl flex-shrink-0
-          ${isActive ? "bg-amber-50 border border-amber-100" : "bg-gray-50 border border-gray-100"}`}
+          key={i}
+          className="bg-white rounded-2xl p-4 sm:p-5 animate-pulse
+          border border-gray-100 shadow-sm"
         >
-          {planIcon}
-        </div>
-
-        {/* Middle */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900 truncate">{p.title}</p>
-          <p className="text-xs text-gray-400 mt-0.5 capitalize">
-            {p.billingCycle} billing
-          </p>
-
-          {/* Date range */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1.5">
-            <Calendar size={11} />
-            <span>{formatDate(p.periodStart)}</span>
-            <ChevronRight size={11} />
-            <span>{formatDate(p.periodEnd)}</span>
+          <div className="flex gap-3 items-center">
+            <div className="w-10 h-10 bg-gray-100 rounded-xl flex-shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-100 rounded w-1/2" />
+              <div className="h-3 bg-gray-100 rounded w-1/3" />
+            </div>
+            <div className="space-y-1.5 text-right">
+              <div className="h-4 bg-gray-100 rounded w-16" />
+              <div className="h-3 bg-gray-100 rounded w-12" />
+            </div>
           </div>
-
-          {/* Tx ref */}
-          <p className="text-[10px] text-gray-300 mt-1 font-mono truncate">
-            Ref: {p.txRef}
-          </p>
-        </div>
-
-        {/* Right */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <p className="text-sm font-black text-gray-900">
-            {formatAmount(p.amount, p.currency)}
-          </p>
-          <StatusBadge remaining={remaining} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Summary strip ──────────────────────────────────────────────────────────
-function SummaryStrip({
-  purchases,
-  currency,
-}: {
-  purchases: Purchase[];
-  currency: string;
-}) {
-  const totalSpent = purchases.reduce((s, p) => s + p.amount, 0);
-  const active = purchases.filter((p) => daysLeft(p.periodEnd) > 0).length;
-  const sym = currency === "NGN" ? "₦" : "₵";
-
-  return (
-    <div className="grid grid-cols-3 gap-3 mb-5">
-      {[
-        {
-          icon: <Receipt size={16} className="text-blue-600" />,
-          label: "Total purchases",
-          value: purchases.length,
-          bg: "bg-blue-50",
-        },
-        {
-          icon: <CheckCircle2 size={16} className="text-green-600" />,
-          label: "Active plans",
-          value: active,
-          bg: "bg-green-50",
-        },
-        {
-          icon: <CreditCard size={16} className="text-yellow-600" />,
-          label: "Total spent",
-          value: `${sym}${totalSpent.toLocaleString()}`,
-          bg: "bg-yellow-50",
-        },
-      ].map((s) => (
-        <div
-          key={s.label}
-          className="bg-white rounded-2xl border border-gray-100
-          shadow-sm p-3 flex flex-col gap-1"
-        >
-          <div
-            className={`w-7 h-7 rounded-lg flex items-center justify-center ${s.bg}`}
-          >
-            {s.icon}
-          </div>
-          <p className="text-xs text-gray-400 leading-none mt-1">{s.label}</p>
-          <p className="text-sm font-black text-gray-900">{s.value}</p>
         </div>
       ))}
     </div>
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────
+// ── Purchase card ──────────────────────────────────────────────────────────
+function PurchaseCard({ p, sym }: { p: Purchase; sym: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const cfg = TYPE_CONFIG[p.type];
+
+  // Derive display values per type
+  const title = (() => {
+    if (p.type === "subscription") return p.title ?? "Subscription";
+    if (p.type === "order")
+      return `${p.items?.length ?? 0} item${p.items?.length !== 1 ? "s" : ""} · ${p.vendor ?? ""}`;
+    if (p.type === "booking") return p.propertyName ?? "Booking";
+    return "Purchase";
+  })();
+
+  const subtitle = (() => {
+    if (p.type === "subscription" && p.billingCycle)
+      return `${p.billingCycle} billing`;
+    if (p.type === "order" && p.vendor) return p.vendor;
+    if (p.type === "booking" && p.checkIn && p.checkOut)
+      return `${formatDate(p.checkIn)} → ${formatDate(p.checkOut)} · ${nights(p.checkIn, p.checkOut)} nights`;
+    return "";
+  })();
+
+  const statusLabel = (() => {
+    if (p.type === "subscription" && p.periodEnd) {
+      const rem = daysLeft(p.periodEnd);
+      if (rem === 0) return { label: "Expired", key: "expired" };
+      if (rem <= 3) return { label: `${rem}d left`, key: "expiring" };
+      if (rem === 1) return { label: "Expires tomorrow", key: "expiring" };
+      return { label: `${rem} days left`, key: "active" };
+    }
+    return { label: p.status?.replace(/_/g, " ") ?? "—", key: p.status ?? "" };
+  })();
+
+  const hasExpand = p.type === "order" && (p.items?.length ?? 0) > 0;
+
+  return (
+    <div
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden
+      hover:shadow-md transition-shadow"
+    >
+      {/* Main row */}
+      <div
+        className={`flex items-start gap-3 sm:gap-4 p-4 sm:p-5
+          ${hasExpand ? "cursor-pointer hover:bg-gray-50/60 transition" : ""}`}
+        onClick={() => hasExpand && setExpanded(!expanded)}
+      >
+        {/* Type icon */}
+        <div
+          className={`w-10 h-10 rounded-xl border flex items-center justify-center
+          flex-shrink-0 ${cfg.bg}`}
+        >
+          {cfg.icon}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-2">
+            <p className="text-sm font-semibold text-gray-800 truncate">
+              {title}
+            </p>
+            <span
+              className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5
+              rounded-full font-medium flex-shrink-0 mt-0.5"
+            >
+              {cfg.label}
+            </span>
+          </div>
+          {subtitle && (
+            <p className="text-xs text-gray-400 mt-0.5 capitalize truncate">
+              {subtitle}
+            </p>
+          )}
+          <p className="text-xs text-gray-300 mt-0.5">
+            {formatDate(p.createdAt)}
+          </p>
+        </div>
+
+        {/* Amount + status */}
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <p className="text-sm font-bold text-gray-900">
+            {sym}
+            {Number(p.amount).toLocaleString()}
+          </p>
+          <span
+            className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize
+            ${STATUS_STYLE[statusLabel.key] ?? "bg-gray-100 text-gray-500"}`}
+          >
+            {statusLabel.label}
+          </span>
+          {hasExpand && (
+            <ChevronDown
+              size={14}
+              className={`text-gray-300 transition-transform duration-200
+              ${expanded ? "rotate-180" : ""}`}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Expanded: order items */}
+      {expanded && p.type === "order" && p.items && (
+        <div className="border-t border-gray-100 px-4 sm:px-5 py-4 bg-gray-50/50">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+            Items
+          </p>
+          <div className="space-y-2">
+            {p.items.map((item, i) => (
+              <div
+                key={i}
+                className="flex justify-between text-xs text-gray-600"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-5 h-5 rounded-md bg-gray-200 text-gray-500 text-[10px]
+                    font-bold flex items-center justify-center flex-shrink-0"
+                  >
+                    {item.qty}
+                  </span>
+                  {item.name}
+                </div>
+                <span className="font-semibold">
+                  {sym}
+                  {(item.price * item.qty).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+          {p.deliveryAddress && (
+            <p className="flex items-center gap-1 text-xs text-gray-400 mt-3 pt-3 border-t border-gray-200">
+              <MapPin size={11} />
+              {p.deliveryAddress}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────
+const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
+  { id: "all", label: "All", icon: <LayoutList size={13} /> },
+  {
+    id: "subscriptions",
+    label: "Subscriptions",
+    icon: <Star size={13} className="fill-amber-400 text-amber-400" />,
+  },
+  { id: "orders", label: "Orders", icon: <ShoppingBag size={13} /> },
+  { id: "bookings", label: "Bookings", icon: <Home size={13} /> },
+];
+
 export default function PurchaseHistoryPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabType>("all");
 
-  const user = useAppSelector((s) => s.auth.user);
-  const currency = user?.currency ?? "GHS";
-  const sym = currency === "NGN" ? "₦" : "₵";
+  const userCurrency = useAppSelector((state) => state.auth.user?.currency);
+  const sym = CURRENCY_SYMBOLS[userCurrency ?? "GHS"] ?? "₵";
 
-  // Resume any pending action after subscription payment
   useResumeAction();
 
-  const fetchHistory = () => {
-    setLoading(true);
-    setError(null);
-    axiosInstance
-      .get("/payments/history")
-      .then((res) => setPurchases(res.data.purchases ?? []))
-      .catch(() =>
-        setError("Failed to load purchase history. Please try again."),
-      )
-      .finally(() => setLoading(false));
-  };
-
   useEffect(() => {
-    fetchHistory();
+    const fetchAll = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch all three purchase types in parallel
+        const [subRes, orderRes, bookingRes] = await Promise.allSettled([
+          axiosInstance.get("/payments/history"),
+          axiosInstance.get("/orders/my"),
+          axiosInstance.get("/bookings/my"),
+        ]);
+
+        const all: Purchase[] = [];
+
+        if (subRes.status === "fulfilled") {
+          const subs: Purchase[] = (subRes.value.data.purchases ?? []).map(
+            (p: Purchase) => ({ ...p, type: "subscription" as const }),
+          );
+          all.push(...subs);
+        }
+
+        if (orderRes.status === "fulfilled") {
+          const orders: Purchase[] = (orderRes.value.data.orders ?? []).map(
+            (o: Purchase) => ({
+              ...o,
+              type: "order" as const,
+              amount: o.amount,
+            }),
+          );
+          all.push(...orders);
+        }
+
+        if (bookingRes.status === "fulfilled") {
+          const bookings: Purchase[] = (
+            bookingRes.value.data.bookings ?? []
+          ).map((b: Purchase) => ({
+            ...b,
+            type: "booking" as const,
+            amount: b.amount,
+          }));
+          all.push(...bookings);
+        }
+
+        // Sort by most recent first
+        all.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+
+        setPurchases(all);
+      } catch {
+        setError("Failed to load history. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAll();
   }, []);
 
-  // Current active subscription (most recent active purchase)
-  const activePlan = purchases.find((p) => daysLeft(p.periodEnd) > 0);
+  const filtered =
+    tab === "all"
+      ? purchases
+      : purchases.filter((p) => {
+          if (tab === "subscriptions") return p.type === "subscription";
+          if (tab === "orders") return p.type === "order";
+          if (tab === "bookings") return p.type === "booking";
+          return true;
+        });
+
+  // Count per type for tab badges
+  const counts = {
+    all: purchases.length,
+    subscriptions: purchases.filter((p) => p.type === "subscription").length,
+    orders: purchases.filter((p) => p.type === "order").length,
+    bookings: purchases.filter((p) => p.type === "booking").length,
+  };
+
+  // Total spent
+  const totalSpent = purchases.reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Receipt size={22} className="text-[#ffc105]" />
-              Purchase History
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              All your SmileBaba subscription payments
-            </p>
-          </div>
-
-          <button
-            onClick={fetchHistory}
-            disabled={loading}
-            className="w-9 h-9 flex items-center justify-center bg-white
-              border border-gray-200 rounded-xl text-gray-500
-              hover:bg-gray-50 transition disabled:opacity-40"
-            title="Refresh"
-          >
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-          </button>
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            Purchase History
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5">
+            All your orders, bookings and subscriptions in one place
+          </p>
         </div>
 
-        {/* ── Active plan banner ── */}
-        {activePlan && !loading && (
-          <div
-            className="bg-gradient-to-r from-amber-50 to-yellow-50 border
-            border-yellow-200 rounded-2xl p-4 mb-5 flex items-center
-            justify-between gap-3"
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl bg-[#ffc105] flex items-center
-                justify-center text-xl"
-              >
-                {PLAN_ICONS[activePlan.planId] ?? "⭐"}
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                  <Sparkles size={13} className="text-yellow-600" />
-                  {activePlan.title}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Active · expires {formatDate(activePlan.periodEnd)} (
-                  {daysLeft(activePlan.periodEnd)} days left)
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/subscribe?renew=1"
-              className="flex-shrink-0 flex items-center gap-1 text-xs
-                font-bold text-yellow-700 hover:underline"
-            >
-              Renew <ExternalLink size={11} />
-            </Link>
-          </div>
-        )}
-
-        {/* ── Summary strip ── */}
+        {/* Summary strip */}
         {!loading && purchases.length > 0 && (
-          <SummaryStrip purchases={purchases} currency={currency} />
-        )}
-
-        {/* ── Loading skeletons ── */}
-        {loading && (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <PurchaseSkeleton key={i} />
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            {[
+              { label: "Total purchases", value: purchases.length },
+              { label: "Orders", value: counts.orders },
+              {
+                label: "Total spent",
+                value: `${sym}${totalSpent.toLocaleString()}`,
+              },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="bg-white border border-gray-100 shadow-sm rounded-2xl p-3 text-center"
+              >
+                <p className="text-lg font-bold text-gray-900">{s.value}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{s.label}</p>
+              </div>
             ))}
           </div>
         )}
 
-        {/* ── Error ── */}
-        {error && !loading && (
+        {/* Tabs */}
+        <div
+          className="flex bg-white border border-gray-100 shadow-sm rounded-2xl p-1 mb-5
+          overflow-x-auto scrollbar-none gap-1"
+        >
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl
+                text-xs font-semibold transition whitespace-nowrap
+                ${
+                  tab === t.id
+                    ? "bg-[#ffc105] text-black shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              {t.icon}
+              {t.label}
+              {!loading && counts[t.id] > 0 && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold
+                  ${tab === t.id ? "bg-black/10 text-black" : "bg-gray-100 text-gray-500"}`}
+                >
+                  {counts[t.id]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Loading */}
+        {loading && <Skeleton />}
+
+        {/* Error */}
+        {!loading && error && (
           <div
             className="bg-red-50 border border-red-200 rounded-2xl p-5
-            flex items-start gap-3"
+            text-red-600 text-sm text-center"
           >
-            <AlertCircle
-              size={18}
-              className="text-red-500 flex-shrink-0 mt-0.5"
-            />
-            <div>
-              <p className="text-sm font-semibold text-red-700">
-                Something went wrong
-              </p>
-              <p className="text-sm text-red-600 mt-0.5">{error}</p>
-              <button
-                onClick={fetchHistory}
-                className="mt-3 text-xs font-bold text-red-600 underline
-                  hover:no-underline"
-              >
-                Try again
-              </button>
-            </div>
+            {error}
           </div>
         )}
 
-        {/* ── Empty state ── */}
-        {!loading && !error && purchases.length === 0 && (
+        {/* Empty */}
+        {!loading && !error && filtered.length === 0 && (
           <div
-            className="bg-white rounded-2xl p-10 text-center shadow-sm
-            border border-gray-100"
+            className="bg-white rounded-2xl p-10 sm:p-16 text-center
+            border border-gray-100 shadow-sm"
           >
-            <div
-              className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center
-              justify-center text-3xl mx-auto mb-4"
-            >
-              🧾
+            <div className="mb-3 mx-auto w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center">
+              {tab === "subscriptions" ? (
+                <Star size={26} className="text-amber-400 fill-amber-300" />
+              ) : tab === "orders" ? (
+                <ShoppingBag size={26} className="text-gray-300" />
+              ) : tab === "bookings" ? (
+                <Home size={26} className="text-gray-300" />
+              ) : (
+                <Receipt size={26} className="text-gray-300" />
+              )}
             </div>
-            <p className="text-gray-800 font-bold text-base">
-              No purchases yet
+            <p className="text-gray-600 font-medium text-sm mb-1">
+              No {tab === "all" ? "purchases" : tab} yet
             </p>
-            <p className="text-sm text-gray-400 mt-1 mb-5">
-              Subscribe to a plan to start selling on SmileBaba
+            <p className="text-xs text-gray-400 mb-6 max-w-xs mx-auto leading-relaxed">
+              {tab === "subscriptions" || tab === "all"
+                ? "Subscribe to a plan to start selling on SmileBaba."
+                : tab === "orders"
+                  ? "Browse the marketplace to place your first order."
+                  : "Browse apartments to make your first booking."}
             </p>
             <Link
-              href="/subscribe"
-              className="inline-flex items-center gap-2 px-6 py-2.5
-                bg-[#ffc105] text-black font-bold rounded-xl
-                hover:bg-amber-400 transition text-sm"
+              href={
+                tab === "bookings"
+                  ? "/restate"
+                  : tab === "orders"
+                    ? "/marketPlace"
+                    : "/subscribe"
+              }
+              className="inline-block px-6 py-2.5 bg-[#ffc105] text-black font-bold
+                rounded-xl hover:bg-amber-400 transition text-sm"
             >
-              <Sparkles size={14} />
-              View plans
+              {tab === "bookings"
+                ? "Browse apartments"
+                : tab === "orders"
+                  ? "Browse marketplace"
+                  : "View plans"}{" "}
+              →
             </Link>
           </div>
         )}
 
-        {/* ── Purchase list ── */}
-        {!loading && purchases.length > 0 && (
+        {/* List */}
+        {!loading && !error && filtered.length > 0 && (
           <div className="space-y-3">
-            {purchases.map((p) => (
-              <PurchaseCard key={p._id} p={p} />
+            {filtered.map((p) => (
+              <PurchaseCard key={p._id} p={p} sym={sym} />
             ))}
           </div>
         )}
 
-        {/* ── Bottom CTA ── */}
+        {/* Footer CTA */}
         {!loading && purchases.length > 0 && (
-          <div
-            className="mt-6 flex flex-col sm:flex-row items-center
-            justify-center gap-3"
-          >
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/subscribe"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffc105]
-                text-black font-bold rounded-xl hover:bg-amber-400
-                transition text-sm"
+              className="px-6 py-2.5 bg-[#ffc105] text-black font-bold rounded-xl
+                hover:bg-amber-400 transition text-sm text-center"
             >
-              <Sparkles size={14} />
-              Upgrade or renew plan
+              Upgrade or renew plan →
             </Link>
             <Link
-              href="/ads/my"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white
-                border border-gray-200 text-gray-700 font-medium rounded-xl
-                hover:bg-gray-50 transition text-sm"
+              href="/marketPlace"
+              className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700
+                font-medium rounded-xl hover:bg-gray-50 transition text-sm text-center"
             >
-              My ads <ChevronRight size={14} />
+              Continue shopping
             </Link>
           </div>
         )}

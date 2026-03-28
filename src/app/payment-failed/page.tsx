@@ -3,36 +3,78 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  XCircle,
+  AlertTriangle,
+  Wrench,
+  Ban,
+  Frown,
+  CreditCard,
+  Phone,
+  MessageCircle,
+  Shield,
+  RefreshCw,
+} from "lucide-react";
 import { consumeReturnState } from "@/src/hooks/useSubscriptionGuard";
 
-// Reason map — matches the ?reason= query param set by verifyPayment
-const REASONS: Record<string, { title: string; desc: string; icon: string }> = {
+type ReasonConfig = {
+  title: string;
+  desc: string;
+  icon: React.ReactNode;
+  iconBg: string;
+};
+
+const REASONS: Record<string, ReasonConfig> = {
   not_successful: {
-    icon: "❌",
+    icon: <XCircle size={36} className="text-red-500" />,
+    iconBg: "bg-red-50",
     title: "Payment was not completed",
     desc: "Your payment did not go through. No money has been taken from your account. Please try again.",
   },
   amount_mismatch: {
-    icon: "⚠️",
+    icon: <AlertTriangle size={36} className="text-yellow-500" />,
+    iconBg: "bg-yellow-50",
     title: "Payment amount mismatch",
     desc: "We detected an issue with the payment amount. Please contact support if money was deducted.",
   },
   server_error: {
-    icon: "🔧",
+    icon: <Wrench size={36} className="text-blue-500" />,
+    iconBg: "bg-blue-50",
     title: "Something went wrong on our end",
     desc: "Our payment system encountered an error. Please try again in a few minutes.",
   },
   cancelled: {
-    icon: "🚫",
+    icon: <Ban size={36} className="text-gray-500" />,
+    iconBg: "bg-gray-100",
     title: "Payment cancelled",
     desc: "You cancelled the payment. No money has been charged. You can try again whenever you're ready.",
   },
   default: {
-    icon: "😕",
+    icon: <Frown size={36} className="text-gray-400" />,
+    iconBg: "bg-gray-100",
     title: "Payment unsuccessful",
     desc: "Your payment could not be processed. Please try again or contact support.",
   },
 };
+
+const NEXT_STEPS: { icon: React.ReactNode; text: string }[] = [
+  {
+    icon: <RefreshCw size={13} className="text-amber-600" />,
+    text: "Try the payment again — most failures are temporary",
+  },
+  {
+    icon: <CreditCard size={13} className="text-blue-500" />,
+    text: "Check your card or MoMo balance and try a different method",
+  },
+  {
+    icon: <Phone size={13} className="text-green-500" />,
+    text: "Contact your bank if money was deducted unexpectedly",
+  },
+  {
+    icon: <MessageCircle size={13} className="text-purple-500" />,
+    text: "Reach out to SmileBaba support if the issue persists",
+  },
+];
 
 export default function PaymentFailedPage() {
   const router = useRouter();
@@ -42,27 +84,19 @@ export default function PaymentFailedPage() {
 
   const [returnUrl, setReturnUrl] = useState<string | null>(null);
 
-  // Recover the return URL so the retry button goes back to the right place
   useEffect(() => {
-    // Don't consume — keep it in storage so retry can re-use it
     if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("smilebaba_return_url");
-      setReturnUrl(saved);
+      setReturnUrl(sessionStorage.getItem("smilebaba_return_url"));
     }
   }, []);
-
-  const handleRetry = () => {
-    // Go back to subscribe with the plan selection intact
-    router.push("/subscription");
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md text-center">
         {/* Icon */}
         <div
-          className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center
-          text-5xl mx-auto mb-6 shadow-lg shadow-red-50"
+          className={`w-24 h-24 ${content.iconBg} rounded-full flex items-center
+          justify-center mx-auto mb-6 shadow-lg`}
         >
           {content.icon}
         </div>
@@ -74,32 +108,15 @@ export default function PaymentFailedPage() {
           {content.desc}
         </p>
 
-        {/* Info card */}
+        {/* Next steps */}
         <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-5 mb-6 text-left">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
             What to do next
           </p>
           <div className="space-y-3">
-            {[
-              {
-                icon: "🔄",
-                text: "Try the payment again — most failures are temporary",
-              },
-              {
-                icon: "💳",
-                text: "Check your card or MoMo balance and try a different method",
-              },
-              {
-                icon: "📞",
-                text: "Contact your bank if money was deducted unexpectedly",
-              },
-              {
-                icon: "💬",
-                text: "Reach out to SmileBaba support if the issue persists",
-              },
-            ].map((s) => (
+            {NEXT_STEPS.map((s) => (
               <div key={s.text} className="flex items-start gap-3">
-                <span className="text-base flex-shrink-0 mt-0.5">{s.icon}</span>
+                <span className="flex-shrink-0 mt-0.5">{s.icon}</span>
                 <span className="text-sm text-gray-600 leading-relaxed">
                   {s.text}
                 </span>
@@ -114,7 +131,7 @@ export default function PaymentFailedPage() {
             className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 mb-6
             flex items-center gap-2.5 text-left"
           >
-            <span className="text-green-500 text-lg flex-shrink-0">🔒</span>
+            <Shield size={16} className="text-green-500 flex-shrink-0" />
             <p className="text-xs text-green-700 leading-relaxed">
               <strong>No charge made.</strong> Your account has not been
               debited. You can retry safely.
@@ -125,23 +142,21 @@ export default function PaymentFailedPage() {
         {/* CTAs */}
         <div className="flex flex-col gap-3">
           <button
-            onClick={handleRetry}
+            onClick={() => router.push("/subscribe")}
             className="w-full py-3 bg-[#ffc105] text-black font-black rounded-2xl
               hover:bg-amber-400 transition active:scale-[0.99] text-sm"
           >
-            Try again →
+            Try again
           </button>
-
           {returnUrl && (
             <Link
               href={returnUrl}
               className="w-full py-3 bg-white border border-gray-200 text-gray-700
                 font-semibold rounded-2xl hover:bg-gray-50 transition text-sm"
             >
-              ← Go back to what I was doing
+              Go back to what I was doing
             </Link>
           )}
-
           <Link
             href="/"
             className="text-xs text-gray-400 hover:text-gray-600 transition mt-1"
@@ -150,7 +165,6 @@ export default function PaymentFailedPage() {
           </Link>
         </div>
 
-        {/* Support */}
         <p className="text-xs text-gray-400 mt-8">
           Need help?{" "}
           <a

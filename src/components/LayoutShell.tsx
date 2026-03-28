@@ -11,6 +11,8 @@ import { calculateTotals } from "../lib/features/cart/cartSlice";
 import { restoreSession } from "../lib/features/auth/authActions";
 import AuthGate from "../utils/AuthGate";
 import { useAppUpdates } from "@/src/hooks/useAppUpdates";
+import GuestLocationDetector from "./guestLocationDetector";
+
 
 
 export const AppInitializer = ({ children }: { children: React.ReactNode }) => {
@@ -80,6 +82,7 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <StoreProvider>
+        <GuestLocationDetector />
         <AppInitializer>
             <LayoutShell>
           <AuthGate>
