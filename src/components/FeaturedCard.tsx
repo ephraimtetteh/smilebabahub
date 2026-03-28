@@ -3,6 +3,7 @@
 import React, { memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { MapPin, Star, Trophy, ImageOff } from "lucide-react";
 import { useAppSelector } from "@/src/app/redux";
 import { Product, getCoverImage } from "@/src/types/product.types";
 
@@ -82,18 +83,18 @@ const FeaturedCard = memo(function FeaturedCard({
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-3xl text-gray-200">
-            🖼️
+          <div className="w-full h-full flex items-center justify-center">
+            <ImageOff size={28} className="text-gray-200" />
           </div>
         )}
 
         {/* Best seller badge */}
         {index % 2 === 0 && (
           <span
-            className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold
-            bg-white text-gray-800 rounded-full shadow-sm"
+            className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5
+            text-[10px] font-bold bg-white text-gray-800 rounded-full shadow-sm"
           >
-            🏆 Best Seller
+            <Trophy size={9} className="text-yellow-500" /> Best Seller
           </span>
         )}
       </div>
@@ -105,8 +106,8 @@ const FeaturedCard = memo(function FeaturedCard({
           <p className="text-xs font-semibold text-gray-800 truncate">
             {seller || "Seller"}
           </p>
-          <span className="text-[10px] text-gray-500 flex-shrink-0">
-            ⭐ 4.5
+          <span className="flex items-center gap-0.5 text-[10px] text-gray-500 flex-shrink-0">
+            <Star size={10} className="fill-yellow-400 text-yellow-400" /> 4.5
           </span>
         </div>
 
@@ -144,7 +145,7 @@ export const FeaturedGrid = memo(function FeaturedGrid({
   const capped = items.slice(0, 7);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3 sm:gap-4 w-full">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 w-full">
       {capped.map((item, i) => (
         <FeaturedCard
           key={(item as any)._id ?? (item as any).id ?? i}

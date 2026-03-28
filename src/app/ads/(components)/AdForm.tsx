@@ -1,19 +1,11 @@
 "use client";
 
 // src/components/ads/AdForm.tsx
-// Shared multi-step form — create ad (/sell) and edit ad (/ads/:id/edit)
-//
-// IMAGE FLOW (Cloudinary-first):
-//   1. User picks images → stored as File objects in local state
-//   2. On submit: all new Files are uploaded to Cloudinary → get {url, publicId}
-//   3. Existing images (edit mode) are kept as-is (already uploaded)
-//   4. onSubmit(uploadedImages: AdImage[], data: AdFormData) is called
-//   5. Caller (SellPage / EditAdPage) dispatches to Redux with images included
-
-import { useState, useCallback, useEffect, useRef, memo } from "react";
+import React, { useState, useCallback, useEffect, useRef, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import { Camera, Globe, Home, Wrench, Sparkles, ImageOff } from "lucide-react";
 import { AdFormData, EMPTY_AD_FORM } from "@/src/types/adForm.types";
 import {
   AdCondition,
@@ -25,6 +17,7 @@ import {
 import { useAppSelector } from "@/src/app/redux";
 import { uploadManyToCloudinary } from "@/src/utils/uploadToCloudinary";
 
+
 // ── Constants ──────────────────────────────────────────────────────────────
 const STEPS = [
   "Basic info",
@@ -34,9 +27,21 @@ const STEPS = [
 ];
 
 const MAIN_CATEGORIES = [
-  { id: "marketplace", label: "Marketplace", icon: "🛍️" },
-  { id: "food", label: "Food", icon: "🍔" },
-  { id: "apartments", label: "Apartments", icon: "🏠" },
+  {
+    id: "marketplace",
+    label: "Marketplace",
+    icon: <Sparkles size={18} className="text-yellow-600" />,
+  },
+  {
+    id: "food",
+    label: "Food",
+    icon: <Home size={18} className="text-orange-500" />,
+  },
+  {
+    id: "apartments",
+    label: "Apartments",
+    icon: <Home size={18} className="text-teal-600" />,
+  },
 ];
 
 const SUBCATEGORIES: Record<string, string[]> = {
@@ -67,12 +72,29 @@ const SUBCATEGORIES: Record<string, string[]> = {
   ],
 };
 
-const CONDITIONS: { id: AdCondition; label: string; icon: string }[] = [
-  { id: "brand_new", label: "Brand new", icon: "✨" },
-  { id: "foreign_used", label: "Foreign used", icon: "🌍" },
-  { id: "local_used", label: "Local used", icon: "🏠" },
-  { id: "refurbished", label: "Refurbished", icon: "🔧" },
-];
+const CONDITIONS: { id: AdCondition; label: string; icon: React.ReactNode }[] =
+  [
+    {
+      id: "brand_new",
+      label: "Brand new",
+      icon: <Sparkles size={15} className="text-yellow-500" />,
+    },
+    {
+      id: "foreign_used",
+      label: "Foreign used",
+      icon: <Globe size={15} className="text-blue-500" />,
+    },
+    {
+      id: "local_used",
+      label: "Local used",
+      icon: <Home size={15} className="text-gray-500" />,
+    },
+    {
+      id: "refurbished",
+      label: "Refurbished",
+      icon: <Wrench size={15} className="text-green-500" />,
+    },
+  ];
 
 const GH_REGIONS = [
   "Greater Accra",
@@ -284,7 +306,7 @@ function ImageSlot({
         </>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-          <span className="text-xl text-gray-300">📷</span>
+          <Camera size={22} className="text-gray-300" />
           <span className="text-[10px] text-gray-400 text-center leading-tight px-1">
             {index === 0 ? "Cover photo" : `Photo ${index + 1}`}
           </span>

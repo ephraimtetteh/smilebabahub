@@ -1,15 +1,22 @@
 "use client";
-
 // src/components/VendorComponents/VendorStatusTabs.tsx
 import { memo } from "react";
+import {
+  LayoutList,
+  TrendingUp,
+  Clock,
+  Pause,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 
 export const STATUS_TABS = [
-  { id: "all", label: "All", icon: "📋" },
-  { id: "active", label: "Active", icon: "🟢" },
-  { id: "pending", label: "In Review", icon: "⏳" },
-  { id: "paused", label: "Paused", icon: "⏸️" },
-  { id: "sold", label: "Sold", icon: "✅" },
-  { id: "expired", label: "Expired", icon: "🔴" },
+  { id: "all", label: "All", icon: <LayoutList size={14} /> },
+  { id: "active", label: "Active", icon: <TrendingUp size={14} /> },
+  { id: "pending", label: "In Review", icon: <Clock size={14} /> },
+  { id: "paused", label: "Paused", icon: <Pause size={14} /> },
+  { id: "sold", label: "Sold", icon: <CheckCircle2 size={14} /> },
+  { id: "expired", label: "Expired", icon: <XCircle size={14} /> },
 ] as const;
 
 export type StatusTabId = (typeof STATUS_TABS)[number]["id"];
@@ -40,7 +47,7 @@ const VendorStatusTabs = memo(function VendorStatusTabs({
                 : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
             }`}
         >
-          <span>{tab.icon}</span>
+          {tab.icon}
           {tab.label}
         </button>
       ))}
