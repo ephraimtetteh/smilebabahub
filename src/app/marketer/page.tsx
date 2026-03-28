@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useAppSelector } from "../redux";
+import EarningsSection from "./(components)/EarningSection";
 
 
 // ── Currency config 
@@ -99,8 +100,8 @@ export default function MarketerLandingPage() {
     () => [
       {
         icon: "💰",
-        title: "20% commission",
-        desc: `Earn 20% on every subscription payment made by vendors you refer. That's ${cfg.symbol}${(cfg.planMonthly * 0.2).toFixed(2)} per HappySmile monthly referral.`,
+        title: "15% commission",
+        desc: `Earn 15% on every subscription payment made by vendors you refer. That's ${cfg.symbol}${(cfg.planMonthly * 0.15).toFixed(2)} per HappySmile monthly referral.`,
       },
       {
         icon: "🔁",
@@ -144,7 +145,7 @@ export default function MarketerLandingPage() {
       },
       {
         q: "Do I earn on renewals?",
-        a: "Yes. Every time a vendor you referred renews their subscription, you earn 20% of that payment.",
+        a: "Yes. Every time a vendor you referred renews their subscription, you earn 15% of that payment.",
       },
       {
         q: "Is there a minimum payout?",
@@ -231,7 +232,7 @@ export default function MarketerLandingPage() {
           <p className="text-gray-400 text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed">
             Get your unique referral code, share it with business owners, and
             earn
-            <strong className="text-white"> 20% commission</strong> on every
+            <strong className="text-white"> 15% commission</strong> on every
             subscription — paid in{" "}
             <strong className="text-white">{cfg.code}</strong> with no cap on
             earnings.
@@ -258,7 +259,7 @@ export default function MarketerLandingPage() {
         {/* Stats strip */}
         <div className="relative max-w-2xl mx-auto mt-16 grid grid-cols-3 gap-4">
           {[
-            { value: "20%", label: "Commission per sale" },
+            { value: "15%", label: "Commission per sale" },
             { value: "Weekly", label: "Payout frequency" },
             { value: cfg.code, label: "Paid in" },
           ].map((s) => (
@@ -409,55 +410,8 @@ export default function MarketerLandingPage() {
       </section>
 
       {/* ── Earnings calculator ── */}
-      <section className="px-6 sm:px-12 py-20 bg-[#161616] border-b border-white/5">
-        <div className="max-w-2xl mx-auto text-center">
-          <p className="text-[#ffc105] text-xs font-semibold uppercase tracking-widest mb-3">
-            Earnings potential
-          </p>
-          <h2
-            className="text-3xl sm:text-4xl font-black mb-4"
-            style={{ fontFamily: "'Syne', sans-serif" }}
-          >
-            What can you earn?
-          </h2>
-          <p className="text-gray-400 text-sm mb-10">
-            Based on the HappySmile plan at{" "}
-            <span className="text-white font-semibold">
-              {cfg.symbol}
-              {cfg.planMonthly.toLocaleString()}/{cfg.code} per month
-            </span>{" "}
-            — our most popular plan {cfg.flag}
-          </p>
-
-          <div className="grid grid-cols-3 gap-4">
-            {rows.map((row) => (
-              <div
-                key={row.referrals}
-                className="bg-[#1a1a1a] border border-white/8 rounded-2xl p-5 text-center"
-              >
-                <p
-                  className="text-3xl font-black text-[#ffc105]"
-                  style={{ fontFamily: "'Syne', sans-serif" }}
-                >
-                  {row.referrals}
-                </p>
-                <p className="text-xs text-gray-500 mb-3">active vendors</p>
-                <p className="text-sm font-bold text-white">{row.monthly}</p>
-                <p className="text-xs text-gray-500">/ month</p>
-                <p className="text-sm font-bold text-[#ffc105] mt-2">
-                  {row.yearly}
-                </p>
-                <p className="text-xs text-gray-500">/ year</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Currency toggle hint */}
-          <p className="text-xs text-gray-600 mt-6">
-            {cfg.flag} Amounts shown in {cfg.code} · based on your location
-          </p>
-        </div>
-      </section>
+     
+      <EarningsSection />
 
       {/* ── FAQ ── */}
       <section className="px-6 sm:px-12 py-20 border-b border-white/5">

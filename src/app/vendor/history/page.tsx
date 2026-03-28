@@ -16,6 +16,10 @@ import {
   ExternalLink,
   ChevronRight,
   Sparkles,
+  Smile,
+  Zap,
+  Star,
+  Crown,
 } from "lucide-react";
 import axiosInstance from "@/src/lib/api/axios";
 import { useResumeAction } from "@/src/hooks/useResumeAction";
@@ -60,11 +64,11 @@ function formatAmount(amount: number, currency: string) {
   })}`;
 }
 
-const PLAN_ICONS: Record<string, string> = {
-  Basic: "🟢",
-  standard: "🔵",
-  popular: "🟡",
-  premium: "⭐",
+const PLAN_ICONS: Record<string, React.ReactNode> = {
+  Basic: <Smile size={14} className="text-green-600" />,
+  standard: <Zap size={14} className="text-blue-600" />,
+  popular: <Star size={14} className="text-yellow-500 fill-yellow-400" />,
+  premium: <Crown size={14} className="text-purple-600" />,
 };
 
 // ── Skeleton card ──────────────────────────────────────────────────────────
@@ -125,7 +129,9 @@ function StatusBadge({ remaining }: { remaining: number }) {
 function PurchaseCard({ p }: { p: Purchase }) {
   const remaining = daysLeft(p.periodEnd);
   const isActive = remaining > 0;
-  const planIcon = PLAN_ICONS[p.planId] ?? "🧾";
+  const planIcon = PLAN_ICONS[p.planId] ?? (
+    <Receipt size={14} className="text-gray-400" />
+  );
 
   return (
     <div

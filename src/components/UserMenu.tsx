@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Star,
   Megaphone,
+  Globe,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../app/redux";
@@ -37,10 +38,10 @@ const ROLE_BADGE: Record<string, { label: string; cls: string }> = {
     cls: "bg-amber-50 text-amber-700 border-amber-200",
   },
   admin: {
-    label: "⚡ Admin",
+    label: "Admin",
     cls: "bg-purple-50 text-purple-700 border-purple-200",
   },
-  guest: { label: "👤 Guest", cls: "bg-gray-50 text-gray-500 border-gray-200" },
+  guest: { label: "Guest", cls: "bg-gray-50 text-gray-500 border-gray-200" },
 };
 
 export default function UserMenu() {
@@ -56,7 +57,7 @@ export default function UserMenu() {
   );
 
   const firstName = getFirstName(user?.username);
-  const flag = COUNTRY_FLAGS[user?.country ?? ""] ?? "🌍";
+  const flag = COUNTRY_FLAGS[user?.country ?? ""] ?? <Globe size={12} />;
   const countryCode =
     user?.currency === "NGN" ? "NG" : user?.currency === "GHS" ? "GH" : null;
   const role = user?.role ?? "guest";

@@ -4,6 +4,7 @@
 import { memo, useState } from "react";
 import Image from "next/image";
 import { AdImage } from "@/src/types/ad.types";
+import { ImageOff } from "lucide-react";
 
 interface ImageGalleryProps {
   images: AdImage[];
@@ -19,11 +20,8 @@ const ImageGallery = memo(function ImageGallery({
 
   if (!list.length) {
     return (
-      <div
-        className="aspect-[4/3] bg-gray-100 rounded-2xl flex items-center
-        justify-center text-5xl text-gray-300"
-      >
-        🖼️
+      <div className="aspect-[4/3] bg-gray-100 rounded-2xl flex items-center justify-center">
+        <ImageOff size={40} className="text-gray-200" />
       </div>
     );
   }

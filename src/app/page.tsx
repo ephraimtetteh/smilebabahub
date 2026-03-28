@@ -13,7 +13,6 @@ const HomePage = () => {
       {/* Scrollable content — sits on top of the fixed hero via z-10 + white bg */}
       <div className="max-sm:relative w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
         <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
-         
           <FeaturedProducts category="apartments" />
           <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
             <div className="w-full">

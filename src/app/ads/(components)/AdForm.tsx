@@ -5,7 +5,7 @@ import React, { useState, useCallback, useEffect, useRef, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "react-toastify";
-import { Camera, Globe, Home, Wrench, Sparkles, ImageOff } from "lucide-react";
+import { Camera, Globe, Home, Wrench, Sparkles, ImageOff, AlertTriangle } from "lucide-react";
 import { AdFormData, EMPTY_AD_FORM } from "@/src/types/adForm.types";
 import {
   AdCondition,
@@ -185,7 +185,7 @@ const Field = memo(function Field({
       {children}
       {error && (
         <p className={errMsg}>
-          <span>⚠️</span>
+          <AlertTriangle size={12} className="inline mr-1" />
           {error}
         </p>
       )}

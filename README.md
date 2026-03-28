@@ -37,539 +37,751 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 
 
-color tokens 
-primary colors: #ffc107
-deep black: #0b0b0b
-pure white: #fffff
-gray text: #8a8a8a
-input bg light: #f5f5f5
-input bg dark: #1c1c1c
+src/
+├── app/                         Next.js App Router pages
+│   ├── layout.tsx               Root layout (providers, toast, navbar)
+│   ├── page.tsx                 Home page
+│   ├── ads/
+│   │   ├── page.tsx             AdsLandingPage — public feed
+│   │   ├── [id]/page.tsx        AdDetail — single ad view
+│   │   ├── [id]/edit/page.tsx   EditAdPage — edit own ad
+│   │   └── my/page.tsx          MyAdsPage — vendor's own ads
+│   ├── sell/page.tsx            SellPage — post new ad
+│   ├── product/[id]/page.tsx    ProductDetails — product view
+│   ├── marketPlace/page.tsx     Marketplace category landing
+│   ├── food/page.tsx            Food category landing
+│   ├── restate/page.tsx         Real estate category landing
+│   ├── subscribe/page.tsx       Subscription plans
+│   ├── payment-success/page.tsx Payment confirmed
+│   ├── payment-failed/page.tsx  Payment failed
+│   ├── auth/
+│   │   ├── login/page.tsx
+│   │   └── register/page.tsx
+│   └── vendor/
+│       ├── dashboard/page.tsx   Vendor analytics dashboard
+│       ├── products/page.tsx    Vendor product management
+│       └── orders/page.tsx      Order summary
+│
+├── components/
+│   ├── ads/                     Ad-specific components
+│   │   ├── AdForm.tsx           Multi-step ad posting form
+│   │   ├── AdCard.tsx           Single ad card
+│   │   ├── AdGrid.tsx           Responsive ad grid
+│   │   ├── BestsellersRow.tsx   Boosted ads row
+│   │   ├── AdsHero.tsx          Hero search section
+│   │   ├── CategoryTabs.tsx     Category filter tabs
+│   │   ├── FiltersPanel.tsx     Advanced filters
+│   │   ├── AdModals.tsx         Boost + delete confirm modals
+│   │   └── ad.constants.ts      Format helpers, badge configs
+│   ├── category/
+│   │   └── CategoryShared.tsx   Shared layout for category pages
+│   ├── VendorComponents/
+│   │   ├── VendorProductCard.tsx
+│   │   ├── VendorStatsStrip.tsx
+│   │   ├── VendorStatusTabs.tsx
+│   │   └── VendorProductSkeleton.tsx
+│   ├── FeaturedProducts.tsx     Homepage featured section
+│   ├── FeaturedCard.tsx         Featured product card
+│   ├── Navbar.tsx               Top navigation
+│   ├── Radio.tsx                Live radio player
+│   ├── Video.tsx                Promotional video + CTA
+│   ├── NewSearch.tsx            Marketplace search bar
+│   ├── NotificationBell.tsx     Notification dropdown
+│   └── ProtectedRoute.tsx       Auth/role guard wrapper
+│
+├── store/
+│   ├── store.ts                 Redux store config
+│   ├── authSlice.ts             Auth state
+│   ├── authActions.ts           Auth thunks
+│   ├── adsSlice.ts              Ads state
+│   ├── adsActions.ts            Ads thunks
+│   ├── productsSlice.ts         Products state
+│   └── productsActions.ts       Products thunks
+│
+├── hooks/
+│   ├── useAds.ts                Convenience wrapper for ads Redux
+│   ├── useProducts.ts           Convenience wrapper for products Redux
+│   ├── useSubscriptionGuard.ts  Redirect to /subscribe if not vendor
+│   ├── useResumeAction.ts       Resume pending action after payment
+│   └── useAppUpdates.ts         Connect to SSE for deploy notifications
+│
+├── lib/
+│   ├── api/axios.ts             Axios instance with token interceptor
+│   ├── uploadToCloudinary.ts    Browser-side Cloudinary upload
+│   └── cloudinary.js            Backend Cloudinary config (delete images)
+│
+└── types/
+    ├── ad.types.ts              All ad TypeScript types
+    ├── product.types.ts         Product types
+    ├── adForm.types.ts          Form data types
+    └── types.ts                 User, auth response types
 
 
-cta 
-background: 121212
-radius: 16
-
-
-https://www.ghanapostgps.com/regions-and-district-codes/
-
-
-  // const fetachProduct = async () => {
-  //   for(let i=0; i < Products.length; i++){
-  //     if (id === Products.[i].id){
-  //       setProduct(Products[i])
-  //     }
-  //   }
-  // }
 
 
 
 
 
+    import Hero from "@/src/components/Hero";
+import Video from "@/src/components/Video";
+import React from "react";
+import AppDownload from "@/src/components/App";
+import FeaturedProducts from "../components/FeaturedProducts";
 
-  "use client";
+const HomePage = () => {
+  return (
+    <div className="w-full flex flex-col flex-1 items-center justify-center max-relative">
+      {/* Hero renders the fixed background + a spacer div */}
+      <Hero />
 
-import { Products } from "@/assets/assets";
+      {/* Scrollable content — sits on top of the fixed hero via z-10 + white bg */}
+      <div className="max-sm:relative w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12">
+          <FeaturedProducts category="apartments" />
+          <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
+            <div className="w-full">
+              <h1 className="lg:text-4xl font-bold py-12 capitalize text-center">
+                Promote your Business & products <br /> Live On smileBaba TV
+              </h1>
+              <Video />
+            </div>
+          </div>
+       
+          <FeaturedProducts category="food" />
+          <FeaturedProducts category="marketplace" />
+        </div>
+        <AppDownload />
+      </div>
+    </div>
+  );
+};
+
+export default HomePage;
+
+
+
+"use client";
+
+// src/app/page.tsx — SmileBaba Hub Homepage
+
+import React, { useEffect } from "react";
+import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import {
+  Search,
+  ChevronRight,
+  MapPin,
+  Smartphone,
+  ShoppingBag,
+  UtensilsCrossed,
+  Home,
+  Star,
+  ArrowRight,
+  Apple,
+  Play,
+  Shield,
+  Zap,
+  Users,
+  TrendingUp,
+  Package,
+} from "lucide-react";
+import { useAppSelector } from "@/src/app/redux";
 
-type ProductProps = {
-  params: {
-    id: string;
-  };
-};
+import FeaturedProducts from "@/src/components/FeaturedProducts";
+import Video from "@/src/components/Video";
+import Radio from "@/src/components/Radio";
 
-type Product = {
-  id: number;
-  title: string;
-  description: string;
-  image: StaticImageData;
-  date: number;
-  category: string;
-  author: string;
-  author_img: StaticImageData;
-  price: number;
-};
-
-const Page = ({ params }: ProductProps) => {
-  const { id } = params;
-
-  const [product, setProduct] = useState<Product | null>(null);
-  const [mainImage, setMainImage] = useState<string | null>(null);
-
-  useEffect(() => {
-    const foundProduct = Products.find((item) => item.id === Number(id));
-    console.log(foundProduct);
-  
-    
-    if (foundProduct) {
-      setProduct(foundProduct ?? null);
-      setMainImage(foundProduct.image );
-    }
-  }, [id]);
-
-  if (!product) return null;
+// ─────────────────────────────────────────────────────────────────────────────
+// HERO
+// ─────────────────────────────────────────────────────────────────────────────
+function Hero() {
+  const user = useAppSelector((s) => s.auth.user);
+  const country = user?.country ?? "Ghana";
+  const flag = country === "Nigeria" ? "🇳🇬" : "🇬🇭";
 
   return (
-    <div>
-      <div className="text-center my-24">
-        <h1 className="text-2xl sm:text-5xl font-semibold max-w-175 mx-auto">
-          {product.title}
-        </h1>
-        <Image
-          src={product.author_img}
-          width={60}
-          height={60}
-          alt=""
-          className="mx-auto mt-6 border border-white rounded-full"
+    <section
+      className="relative w-full min-h-[90vh] flex items-center
+      justify-center overflow-hidden bg-[#0f0f0f]"
+    >
+      {/* Background gradient blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full
+          bg-yellow-400/20 blur-[120px]"
         />
-        <p className="mt-1 pb-2 text-lg max-w-185 mx-auto">{product.author}</p>
+        <div
+          className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full
+          bg-yellow-600/15 blur-[100px]"
+        />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          w-[800px] h-[400px] rounded-full bg-amber-400/10 blur-[80px]"
+        />
       </div>
 
-      {mainImage && <Image src={mainImage} alt="product" className="w-64" />}
-    </div>
-  );
-};
-
-export default Page;
-
-
-## colors
-===== ffc10529
-# smilebabaMarketPlace
-smileBabaMarketPlace
-
-
-
-dispatch(addToCart(product));
-dispatch(calculateTotals());
-
-
-dispatch(increaseCartItem(productId));
-dispatch(decreaseCartItem(productId));
-dispatch(calculateTotals());
-
-
-dispatch(setLogoutState());
-dispatch(clearCart());
-
-
-export const selectUser = (state) => state.auth.user;
-export const selectToken = (state) => state.auth.token;
-
-export const selectCartItems = (state) => state.cart.cartItems;
-export const selectCartTotal = (state) => state.cart.total;
-export const selectCartAmount = (state) => state.cart.amount;
-
-
-
-https://video2.getstreamhosting.com:2020/controller/Widgets/495
-
-const Radios = ()  => {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-
-    if (playing) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-
-    setPlaying(!playing);
-  };
-
-  return (
-    <div className="p-6 bg-amber-950 rounded-xl text-white">
-      <h2 className="text-xl mb-4">
-        SmileBaba <span className="text-yellow-400">Radio</span>
-      </h2>
-
-      <button
-        onClick={togglePlay}
-        className="bg-yellow-500 text-black px-4 py-2 rounded-lg"
-      >
-        {playing ? "Stop Listening" : "Start Listening"}
-      </button>
-
-      <audio ref={audioRef} preload="none">
-        <source
-          src="https://video2.getstreamhosting.com:2020/stream"
-          type="audio/mpeg"
-        />
-      </audio>
-    </div>
-  );
-}
-
-const RadioComponent = () => {
-  const [error, setError] = useState()
-  useEffect(() => {
-    // If the widget needs manual initialization,
-    // you can call it here after script loads.
-  }, []);
-
-  return (
-    <div className="px-4 md:px-16 lg:px-14 xl:px-12">
-      {/* Load GetStreamHosting widget */}
-      <Script
-        src="https://video2.getstreamhosting.com:2020/dist/widgets.js"
-        strategy="afterInteractive"
+      {/* Grid texture overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
       />
 
-      <div className="bg-amber-950 border-2 border-[#d8a304] rounded-2xl p-4 text-white mt-4">
-        <h3 className="text-center text-2xl font-semibold">
-          SmileBaba <span className="text-[#ffc105]">Radio</span>
-        </h3>
-
-        {/* This div is IMPORTANT */}
+      {/* Content */}
+      <div
+        className="relative z-10 w-full max-w-5xl mx-auto px-5 sm:px-8
+        flex flex-col items-center text-center py-20"
+      >
+        {/* Country badge */}
         <div
-          id="gshoutcast-widget"
-          data-type="audio"
-          data-public-url="https://video2.getstreamhosting.com:2020/AudioPlayer/8244?mount=/stream&"
-        />
+          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm
+          border border-white/20 text-white/80 text-xs font-semibold
+          px-4 py-2 rounded-full mb-6"
+        >
+          <span>{flag}</span>
+          <span>#1 Marketplace in {country}</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <span className="text-green-400">Live</span>
+        </div>
+
+        {/* Headline */}
+        <h1
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black
+          text-white leading-[1.1] mb-6 tracking-tight"
+        >
+          Buy & Sell
+          <span
+            className="block text-transparent bg-clip-text
+            bg-gradient-to-r from-yellow-400 to-amber-500"
+          >
+            Anything in {country}
+          </span>
+        </h1>
+
+        <p className="text-white/60 text-base sm:text-lg max-w-xl mb-10 leading-relaxed">
+          From smartphones to street food, apartments to services — SmileBaba
+          connects buyers and sellers across {country}.
+        </p>
+
+        {/* Search bar */}
+        <div className="w-full max-w-2xl">
+          <Link
+            href="/ads"
+            className="flex items-center bg-white rounded-2xl px-5 py-4 gap-3
+              shadow-2xl shadow-black/50 hover:shadow-yellow-400/20
+              transition-all duration-300 group"
+          >
+            <Search size={20} className="text-gray-400 flex-shrink-0" />
+            <span className="text-gray-400 text-sm sm:text-base flex-1 text-left">
+              Search products, food, apartments in {country}…
+            </span>
+            <div
+              className="flex-shrink-0 bg-[#ffc105] text-black font-bold
+              px-4 py-2 rounded-xl text-sm flex items-center gap-1.5
+              group-hover:bg-amber-400 transition"
+            >
+              Search <ArrowRight size={14} />
+            </div>
+          </Link>
+        </div>
+
+        {/* Quick category links */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
+          {[
+            {
+              label: "Marketplace",
+              icon: <ShoppingBag size={14} />,
+              href: "/marketPlace",
+            },
+            {
+              label: "Food",
+              icon: <UtensilsCrossed size={14} />,
+              href: "/food",
+            },
+            { label: "Apartments", icon: <Home size={14} />, href: "/restate" },
+            {
+              label: "Electronics",
+              icon: <Smartphone size={14} />,
+              href: "/ads?category=marketplace&sub=electronics",
+            },
+          ].map((c) => (
+            <Link
+              key={c.label}
+              href={c.href}
+              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20
+                backdrop-blur-sm border border-white/20 text-white text-xs
+                font-semibold px-4 py-2 rounded-full transition-all"
+            >
+              {c.icon} {c.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Stats row */}
+        <div
+          className="flex flex-wrap items-center justify-center gap-6 sm:gap-10
+          mt-12 text-white/60 text-xs sm:text-sm"
+        >
+          {[
+            { value: "50K+", label: "Active listings" },
+            { value: "12K+", label: "Verified vendors" },
+            { value: "2", label: "Countries" },
+            { value: "100K+", label: "Monthly visitors" },
+          ].map((s) => (
+            <div key={s.label} className="flex flex-col items-center gap-0.5">
+              <span className="text-xl sm:text-2xl font-black text-white">
+                {s.value}
+              </span>
+              <span>{s.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="p-6 bg-amber-950 rounded-xl text-white">
-        <h2 className="text-xl mb-4">
-          SmileBaba <span className="text-yellow-400">Radio</span>
-        </h2>
-
-        <audio
-          controls
-          preload="none"
-          className="w-full"
-          onError={() => setError(true)}
+      {/* Bottom curve */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <svg
+          viewBox="0 0 1440 60"
+          className="w-full fill-white"
+          preserveAspectRatio="none"
         >
-          <source
-            src="https://video2.getstreamhosting.com:2020/AudioPlayer/8244?mount=/stream&"
-            type="audio/mpeg"
-          />
-        </audio>
+          <path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z" />
+        </svg>
+      </div>
+    </section>
+  );
+}
 
-        {error && <p className="text-red-400 mt-2">Stream failed to load.</p>}
+// ─────────────────────────────────────────────────────────────────────────────
+// TRUST BAR
+// ─────────────────────────────────────────────────────────────────────────────
+function TrustBar() {
+  const items = [
+    {
+      icon: <Shield size={18} className="text-green-600" />,
+      text: "Verified Sellers",
+      sub: "All vendors are reviewed",
+    },
+    {
+      icon: <Zap size={18} className="text-yellow-600" />,
+      text: "Instant Contact",
+      sub: "Call or WhatsApp sellers",
+    },
+    {
+      icon: <MapPin size={18} className="text-blue-600" />,
+      text: "Local Listings",
+      sub: "Filtered by your country",
+    },
+    {
+      icon: <Users size={18} className="text-purple-600" />,
+      text: "Growing Community",
+      sub: "12,000+ active vendors",
+    },
+  ];
+
+  return (
+    <div className="w-full border-b border-gray-100">
+      <div className="max-w-6xl mx-auto px-4 py-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {items.map((item) => (
+            <div
+              key={item.text}
+              className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50
+                transition"
+            >
+              <div
+                className="w-9 h-9 rounded-xl bg-gray-100 flex items-center
+                justify-center flex-shrink-0"
+              >
+                {item.icon}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-gray-900 truncate">
+                  {item.text}
+                </p>
+                <p className="text-[10px] text-gray-400 truncate">{item.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION WRAPPER
+// ─────────────────────────────────────────────────────────────────────────────
+function Section({
+  title,
+  sub,
+  children,
+  className = "",
+}: {
+  title?: string;
+  sub?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`w-full py-10 ${className}`}>
+      {title && (
+        <div className="mb-6 px-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-gray-900">
+            {title}
+          </h2>
+          {sub && <p className="text-sm text-gray-400 mt-1">{sub}</p>}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
 
-  {/* <select
-            name="category"
-            required
-            className="border-gray-300 w-full sm:w-125 border p-4 rounded mb-4 outline-none"
-            onChange={(e) => setCategoryId(e.target.value)}
+// ─────────────────────────────────────────────────────────────────────────────
+// HOW IT WORKS
+// ─────────────────────────────────────────────────────────────────────────────
+function HowItWorks() {
+  const steps = [
+    {
+      n: "01",
+      icon: <Search size={24} className="text-yellow-600" />,
+      title: "Browse or Search",
+      desc: "Search by category, location, or keyword. Listings are filtered to your country.",
+      color: "bg-yellow-50",
+    },
+    {
+      n: "02",
+      icon: <Users size={24} className="text-blue-600" />,
+      title: "Contact the Seller",
+      desc: "Tap to reveal the seller's phone number or send a WhatsApp message directly.",
+      color: "bg-blue-50",
+    },
+    {
+      n: "03",
+      icon: <Shield size={24} className="text-green-600" />,
+      title: "Meet & Pay Safely",
+      desc: "Meet in a public place, inspect the item, and pay only when satisfied.",
+      color: "bg-green-50",
+    },
+    {
+      n: "04",
+      icon: <Package size={24} className="text-purple-600" />,
+      title: "Sell Your Items",
+      desc: "Post your first ad free. Upgrade to a vendor plan to post unlimited listings.",
+      color: "bg-purple-50",
+    },
+  ];
+
+  return (
+    <Section title="How it works" sub="Buying and selling made simple">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {steps.map((s) => (
+          <div
+            key={s.n}
+            className="relative bg-white rounded-3xl border border-gray-100
+              shadow-sm p-6 hover:shadow-md transition-shadow"
           >
-            <option value="">Select Category</option>
+            <span
+              className="absolute top-4 right-4 text-[11px] font-black
+              text-gray-200"
+            >
+              {s.n}
+            </span>
+            <div
+              className={`w-12 h-12 rounded-2xl ${s.color} flex items-center
+              justify-center mb-4`}
+            >
+              {s.icon}
+            </div>
+            <h3 className="font-bold text-gray-900 text-sm mb-1">{s.title}</h3>
+            <p className="text-xs text-gray-500 leading-relaxed">{s.desc}</p>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
 
-            {categories.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select> */}
+// ─────────────────────────────────────────────────────────────────────────────
+// APP DOWNLOAD
+// ─────────────────────────────────────────────────────────────────────────────
+function AppDownload() {
+  return (
+    <section className="w-full bg-[#0f0f0f] py-16 px-4 overflow-hidden relative">
+      {/* Glow */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px]
+        bg-yellow-400/10 blur-[100px] pointer-events-none"
+      />
 
-
-
-
-          {/* <select
-            name="categoryType"
-            required
-            disabled={!selectedCategory}
-            className="border-gray-300 w-full sm:w-125 border px-4 py-3 rounded mb-4 outline-none"
+      <div
+        className="relative z-10 max-w-5xl mx-auto flex flex-col lg:flex-row
+        items-center gap-10"
+      >
+        {/* Left */}
+        <div className="flex-1 text-center lg:text-left">
+          <div
+            className="inline-flex items-center gap-2 bg-yellow-400/10
+            border border-yellow-400/30 text-yellow-400 text-xs font-bold
+            px-3 py-1.5 rounded-full mb-5"
           >
-            <option value="">Select Category Type</option>
+            <Zap size={11} /> Coming soon
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 leading-tight">
+            SmileBaba in your
+            <span className="text-yellow-400"> pocket</span>
+          </h2>
+          <p className="text-white/50 text-sm leading-relaxed mb-7 max-w-md">
+            Get instant notifications when new listings match your search. Chat
+            with sellers, track your ads, and manage your store — all from the
+            SmileBaba mobile app.
+          </p>
 
-            {selectedCategory?.children?.map((child) => (
-              <option key={child.id} value={child.id}>
-                {child.name}
-              </option>
+          <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+            {/* App Store */}
+            <button
+              className="flex items-center gap-3 bg-white text-black
+              px-5 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-100
+              transition active:scale-95"
+            >
+              <Apple size={20} />
+              <div className="text-left">
+                <p className="text-[10px] text-gray-500 leading-none">
+                  Download on the
+                </p>
+                <p className="font-black leading-tight">App Store</p>
+              </div>
+            </button>
+
+            {/* Google Play */}
+            <button
+              className="flex items-center gap-3 bg-white/10 border
+              border-white/20 text-white px-5 py-3 rounded-2xl font-semibold
+              text-sm hover:bg-white/15 transition active:scale-95"
+            >
+              <Play size={18} className="fill-white" />
+              <div className="text-left">
+                <p className="text-[10px] text-white/50 leading-none">
+                  Get it on
+                </p>
+                <p className="font-black leading-tight">Google Play</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Mini stats */}
+          <div className="flex gap-6 mt-8 justify-center lg:justify-start">
+            {[
+              { value: "4.8", label: "App Store rating" },
+              { value: "50K+", label: "Downloads" },
+              { value: "Free", label: "Always" },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="text-xl font-black text-white">{s.value}</p>
+                <p className="text-[10px] text-white/40">{s.label}</p>
+              </div>
             ))}
-          </select> */}
+          </div>
+        </div>
 
+        {/* Right — phone mockup */}
+        <div className="flex-shrink-0 relative">
+          <div
+            className="w-56 sm:w-64 aspect-[9/19] bg-gradient-to-b from-gray-800
+            to-gray-900 rounded-[3rem] border-4 border-gray-700 shadow-2xl
+            flex flex-col items-center justify-center overflow-hidden
+            relative"
+          >
+            {/* Notch */}
+            <div className="absolute top-4 w-24 h-5 bg-gray-900 rounded-full z-10" />
+            {/* Screen content */}
+            <div
+              className="w-full h-full bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f]
+              flex items-center justify-center"
+            >
+              <div className="text-center">
+                <div
+                  className="w-16 h-16 bg-[#ffc105] rounded-2xl flex items-center
+                  justify-center mx-auto mb-3 shadow-xl shadow-yellow-400/40"
+                >
+                  <ShoppingBag size={28} className="text-black" />
+                </div>
+                <p className="text-white font-black text-lg">SmileBaba</p>
+                <p className="text-white/40 text-xs mt-1">
+                  Buy &amp; Sell Locally
+                </p>
+              </div>
+            </div>
+            {/* Home indicator */}
+            <div className="absolute bottom-3 w-20 h-1 bg-gray-600 rounded-full" />
+          </div>
 
-
-
-
-
-
- User Login
-     ↓
-Next.js → /auth/login
-     ↓
-Backend sets HttpOnly cookies
-     ↓
-Browser stores cookies
-     ↓
-Axios automatically sends cookies
-     ↓
-Backend authenticates user
-     ↓
-Middleware protects routes
-     ↓
-Axios refreshes tokens automatically
-
-GET /auth/me
-
-
-Backend returns logged user.
-
-Example response:
-
-{
-  user: {
-    id: 1,
-    name: "Smile Baba",
-    role: "admin"
-  }
+          {/* Floating badge */}
+          <div
+            className="absolute -top-3 -right-3 bg-yellow-400 text-black
+            text-xs font-black px-3 py-1.5 rounded-full shadow-lg
+            flex items-center gap-1"
+          >
+            <Star size={11} className="fill-black" /> 4.8
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
-auth: {
-   user: {},
-   role: "admin",
-   isAuthenticated: true,
-   isAuthenticating: false
+// ─────────────────────────────────────────────────────────────────────────────
+// SELL CTA
+// ─────────────────────────────────────────────────────────────────────────────
+function SellCta() {
+  const user = useAppSelector((s) => s.auth.user);
+
+  return (
+    <section className="w-full py-10 px-1">
+      <div
+        className="bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500
+        rounded-3xl p-8 sm:p-12 flex flex-col sm:flex-row items-center
+        justify-between gap-6 shadow-xl shadow-yellow-400/20 relative overflow-hidden"
+      >
+        {/* Decorative circles */}
+        <div
+          className="absolute -top-10 -right-10 w-40 h-40 bg-white/10
+          rounded-full pointer-events-none"
+        />
+        <div
+          className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10
+          rounded-full pointer-events-none"
+        />
+
+        <div className="relative z-10 text-center sm:text-left">
+          <p className="text-2xl sm:text-3xl font-black text-black mb-2">
+            Start selling today
+          </p>
+          <p className="text-black/60 text-sm max-w-md">
+            {user
+              ? `Post your first listing as ${user.username} and reach thousands of buyers in ${user.country}.`
+              : "Create a free account and start reaching thousands of buyers in your area."}
+          </p>
+        </div>
+
+        <div className="relative z-10 flex flex-col sm:flex-row gap-3 flex-shrink-0">
+          {user ? (
+            <Link
+              href="/sell"
+              className="flex items-center gap-2 bg-black text-white font-bold
+                px-7 py-3.5 rounded-2xl text-sm hover:bg-gray-900 transition
+                active:scale-95 whitespace-nowrap"
+            >
+              <Package size={16} /> Post an ad
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/auth/register"
+                className="flex items-center gap-2 bg-black text-white font-bold
+                  px-7 py-3.5 rounded-2xl text-sm hover:bg-gray-900 transition
+                  active:scale-95 whitespace-nowrap"
+              >
+                Get started free
+              </Link>
+              <Link
+                href="/ads"
+                className="flex items-center gap-2 bg-white/80 text-black font-semibold
+                  px-7 py-3.5 rounded-2xl text-sm hover:bg-white transition
+                  whitespace-nowrap"
+              >
+                Browse listings <ChevronRight size={14} />
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+export default function HomePage() {
+  return (
+    <div className="w-full flex flex-col">
+      {/* Full-bleed dark hero */}
+      <Hero />
 
-export const selectUser = (state:any) => state.auth.user
-export const selectRole = (state:any) => state.auth.user.role
+      {/* White scrollable content */}
+      <div className="w-full bg-white">
+        {/* Trust bar */}
+        <TrustBar />
 
+        {/* Main content — max-width container */}
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
+          {/* Radio player */}
+          <div className="pt-8">
+            <Radio />
+          </div>
 
-export const hasRole = (
-  userRole:string,
-  roles:string[]
-) => {
-  return roles.includes(userRole);
-};
+          {/* Apartments featured */}
+          <Section>
+            <FeaturedProducts
+              category="apartments"
+              title="Apartments & Short Stays"
+              viewAllHref="/restate"
+              viewAllLabel="View all properties"
+            />
+          </Section>
 
+          {/* How it works */}
+          <HowItWorks />
 
-if (!hasRole(user.role, ["admin"])) {
-   router.push("/");
+          {/* Food featured */}
+          <Section>
+            <FeaturedProducts
+              category="food"
+              title="Food & Restaurants"
+              viewAllHref="/food"
+              viewAllLabel="See all food listings"
+            />
+          </Section>
+
+          {/* Sell CTA */}
+          <SellCta />
+
+          {/* Marketplace featured */}
+          <Section>
+            <FeaturedProducts
+              category="marketplace"
+              title="Shop the Marketplace"
+              viewAllHref="/marketPlace"
+              viewAllLabel="Browse marketplace"
+            />
+          </Section>
+        </div>
+
+        {/* Full-bleed video promo */}
+        <div className="w-full py-10 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl sm:text-3xl font-black text-gray-900">
+                Promote your business on SmileBaba TV
+              </h2>
+              <p className="text-sm text-gray-500 mt-2">
+                Reach thousands of buyers through live video, radio, and social
+                media
+              </p>
+            </div>
+            <Video />
+          </div>
+        </div>
+
+        {/* Full-bleed dark app download */}
+        <AppDownload />
+      </div>
+    </div>
+  );
 }
 
-
-
-if(role === "admin"){
-   menu = adminMenu
-}
-
-if(role === "vendor"){
-   menu = vendorMenu
-}
-
-Admin
-
-Users
-
-Vendors
-
-Apartments
-
-Analytics
-
-Ads
-
-Radio
-
-TV
-
-
-
-Vendor
-
-Products
-
-Orders
-
-Sales
-
-Agent
-
-Apartments
-
-Bookings
-
-
-
-User
-
-Orders
-
-Bookings
-
-Profile
-
-
-
-
-
-const publishAd = async () => {
-
-  const form = new FormData()
-
-  form.append("title", data.title)
-  form.append("description", data.description)
-  form.append("price", data.price)
-
-  data.images.forEach((img) => {
-    if (img) form.append("images", img)
-  })
-
-  await fetch("/api/products/create", {
-    method: "POST",
-    body: form
-  })
-}
-
-
-const handleSubmit = async () => {
-  setIsSubmitting(true);
-
-  try {
-    const form = new FormData();
-
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key === "images") {
-        value.forEach((img) => {
-          if (img) form.append("images", img);
-        });
-      } else {
-        form.append(key, value as string);
-      }
-    });
-
-    await fetch("/api/products/create", {
-      method: "POST",
-      body: form,
-    });
-
-  } catch (error) {
-    console.error(error);
-  }
-
-  setIsSubmitting(false);
-};
-
-https://picsum.photos/600/400
-
-
-
-
-
-
-
-
-
-
-
-store
- ├ auth
- │   ├ user
- │   ├ token
- │
- ├ cart
- │   ├ foodCart
- │   ├ marketplaceCart
- │
- ├ food
- │   ├ restaurants
- │   ├ meals
- │
- ├ apartments
- │   ├ listings
- │   ├ bookings
- │
- └ marketplace
-     ├ products
-
-
-
-
-
-
-
-
-
-  {
-  auth: {
-    user
-    token
-  },
-
-  cart: {
-    foodCart
-    marketplaceCart
-  },
-
-  food: {
-    restaurants
-    meals
-  },
-
-  apartments: {
-    listings
-    bookings
-  },
-
-  marketplace: {
-    products
-  },
-
-  ui: {
-    sidebarOpen
-  }
-}
-
-
-
-authSlice
-  handles login/logout/user
-
-cartSlice
-  handles cart logic
-  listens to login.fulfilled
-
-foodSlice
-  restaurants/meals
-
-apartmentSlice
-  listings/bookings
-
-marketplaceSlice
-  products
-
-
-
-
-  ANS3WEZPK3TC78ZTVL6U2XD1
-
-
-
-
-
-
-
-
-
-
-
-
-  subscription-system/
-├── config/pricing.js              ← Single source of truth for all prices
-├── models/
-│   ├── notification.js            ← Notification documents (7/3/1 day expiry)
-│   └── purchase.js                ← Purchase history records
-├── controllers/paymentController.js  ← All payment logic + history + notifications
-├── middleware/requireVendor.js    ← Blocks non-vendors at API level
-├── cron/subscriptionExpiry.js     ← Daily job: fires 7/3/1 day + expired alerts
-├── routes/paymentRoutes.js        ← All payment endpoints
-├── hooks/
-│   ├── useSubscriptionGuard.ts    ← Frontend: intercepts actions, saves returnUrl
-│   └── useResumeAction.ts         ← Frontend: resumes after payment success
-├── pages/
-│   ├── Subscription.tsx           ← Updated subscribe page with real API call
-│   └── PurchaseHistory.tsx        ← Customer purchase history page
-└── components/NotificationBell.tsx  ← Bell icon with unread badge + dropdown

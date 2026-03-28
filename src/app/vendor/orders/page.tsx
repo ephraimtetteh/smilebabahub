@@ -30,6 +30,7 @@ import {
   AlertCircle,
   XCircle,
   RefreshCw,
+  ImageOff,
 } from "lucide-react";
 
 
@@ -173,7 +174,7 @@ function OrderRow({
               className="w-full h-full flex items-center justify-center
               text-base"
             >
-              🖼️
+              <ImageOff size={24} className="text-gray-200" />
             </div>
           )}
         </div>

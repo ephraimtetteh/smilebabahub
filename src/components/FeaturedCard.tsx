@@ -123,7 +123,9 @@ const FeaturedCard = memo(function FeaturedCard({
         {/* Location */}
         {(city || region) && (
           <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1">
-            <span>📍</span>
+            <span>
+              <MapPin size={11} className="text-gray-400" />{" "}
+            </span>
             <span className="truncate">
               {[city, region].filter(Boolean).join(", ")}
             </span>
@@ -145,7 +147,7 @@ export const FeaturedGrid = memo(function FeaturedGrid({
   const capped = items.slice(0, 7);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 w-full">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 max-w-7xl mx-auto w-full">
       {capped.map((item, i) => (
         <FeaturedCard
           key={(item as any)._id ?? (item as any).id ?? i}

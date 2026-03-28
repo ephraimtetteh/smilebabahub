@@ -92,9 +92,7 @@ export default function MarketerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "commissions" | "payout"
-  >("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "commissions" | "payout">("overview");
   const [payoutForm, setPayoutForm] = useState({
     payoutMethod: "",
     accountName: "",
@@ -293,7 +291,7 @@ export default function MarketerDashboard() {
               {marketer.referralCode}
             </p>
             <p className="text-xs text-gray-500 mt-1.5">
-              Share this code with vendors. They get 20% off, you earn 20%
+              Share this code with vendors. They get 15% off, you earn 15%
               commission.
             </p>
           </div>
