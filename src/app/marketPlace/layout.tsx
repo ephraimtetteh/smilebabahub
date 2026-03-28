@@ -108,7 +108,7 @@ export default function MarketplaceLayout({
       />
 
       {/* SEO header — visible to crawlers and users */}
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-6 sm:py-8">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-20 sm:pt-8">
         <div className="max-w-5xl mx-auto">
           {/* Breadcrumb */}
           <nav aria-label="breadcrumb" className="mb-3">
@@ -126,14 +126,13 @@ export default function MarketplaceLayout({
           </nav>
 
           {/* H1 */}
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-            Marketplace — Buy &amp; Sell in Ghana and Nigeria
-          </h1>
+          {/* <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+            Marketplace — Buy &amp; Sell to thousands of customers
+          </h1> */}
 
           {/* Subheader */}
-          <p className="text-sm sm:text-base text-gray-500 max-w-2xl leading-relaxed">
-            Browse thousands of listings from verified vendors across Ghana and
-            Nigeria. Shop{" "}
+          {/* <p className="text-sm sm:text-base text-gray-500 max-w-2xl leading-relaxed">
+            Browse thousands of listings from verified vendors. Shop{" "}
             {["phones", "cars", "electronics", "fashion", "services"].map(
               (cat, i, arr) => (
                 <span key={cat}>
@@ -155,7 +154,7 @@ export default function MarketplaceLayout({
               post your free ad
             </Link>{" "}
             today.
-          </p>
+          </p> */}
 
           {/* Trust signals */}
           <div className="flex flex-wrap items-center gap-4 mt-4">

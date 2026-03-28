@@ -394,12 +394,11 @@ export function CategoryLandingLayout({
     .slice(0, 7);
 
   return (
-    <div className="w-full min-h-screen bg-gray-50">
+    <div className="w-full min-h-screen bg-gray-50 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 pt-30">
       {showRadio && <Radio />}
 
       <div
-        className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12
-        flex flex-col gap-10 py-10"
+        className="flex flex-col gap-10 py-10"
       >
         <CountryChip
           country={userCountry}

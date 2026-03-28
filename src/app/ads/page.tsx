@@ -136,7 +136,7 @@ export default function AdsLandingPage() {
   const mainAds = ads.filter((a) => !a.boost?.isBoosted);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-20">
       <AdsHero
         country={userCountry}
         search={search}
