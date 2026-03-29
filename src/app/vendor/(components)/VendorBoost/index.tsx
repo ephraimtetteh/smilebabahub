@@ -11,7 +11,7 @@ import { assets } from "@/src/assets/assets";
 import { useProducts } from "@/src/hooks/useProducts";
 import { getCoverImage } from "@/src/types/product.types";
 import { toast } from "react-toastify";
-import { Star, Package, Zap, Megaphone } from "lucide-react";
+import { Star, Package, Zap, Megaphone, X, TrendingUp } from "lucide-react";
 
 // ── Currency config ────────────────────────────────────────────────────────
 const PRICES: Record<string, Record<string, Record<string, number>>> = {
@@ -32,53 +32,195 @@ const PRICES: Record<string, Record<string, Record<string, number>>> = {
 
 const CURRENCY_SYMBOLS: Record<string, string> = { GHS: "₵", NGN: "₦" };
 
+type BoostTier = {
+  id: string;
+  label: string;
+  desc: string;
+  days: number;
+  display: string;
+};
+const TIER_ICON: Record<string, React.ReactNode> = {
+  standard: <Zap size={18} className="text-amber-500" />,
+  featured: <TrendingUp size={18} className="text-blue-500" />,
+  premium: <Star size={18} className="text-purple-500 fill-purple-400" />,
+};
+
+// ── Boost tier modal ───────────────────────────────────────────────────────
+function BoostModal({
+  adId,
+  currency,
+  onClose,
+}: {
+  adId: string;
+  currency: string;
+  onClose: () => void;
+}) {
+  const [tiers, setTiers] = useState<BoostTier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState<string | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
+  // Perform the actual redirect outside of the async handler
+  // so it doesn't trigger the immutability lint rule
+  useEffect(() => {
+    if (redirectUrl) {
+      window.location.assign(redirectUrl);
+    }
+  }, [redirectUrl]);
+
+  useEffect(() => {
+    axiosInstance
+      .get(`/payments/boost/pricing?currency=${currency}`)
+      .then((res) => setTiers(res.data.tiers ?? []))
+      .catch(() => setTiers([]))
+      .finally(() => setLoading(false));
+  }, [currency]);
+
+  const handlePay = async (tier: string) => {
+    setPaying(tier);
+    try {
+      const endpoint =
+        currency === "NGN"
+          ? "/payments/boost/ng/initialize"
+          : "/payments/boost/gh/initialize";
+      const res = await axiosInstance.post(endpoint, {
+        adId,
+        tier,
+        returnUrl: window.location.pathname,
+      });
+      if (res.data.paymentLink) {
+        setRedirectUrl(res.data.paymentLink);
+      } else {
+        toast.error("Could not start payment. Try again.");
+        setPaying(null);
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Payment failed. Try again.");
+      setPaying(null);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center
+      justify-center p-4"
+    >
+      <div className="bg-white rounded-3xl p-6 w-full max-w-sm">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-lg font-black text-gray-900">Boost this ad</h3>
+            <p className="text-sm text-gray-500">
+              Choose a boost tier to reach more buyers
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 bg-gray-100 rounded-full flex items-center
+              justify-center hover:bg-gray-200 transition"
+          >
+            <X size={15} className="text-gray-500" />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-20 bg-gray-100 rounded-2xl animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3 mb-4">
+            {tiers.map((b) => (
+              <button
+                key={b.id}
+                onClick={() => handlePay(b.id)}
+                disabled={paying !== null}
+                className="w-full flex items-start gap-3 p-4 bg-gray-50 border-2
+                  border-gray-100 rounded-2xl hover:border-yellow-400 hover:bg-yellow-50/30
+                  transition text-left disabled:opacity-50 active:scale-[0.99]"
+              >
+                <span
+                  className="flex-shrink-0 w-9 h-9 bg-white rounded-xl
+                  flex items-center justify-center shadow-sm"
+                >
+                  {TIER_ICON[b.id] ?? (
+                    <Zap size={18} className="text-gray-400" />
+                  )}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <p className="text-sm font-bold text-gray-900">{b.label}</p>
+                    <p className="text-sm font-black text-yellow-600">
+                      {paying === b.id ? (
+                        <span
+                          className="w-4 h-4 border-2 border-yellow-400
+                            border-t-transparent rounded-full animate-spin inline-block"
+                        />
+                      ) : (
+                        b.display
+                      )}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500">{b.desc}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {b.days} days · one-time
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          className="w-full py-2.5 text-gray-500 text-sm font-medium
+            hover:text-gray-700 transition"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const VendorBoost = () => {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
-  const [boostingId, setBoostingId] = useState<string | null>(null);
+  const [boostingAdId, setBoostingAdId] = useState<string | null>(null);
 
   const userCurrency =
     useAppSelector((state) => state.auth.user?.currency) ?? "GHS";
   const sym = CURRENCY_SYMBOLS[userCurrency] ?? "₵";
 
-  const { guard, handleApiError } = useSubscriptionGuard();
+  const { guard } = useSubscriptionGuard();
 
-  const { myProducts, myLoading, loadMyProducts, formatProductPrice } =
-    useProducts();
+  const { myProducts, myLoading, loadMyProducts } = useProducts();
 
-  // Load vendor's own products on mount
   useEffect(() => {
     loadMyProducts({ limit: 9 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Boost handler ──────────────────────────────────────────────────────
-  const handleBoost = (productId: string) => {
-    guard({ type: "boost_product", payload: { productId } }, async () => {
-      try {
-        setBoostingId(productId);
-        await axiosInstance.post(`/ads/${productId}/boost`, {
-          tier: "standard",
-        });
-        toast.success(
-          "Product boosted! It will now appear higher in search results.",
-        );
-      } catch (err) {
-        if (
-          !handleApiError(err, {
-            type: "boost_product",
-            payload: { productId },
-          })
-        ) {
-          toast.error("Failed to boost product. Please try again.");
-        }
-      } finally {
-        setBoostingId(null);
-      }
+  // Open boost modal — subscription guard ensures vendor is active
+  const handleBoostClick = (productId: string) => {
+    guard({ type: "boost_product", payload: { productId } }, () => {
+      setBoostingAdId(productId);
     });
   };
 
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto text-black">
+      {/* Boost tier modal */}
+      {boostingAdId && (
+        <BoostModal
+          adId={boostingAdId}
+          currency={userCurrency}
+          onClose={() => setBoostingAdId(null)}
+        />
+      )}
+
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -280,27 +422,16 @@ const VendorBoost = () => {
                 </p>
 
                 <div className="flex gap-2">
-                  {/* Boost */}
+                  {/* Boost — opens payment modal */}
                   <button
-                    onClick={() => handleBoost(String(item._id ?? item.id))}
-                    disabled={boostingId === String(item._id ?? item.id)}
-                    className="flex-1 py-2 bg-[#ffc105] text-black text-sm font-bold
-                    rounded-xl hover:bg-amber-400 transition disabled:opacity-50
-                    active:scale-95"
+                    onClick={() =>
+                      handleBoostClick(String(item._id ?? item.id))
+                    }
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2
+                    bg-[#ffc105] text-black text-sm font-bold rounded-xl
+                    hover:bg-amber-400 transition active:scale-95"
                   >
-                    {boostingId === String(item._id ?? item.id) ? (
-                      <span className="flex items-center justify-center gap-1">
-                        <span
-                          className="w-3 h-3 border-2 border-black/30 border-t-black
-                          rounded-full animate-spin inline-block"
-                        />
-                        Boosting…
-                      </span>
-                    ) : (
-                      <>
-                        <Zap size={13} /> Boost
-                      </>
-                    )}
+                    <Zap size={13} /> Boost
                   </button>
 
                   {/* Promote */}

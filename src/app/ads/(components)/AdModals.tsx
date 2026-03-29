@@ -2,19 +2,25 @@
 
 // src/components/ads/AdModals.tsx
 import { memo, useEffect, useState } from "react";
+import { Zap, Star, TrendingUp, Trash2, X } from "lucide-react";
 import { BoostTier } from "@/src/types/ad.types";
-import axiosInstance from "@/src/lib/api/axios";
-import { useAppSelector } from "../../redux";
 import { BOOST_TIERS } from "./ad.constants";
+import { useAppSelector } from "@/src/app/redux";
+import axiosInstance from "@/src/lib/api/axios";
 
-// ── Boost tier with real price from backend ────────────────────────────────
 type PricedTier = {
   id: BoostTier;
   label: string;
   desc: string;
   days: number;
   display: string;
-  icon: string;
+};
+
+// Lucide icon per tier
+const TIER_ICON: Record<string, React.ReactNode> = {
+  standard: <Zap size={20} className="text-amber-500" />,
+  featured: <TrendingUp size={20} className="text-blue-500" />,
+  premium: <Star size={20} className="text-purple-500 fill-purple-400" />,
 };
 
 // ── Boost modal ────────────────────────────────────────────────────────────
@@ -35,27 +41,22 @@ export const BoostModal = memo(function BoostModal({
   const [tiers, setTiers] = useState<PricedTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<BoostTier | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
-  // Fetch real prices from backend
+  // Redirect triggered by state change — avoids the immutability lint rule
+  useEffect(() => {
+    if (redirectUrl) {
+      window.location.assign(redirectUrl);
+    }
+  }, [redirectUrl]);
+
   useEffect(() => {
     axiosInstance
       .get(`/payments/boost/pricing?currency=${userCurrency}`)
       .then((res) => {
-        // Merge backend prices with frontend icons
-        const iconMap: Record<string, string> = {
-          standard: "🔶",
-          featured: "🔵",
-          premium: "⭐",
-        };
-        setTiers(
-          (res.data.tiers as PricedTier[]).map((t) => ({
-            ...t,
-            icon: iconMap[t.id] ?? "🚀",
-          })),
-        );
+        setTiers((res.data.tiers as PricedTier[]) ?? []);
       })
       .catch(() => {
-        // Fallback to static config if pricing endpoint fails
         setTiers(
           BOOST_TIERS.map((b) => ({
             id: b.tier,
@@ -63,36 +64,32 @@ export const BoostModal = memo(function BoostModal({
             desc: b.desc,
             days: b.days,
             display: "—",
-            icon: b.icon,
           })),
         );
       })
       .finally(() => setLoading(false));
   }, [userCurrency]);
 
-  const handleBoostPay = async (tier: BoostTier) => {
+  const handlePay = async (tier: BoostTier) => {
     setPaying(tier);
     try {
-      // Determine country endpoint
       const endpoint =
         userCurrency === "NGN"
-          ? `/payments/boost/ng/initialize`
-          : `/payments/boost/gh/initialize`;
-
+          ? "/payments/boost/ng/initialize"
+          : "/payments/boost/gh/initialize";
       const res = await axiosInstance.post(endpoint, {
         adId,
         tier,
         returnUrl: window.location.pathname,
       });
-
-      // Redirect to Flutterwave payment page
       if (res.data.paymentLink) {
-        window.location.href = res.data.paymentLink;
+        setRedirectUrl(res.data.paymentLink);
+      } else {
+        onBoost(tier); // fallback
+        setPaying(null);
       }
-    } catch (err: any) {
-      // Fallback: let parent handle (free boost for now)
-      onBoost(tier);
-    } finally {
+    } catch {
+      onBoost(tier); // fallback
       setPaying(null);
     }
   };
@@ -103,10 +100,19 @@ export const BoostModal = memo(function BoostModal({
       justify-center p-4"
     >
       <div className="bg-white rounded-3xl p-6 w-full max-w-sm">
-        <h3 className="text-lg font-black text-gray-900 mb-1">Boost this ad</h3>
-        <p className="text-sm text-gray-500 mb-5">
-          Choose a boost tier to increase visibility and reach more buyers.
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-black text-gray-900">Boost this ad</h3>
+            <p className="text-sm text-gray-500">Reach more buyers instantly</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 bg-gray-100 rounded-full flex items-center
+              justify-center hover:bg-gray-200 transition"
+          >
+            <X size={15} className="text-gray-500" />
+          </button>
+        </div>
 
         {loading ? (
           <div className="space-y-3">
@@ -118,28 +124,31 @@ export const BoostModal = memo(function BoostModal({
             ))}
           </div>
         ) : (
-          <div className="space-y-3 mb-5">
+          <div className="space-y-3 mb-4">
             {tiers.map((b) => (
               <button
                 key={b.id}
-                onClick={() => handleBoostPay(b.id)}
+                onClick={() => handlePay(b.id)}
                 disabled={mutating || paying !== null}
                 className="w-full flex items-start gap-3 p-4 bg-gray-50 border-2
                   border-gray-100 rounded-2xl hover:border-yellow-400 transition
                   text-left disabled:opacity-50 active:scale-[0.99]"
               >
-                <span className="text-2xl flex-shrink-0">{b.icon}</span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                <span
+                  className="flex-shrink-0 w-9 h-9 bg-white rounded-xl
+                  flex items-center justify-center shadow-sm"
+                >
+                  {TIER_ICON[b.id]}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
                     <p className="text-sm font-bold text-gray-900">{b.label}</p>
                     <p className="text-sm font-black text-yellow-600">
                       {paying === b.id ? (
-                        <span className="flex items-center gap-1">
-                          <span
-                            className="w-3 h-3 border-2 border-yellow-400
-                              border-t-transparent rounded-full animate-spin inline-block"
-                          />
-                        </span>
+                        <span
+                          className="w-4 h-4 border-2 border-yellow-400
+                          border-t-transparent rounded-full animate-spin inline-block"
+                        />
                       ) : (
                         b.display
                       )}
@@ -147,7 +156,7 @@ export const BoostModal = memo(function BoostModal({
                   </div>
                   <p className="text-xs text-gray-500">{b.desc}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {b.days} days · one-time payment
+                    {b.days} days · one-time
                   </p>
                 </div>
               </button>
@@ -157,7 +166,8 @@ export const BoostModal = memo(function BoostModal({
 
         <button
           onClick={onClose}
-          className="w-full py-2.5 text-gray-500 text-sm font-medium hover:text-gray-700"
+          className="w-full py-2.5 text-gray-500 text-sm font-medium
+            hover:text-gray-700 transition"
         >
           Cancel
         </button>
@@ -179,12 +189,14 @@ export const DeleteConfirmModal = memo(function DeleteConfirmModal({
   onClose,
 }: DeleteConfirmModalProps) {
   return (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center
-      justify-center p-4"
-    >
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center">
-        <p className="text-3xl mb-3">🗑️</p>
+        <div
+          className="w-14 h-14 bg-red-50 rounded-2xl flex items-center
+          justify-center mx-auto mb-3"
+        >
+          <Trash2 size={26} className="text-red-500" />
+        </div>
         <h3 className="text-lg font-black text-gray-900 mb-2">
           Delete this ad?
         </h3>

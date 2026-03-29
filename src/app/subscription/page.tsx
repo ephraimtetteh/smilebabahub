@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/src/components/Button";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -10,6 +10,7 @@ import { SubscriptionPlanProps } from "@/src/types/types";
 import { consumeReturnState } from "@/src/hooks/useSubscriptionGuard";
 import axiosInstance from "@/src/lib/api/axios";
 import { useAppSelector } from "../redux";
+
 
 // ── Currency config ────────────────────────────────────────────────────────
 // Mirrors PRICING in config/pricing.js — keeps frontend display in sync
@@ -113,6 +114,15 @@ const Subscription = ({
     }
   };
 
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
+  // Redirect triggered by state — avoids the immutability lint rule
+  useEffect(() => {
+    if (redirectUrl) {
+      window.location.assign(redirectUrl);
+    }
+  }, [redirectUrl]);
+
   const handlePayNow = async () => {
     setError(null);
     setLoading(true);
@@ -133,7 +143,7 @@ const Subscription = ({
         return;
       }
 
-      window.location.href = res.data.paymentLink;
+      setRedirectUrl(res.data.paymentLink);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setError(
