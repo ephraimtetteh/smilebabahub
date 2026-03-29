@@ -1,98 +1,58 @@
 "use client";
-
-// src/app/product/[id]/page.tsx
+// src/components/ads/ProductDetail/index.tsx
+// Orchestrator only — all heavy logic lives in the sub-components.
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import {
-  IoCallOutline,
-  IoChatboxEllipsesOutline,
-  IoCloseOutline,
-  IoLocationOutline,
-  IoTimeOutline,
-  IoEyeOutline,
-  IoHeartOutline,
-  IoShareSocialOutline,
-} from "react-icons/io5";
-import { FaWhatsapp } from "react-icons/fa";
-import { MdOutlineLocalOffer, MdVerified } from "react-icons/md";
-import { FaAngleRight, FaBoxOpen, FaTruck, FaTag } from "react-icons/fa6";
-
-import Button from "@/src/components/Button";
-import AsideCard from "@/src/components/AsideCard";
-import Socials from "@/src/components/Socials";
-import ChatRoom from "@/src/components/ChatRoom";
-import Offer from "@/src/components/Offer";
-import FeaturedProducts from "@/src/components/FeaturedProducts";
+  Phone,
+  MessageCircle,
+  X,
+  ChevronRight,
+  MapPin,
+  Clock,
+  Eye,
+  Heart,
+  Shield,
+  ShoppingCart,
+  Megaphone,
+  Truck,
+  Tag,
+  Frown,
+  Pencil,
+  CreditCard,
+  CalendarDays,
+  UtensilsCrossed,
+} from "lucide-react";
 
 import { useAds } from "@/src/hooks/useAds";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
-import { addToCart } from "@/src/lib/features/cart/cartSlice";
+import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
 import { safetyTips } from "@/src/constants/safetyTips";
-import {
-  CONDITION_LABELS,
-  BOOST_BADGE,
-  formatAdPrice,
-  formatDate,
-} from "@/src/app/ads/(components)/ad.constants";
 
-// ── Detail row used in the specs table ────────────────────────────────────
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
-  if (!value) return null;
-  return (
-    <div
-      className="flex items-start justify-between py-3
-      border-b border-gray-100 last:border-0 gap-4"
-    >
-      <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
-        {label}
-      </span>
-      <span className="text-sm text-gray-900 font-semibold text-right">
-        {value}
-      </span>
-    </div>
-  );
-}
+import FeaturedProducts from "@/src/components/FeaturedProducts";
 
-// ── Section card ───────────────────────────────────────────────────────────
-function Section({
-  title,
-  children,
-  className = "",
-}: {
-  title?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`bg-white rounded-2xl shadow-sm border border-gray-100
-      p-5 sm:p-6 ${className}`}
-    >
-      {title && (
-        <h3
-          className="text-base font-bold text-gray-900 mb-4 pb-3
-          border-b border-gray-100"
-        >
-          {title}
-        </h3>
-      )}
-      {children}
-    </div>
-  );
-}
+// Sub-components
 
-// ── Main component ─────────────────────────────────────────────────────────
+
+// Lazy-imported originals (still used for chat / offer)
+import Offer from "@/src/components/Offer";
+import ChatRoom from "@/src/components/ChatRoom";
+import Socials from "@/src/components/Socials";
+import { currencySym, resolveMode } from "../../ads/(components)/adHelpers";
+import { AdMode } from "@/src/types/ad.types";
+import { BOOST_BADGE, CONDITION_LABELS, formatAdPrice, formatDate } from "../../ads/(components)/ad.constants";
+import BuyModal from "../(components)/BuyModal";
+import BookingModal from "../(components)/BookingModal";
+import OrderModal from "../(components)/OrderModal";
+import AdGallery from "../../ads/(components)/AdGallery";
+import { DetailRow, Section } from "../../ads/(components)/AdUI";
+
 const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
 
@@ -104,34 +64,95 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
     logContactClick,
   } = useAds();
 
-  const [mainImage, setMainImage] = useState<string | null>(null);
-  const [activeThumb, setActiveThumb] = useState(0);
-  const [phoneRevealed, setPhoneRevealed] = useState(false);
-  const [chatRoom, setChatRoom] = useState(false);
+  // Modal open states
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [bookOpen, setBookOpen] = useState(false);
+  const [orderOpen, setOrderOpen] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
+  const [chatRoom, setChatRoom] = useState(false);
+
+  // Callback-request state
   const [callRequest, setCallRequest] = useState(false);
   const [callName, setCallName] = useState("");
   const [callPhone, setCallPhone] = useState("");
+  const [phoneReveal, setPhoneReveal] = useState(false);
 
   useEffect(() => {
     if (id) loadAdById(id);
   }, [id]);
 
-  useEffect(() => {
-    if (ad?.images?.length) {
-      const cover = ad.images.find((i) => i.isCover) ?? ad.images[0];
-      setMainImage(cover?.url ?? null);
-    }
-  }, [ad]);
+  if (currentLoading || (!ad && !currentError)) {
+    return (
+      <div className="pt-32 pb-20 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+          <div className="space-y-4">
+            <div className="aspect-[4/3] bg-gray-100 rounded-2xl animate-pulse" />
+            <div className="h-6 bg-gray-100 rounded w-3/4 animate-pulse" />
+            <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-36 bg-gray-100 rounded-2xl animate-pulse"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleThumbClick = (url: string, idx: number) => {
-    setMainImage(url);
-    setActiveThumb(idx);
-  };
+  if (currentError || !ad) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center
+        text-center px-4 pt-32"
+      >
+        <Frown size={52} className="text-gray-200 mb-4" />
+        <h2 className="text-2xl font-black text-gray-800 mb-2">
+          Listing not found
+        </h2>
+        <p className="text-gray-500 mb-6">
+          {currentError ?? "This listing may have been removed."}
+        </p>
+        <Link
+          href="/ads"
+          className="px-6 py-3 bg-[#ffc105] text-black font-bold
+          rounded-2xl hover:bg-amber-400 transition"
+        >
+          Browse listings
+        </Link>
+      </div>
+    );
+  }
 
-  const handleRevealPhone = () => {
-    setPhoneRevealed(true);
-    logContactClick(id);
+  const mode: AdMode = resolveMode(ad.category?.main, pathname);
+  const sym = currencySym(ad.price?.currency);
+  const isOwner =
+    user && String(ad.postedBy?._id ?? ad.postedBy) === String(user._id);
+  const boostBadge =
+    ad.boost?.isBoosted && ad.boost?.boostTier
+      ? BOOST_BADGE[ad.boost.boostTier as keyof typeof BOOST_BADGE]
+      : null;
+  const waNumber = ad.contact?.whatsapp?.replace(/\D/g, "");
+  const waMsg = encodeURIComponent(
+    `Hi, I saw your listing "${ad.title}" on SmileBaba Hub.`,
+  );
+
+  const handleAddToCart = () => {
+    dispatch(
+      addToCart({
+        id: ad._id,
+        title: ad.title,
+        price: ad.price?.amount,
+        image: ad.images?.[0]?.url ?? "",
+        category: ad.category?.main ?? "",
+        amount: 1,
+      }),
+    );
+    dispatch(calculateTotals());
+    toast.success("Added to cart");
   };
 
   const handleCallbackSubmit = () => {
@@ -145,93 +166,50 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
     setCallPhone("");
   };
 
-  const handleAddToCart = () => {
-    if (!ad) return;
-    dispatch(
-      addToCart({
-        id: ad._id,
-        title: ad.title,
-        price: ad.price?.amount,
-        image: ad.coverImage ?? ad.images?.[0]?.url ?? "",
-        category: ad.category?.main ?? "",
-        amount: 1,
-      }),
-    );
-    toast.success("Added to cart! 🛒");
-  };
-
-  // ── Loading skeleton ──
-  if (currentLoading || (!ad && !currentError)) {
-    return (
-      <div className="pt-32 pb-20 px-4 md:px-16 lg:px-24 max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-[1fr_380px] gap-8 animate-pulse">
-          <div className="space-y-4">
-            <div className="h-9 bg-gray-100 rounded-xl w-3/4" />
-            <div className="aspect-[4/3] bg-gray-100 rounded-2xl" />
-            <div className="grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="aspect-square bg-gray-100 rounded-xl" />
-              ))}
-            </div>
-            <div className="h-40 bg-gray-100 rounded-2xl" />
-          </div>
-          <div className="space-y-4">
-            <div className="h-36 bg-gray-100 rounded-2xl" />
-            <div className="h-56 bg-gray-100 rounded-2xl" />
-            <div className="h-32 bg-gray-100 rounded-2xl" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Not found ──
-  if (currentError || !ad) {
-    return (
-      <div className="pt-40 text-center px-4">
-        <p className="text-5xl mb-4">😕</p>
-        <p className="text-gray-800 font-bold text-xl mb-2">
-          Product not found
-        </p>
-        <p className="text-gray-400 text-sm mb-8">{currentError}</p>
-        <Link
-          href="/ads"
-          className="px-8 py-3 bg-[#ffc105] text-black font-bold rounded-2xl text-sm"
-        >
-          Browse all ads →
-        </Link>
-      </div>
-    );
-  }
-
-  const sym = ad.price?.currency === "NGN" ? "₦" : "₵";
-  const images = ad.images ?? [];
-  const boostBadge = ad.boost?.isBoosted
-    ? BOOST_BADGE[ad.boost.boostTier]
-    : null;
-  const isOwner = user && String(ad.postedBy?._id) === String(user._id);
-  const waNumber = ad.contact?.whatsapp?.replace(/\D/g, "");
-  const waMsg = encodeURIComponent(
-    `Hi, I saw your ad for "${ad.title}" on SmileBaba`,
-  );
+  // Primary CTA config per mode
+  const cta = {
+    marketplace: {
+      label: "Buy now",
+      icon: <CreditCard size={16} />,
+      open: () => setBuyOpen(true),
+    },
+    food: {
+      label: "Order now",
+      icon: <UtensilsCrossed size={16} />,
+      open: () => setOrderOpen(true),
+    },
+    apartments: {
+      label: "Book now",
+      icon: <CalendarDays size={16} />,
+      open: () => setBookOpen(true),
+    },
+  }[mode];
 
   return (
-    <div
-      className="pt-28 md:pt-32 pb-16 px-4 md:px-10 lg:px-16 xl:px-24
-      max-w-7xl mx-auto"
-    >
-      {/* ── Breadcrumb ── */}
+    <div className="pt-28 pb-20 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto">
+      {/* Modals */}
+      {buyOpen && (
+        <BuyModal ad={ad} sym={sym} onClose={() => setBuyOpen(false)} />
+      )}
+      {bookOpen && (
+        <BookingModal ad={ad} sym={sym} onClose={() => setBookOpen(false)} />
+      )}
+      {orderOpen && (
+        <OrderModal ad={ad} sym={sym} onClose={() => setOrderOpen(false)} />
+      )}
+
+      {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
         <Link href="/" className="hover:text-gray-600">
           Home
         </Link>
-        <span>›</span>
+        <ChevronRight size={12} />
         <Link href="/ads" className="hover:text-gray-600">
-          Ads
+          Listings
         </Link>
         {ad.category?.main && (
           <>
-            <span>›</span>
+            <ChevronRight size={12} />
             <Link
               href={`/ads?category=${ad.category.main}`}
               className="hover:text-gray-600 capitalize"
@@ -240,199 +218,165 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             </Link>
           </>
         )}
-        <span>›</span>
-        <span className="text-gray-600 truncate max-w-[200px]">{ad.title}</span>
+        <ChevronRight size={12} />
+        <span className="text-gray-600 truncate max-w-[160px]">{ad.title}</span>
       </nav>
 
-      <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-        {/* ════════════════ LEFT COLUMN ════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+        {/* ── LEFT ── */}
         <div className="space-y-6">
-          {/* ── Title + badges ── */}
-          <div>
-            <div className="flex items-start gap-3 flex-wrap mb-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex-1">
-                {ad.title}
-              </h1>
-              {boostBadge && (
-                <span
-                  className={`flex-shrink-0 text-xs font-bold px-3 py-1
-                  rounded-full border ${boostBadge.cls}`}
-                >
-                  {boostBadge.label}
-                </span>
-              )}
-              {ad.isSold && (
-                <span
-                  className="flex-shrink-0 text-xs font-bold px-3 py-1
-                  rounded-full bg-red-100 text-red-600"
-                >
-                  SOLD
-                </span>
-              )}
-            </div>
+          <AdGallery
+            images={ad.images ?? []}
+            title={ad.title}
+            boostBadge={boostBadge}
+          />
 
-            {/* Quick meta row */}
-            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-              {ad.location?.city || ad.location?.region ? (
+          {/* Title + description */}
+          <Section>
+            {ad.category?.main && (
+              <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
+                <Tag size={11} />
+                <Link
+                  href={`/ads?category=${ad.category.main}`}
+                  className="hover:text-gray-600 capitalize"
+                >
+                  {ad.category.main}
+                </Link>
+                {ad.category?.sub && (
+                  <>
+                    <ChevronRight size={11} />
+                    <span className="capitalize">{ad.category.sub}</span>
+                  </>
+                )}
+              </nav>
+            )}
+            <h1 className="text-2xl font-black text-gray-900 mb-2">
+              {ad.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mb-4">
+              {ad.location?.city && (
                 <span className="flex items-center gap-1">
-                  <IoLocationOutline className="text-[#ffc105]" />
+                  <MapPin size={12} />
                   {[ad.location.city, ad.location.region]
                     .filter(Boolean)
                     .join(", ")}
                 </span>
-              ) : null}
+              )}
               <span className="flex items-center gap-1">
-                <IoTimeOutline />
+                <Clock size={12} />
                 {formatDate(ad.createdAt)}
               </span>
               <span className="flex items-center gap-1">
-                <IoEyeOutline />
+                <Eye size={12} />
                 {ad.views ?? 0} views
               </span>
             </div>
-          </div>
-
-          {/* ── Image gallery ── */}
-          <Section>
-            {/* Main image */}
-            <div
-              className="relative rounded-xl overflow-hidden bg-gray-100
-              aspect-[4/3] mb-3"
-            >
-              {mainImage ? (
-                <Image
-                  src={mainImage}
-                  alt={ad.title}
-                  fill
-                  priority
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 60vw"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-6xl">
-                  🖼️
-                </div>
-              )}
-              {images.length > 1 && (
-                <div
-                  className="absolute bottom-3 right-3 bg-black/60 text-white
-                  text-xs px-2.5 py-1 rounded-full"
-                >
-                  {activeThumb + 1} / {images.length}
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnails */}
-            {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleThumbClick(img.url, i)}
-                    className={`relative flex-shrink-0 w-18 h-18 w-[72px] h-[72px]
-                      rounded-xl overflow-hidden border-2 transition
-                      ${
-                        i === activeThumb
-                          ? "border-[#ffc105]"
-                          : "border-transparent hover:border-gray-300"
-                      }`}
-                  >
-                    <Image
-                      src={img.url}
-                      alt={`thumb ${i + 1}`}
-                      fill
-                      sizes="72px"
-                      className="object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </Section>
-
-          {/* ── Description ── */}
-          <Section title="Description">
-            <p className="text-gray-600 leading-relaxed whitespace-pre-line text-sm">
-              {ad.description || "No description provided."}
+            <p className="text-gray-600 text-sm leading-7 whitespace-pre-line">
+              {ad.description}
             </p>
-
-            {ad.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
-                {ad.tags.map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/ads?search=${tag}`}
-                    className="flex items-center gap-1 text-xs bg-gray-100
-                      text-gray-600 px-3 py-1 rounded-full hover:bg-yellow-50
-                      hover:text-yellow-700 transition"
-                  >
-                    <FaTag className="text-[10px]" /> {tag}
-                  </Link>
-                ))}
-              </div>
-            )}
           </Section>
 
-          {/* ── Product details / specs ── */}
-          <Section title="Product Details">
-            <DetailRow
-              label="Category"
-              value={
-                <span className="flex items-center gap-1.5">
-                  <span className="capitalize">{ad.category?.main}</span>
-                  {ad.category?.sub && (
-                    <span className="text-gray-400">› {ad.category.sub}</span>
-                  )}
-                </span>
-              }
-            />
+          {/* Actions */}
+          <Section>
+            {!isOwner && !ad.isSold ? (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={cta.open}
+                  className="flex-1 flex items-center justify-center gap-2 py-3.5
+                    bg-[#ffc105] text-black font-black rounded-2xl text-sm
+                    hover:bg-amber-400 transition active:scale-[0.99]"
+                >
+                  {cta.icon}
+                  {cta.label}
+                </button>
+                {mode !== "apartments" && (
+                  <button
+                    onClick={handleAddToCart}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5
+                      bg-white border-2 border-[#ffc105] text-[#ffc105] font-bold
+                      rounded-2xl text-sm hover:bg-yellow-50 transition"
+                  >
+                    <ShoppingCart size={16} />
+                    Add to cart
+                  </button>
+                )}
+              </div>
+            ) : ad.isSold ? (
+              <div
+                className="flex items-center justify-center py-3 bg-gray-100
+                rounded-2xl text-sm text-gray-500 font-bold"
+              >
+                Sold
+              </div>
+            ) : (
+              <div
+                className="flex items-center justify-center py-3 bg-gray-50
+                border border-gray-200 rounded-2xl text-sm text-gray-500"
+              >
+                This is your listing
+              </div>
+            )}
+
+            {mode === "marketplace" && !isOwner && (
+              <div className="mt-3">
+                {!offerOpen ? (
+                  <button
+                    onClick={() => setOfferOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 py-3
+                        border-2 border-gray-200 text-gray-700 font-bold rounded-2xl
+                        text-sm hover:border-[#ffc105] hover:text-[#ffc105] transition"
+                  >
+                    <Megaphone size={15} />
+                    Make an offer
+                  </button>
+                ) : (
+                  <Offer onClose={() => setOfferOpen(false)} />
+                )}
+              </div>
+            )}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <Socials />
+            </div>
+          </Section>
+
+          {/* Specs */}
+          <Section title="Details">
             {ad.condition && ad.condition !== "not_applicable" && (
               <DetailRow
                 label="Condition"
                 value={
-                  <span className="text-blue-600">
-                    {CONDITION_LABELS[ad.condition]}
-                  </span>
+                  CONDITION_LABELS[
+                    ad.condition as keyof typeof CONDITION_LABELS
+                  ] ?? ad.condition
                 }
               />
             )}
-            <DetailRow
-              label="Negotiable"
-              value={
-                ad.negotiable === "yes" ? (
-                  <span className="text-green-600">✓ Yes, open to offers</span>
-                ) : ad.negotiable === "no" ? (
-                  "Fixed price"
-                ) : (
-                  "Not specified"
-                )
-              }
-            />
-            <DetailRow
-              label="Location"
-              value={[
-                ad.location?.address,
-                ad.location?.city,
-                ad.location?.region,
-                ad.location?.country,
-              ]
-                .filter(Boolean)
-                .join(", ")}
-            />
+            {ad.negotiable === "yes" && (
+              <DetailRow
+                label="Negotiable"
+                value={
+                  <span className="text-green-600">Yes, open to offers</span>
+                }
+              />
+            )}
             {ad.delivery?.available && (
               <DetailRow
                 label="Delivery"
                 value={
-                  <span className="flex items-center gap-1.5">
-                    <FaTruck className="text-blue-500" />
-                    {ad.delivery.option?.replace(/_/g, " ")}
-                    {ad.delivery.fee > 0
-                      ? ` · ${sym}${ad.delivery.fee.toLocaleString()}`
-                      : " · Free"}
-                    {ad.delivery.note ? ` (${ad.delivery.note})` : ""}
-                  </span>
+                  ad.delivery.fee === 0
+                    ? "Free delivery"
+                    : `${sym}${ad.delivery.fee.toLocaleString()}`
                 }
+              />
+            )}
+            <DetailRow
+              label="Category"
+              value={<span className="capitalize">{ad.category?.main}</span>}
+            />
+            {ad.category?.sub && (
+              <DetailRow
+                label="Subcategory"
+                value={<span className="capitalize">{ad.category.sub}</span>}
               />
             )}
             <DetailRow label="Posted" value={formatDate(ad.createdAt)} />
@@ -455,9 +399,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                 </span>
               }
             />
-
-            {/* EAV attributes */}
-            {ad.attributes?.map((attr) => (
+            {ad.attributes?.map((attr: any) => (
               <DetailRow
                 key={attr.key}
                 label={attr.key.replace(/_/g, " ")}
@@ -465,49 +407,13 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
               />
             ))}
           </Section>
-
-          {/* ── Actions row ── */}
-          <Section>
-            <div className="flex flex-col sm:flex-row items-stretch gap-3">
-              {!offerOpen ? (
-                <button
-                  onClick={() => setOfferOpen(true)}
-                  className="flex-1 flex items-center justify-center gap-2 py-3
-                    bg-white border-2 border-[#ffc105] text-[#ffc105] font-bold
-                    rounded-2xl text-sm hover:bg-yellow-50 transition"
-                >
-                  <MdOutlineLocalOffer className="text-lg" />
-                  Make an offer
-                </button>
-              ) : (
-                <div className="flex-1">
-                  <Offer onClose={() => setOfferOpen(false)} />
-                </div>
-              )}
-
-              {!ad.isSold && (
-                <button
-                  onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2 py-3
-                    bg-[#ffc105] text-black font-bold rounded-2xl text-sm
-                    hover:bg-amber-400 transition active:scale-[0.99]"
-                >
-                  🛒 Add to cart
-                </button>
-              )}
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <Socials />
-            </div>
-          </Section>
         </div>
 
-        {/* ════════════════ RIGHT SIDEBAR ════════════════ */}
+        {/* ── RIGHT SIDEBAR ── */}
         <aside className="space-y-4">
-          {/* ── Price card ── */}
+          {/* Price + CTA */}
           <Section>
-            <div className="flex items-start justify-between gap-2 mb-1">
+            <div className="flex items-start justify-between gap-2 mb-3">
               <div>
                 <p className="text-3xl font-black text-gray-900">
                   {formatAdPrice(
@@ -518,6 +424,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {ad.price?.currency}
+                  {mode === "apartments" ? " / night" : ""}
                 </p>
               </div>
               {ad.negotiable === "yes" && (
@@ -533,102 +440,93 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             {ad.delivery?.available && (
               <div
                 className="flex items-center gap-2 text-sm text-blue-600
-                bg-blue-50 rounded-xl px-3 py-2 mt-3"
+                bg-blue-50 rounded-xl px-3 py-2 mb-3"
               >
-                <FaTruck />
-                Delivery available
+                <Truck size={14} />
+                Delivery
                 {ad.delivery.fee === 0
                   ? " · Free"
                   : ` · ${sym}${ad.delivery.fee.toLocaleString()}`}
               </div>
             )}
 
-            <div className="mt-4 space-y-2">
-              {!callRequest ? (
-                <button
-                  onClick={() => setCallRequest(true)}
-                  className="w-full py-3 border-2 border-[#ffc105] text-[#ffc105]
-                    font-bold rounded-2xl text-sm hover:bg-yellow-50 transition"
-                >
-                  📞 Request a call back
-                </button>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-500 font-medium">
-                    Enter your details and the seller will call you back:
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Your name"
-                    value={callName}
-                    onChange={(e) => setCallName(e.target.value)}
-                    className="w-full p-3 border border-gray-200 rounded-xl text-sm
-                      focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Your phone number"
-                    value={callPhone}
-                    onChange={(e) => setCallPhone(e.target.value)}
-                    className="w-full p-3 border border-gray-200 rounded-xl text-sm
-                      focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleCallbackSubmit}
-                      className="flex-1 py-2.5 bg-[#ffc105] text-black font-bold
-                        rounded-xl text-sm hover:bg-amber-400 transition"
-                    >
-                      Submit
-                    </button>
-                    <button
-                      onClick={() => setCallRequest(false)}
-                      className="flex-1 py-2.5 border border-gray-200 text-gray-600
-                        font-medium rounded-xl text-sm hover:bg-gray-50 transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+            {!isOwner && !ad.isSold && (
+              <button
+                onClick={cta.open}
+                className="w-full flex items-center justify-center gap-2 py-3.5
+                  bg-[#ffc105] text-black font-black rounded-2xl text-sm
+                  hover:bg-amber-400 transition mb-2"
+              >
+                {cta.icon}
+                {cta.label}
+              </button>
+            )}
+
+            {/* Callback */}
+            {!callRequest ? (
+              <button
+                onClick={() => setCallRequest(true)}
+                className="w-full py-3 border-2 border-gray-200 text-gray-700 font-bold
+                  rounded-2xl text-sm hover:border-[#ffc105] hover:text-[#ffc105] transition"
+              >
+                Request a call back
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 font-medium">
+                  Enter your details — the seller will call you back:
+                </p>
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={callName}
+                  onChange={(e) => setCallName(e.target.value)}
+                  className="w-full p-3 border border-gray-200 rounded-xl text-sm
+                    focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                />
+                <input
+                  type="tel"
+                  placeholder="Your phone"
+                  value={callPhone}
+                  onChange={(e) => setCallPhone(e.target.value)}
+                  className="w-full p-3 border border-gray-200 rounded-xl text-sm
+                    focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCallbackSubmit}
+                    className="flex-1 py-2.5 bg-[#ffc105] text-black font-bold
+                      rounded-xl text-sm hover:bg-amber-400 transition"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    onClick={() => setCallRequest(false)}
+                    className="flex-1 py-2.5 border border-gray-200 text-gray-600
+                      rounded-xl text-sm hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </Section>
 
-          {/* ── Seller details ── */}
+          {/* Seller */}
           <Section title="Seller Details">
-            {/* Avatar + name */}
-            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
-              {ad.postedBy?.profilePicture ? (
-                <div className="relative w-14 h-14 flex-shrink-0">
-                  <Image
-                    src={ad.postedBy.profilePicture}
-                    alt="seller"
-                    fill
-                    className="object-cover rounded-full"
-                  />
-                </div>
-              ) : (
-                <div
-                  className="w-14 h-14 rounded-full bg-[#ffc105] flex items-center
-                  justify-center text-2xl font-black text-black flex-shrink-0"
-                >
-                  {ad.contact?.name?.charAt(0)?.toUpperCase() ?? "?"}
-                </div>
-              )}
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+              <div
+                className="w-12 h-12 rounded-full bg-[#ffc105] flex items-center
+                justify-center text-black font-black text-lg flex-shrink-0"
+              >
+                {ad.contact?.name?.charAt(0)?.toUpperCase() ?? "?"}
+              </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="font-bold text-gray-900 truncate">
-                    {ad.contact?.name}
-                  </p>
-                  <MdVerified className="text-blue-500 flex-shrink-0 text-sm" />
-                </div>
-                {ad.postedBy?.username && (
-                  <p className="text-xs text-gray-400">
-                    @{ad.postedBy.username}
-                  </p>
-                )}
-                <p className="text-xs text-gray-400 mt-0.5">
-                  📍{" "}
+                <p className="font-bold text-gray-900 truncate">
+                  {ad.contact?.name ?? ad.postedBy?.username ?? "Seller"}
+                </p>
+                <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                  <MapPin size={11} className="flex-shrink-0" />
                   {[ad.location?.city, ad.location?.region]
                     .filter(Boolean)
                     .join(", ") || "Location not set"}
@@ -636,26 +534,25 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
             </div>
 
-            {/* Contact buttons */}
             <div className="space-y-2.5">
-              {/* Phone reveal */}
               {ad.contact?.showPhone !== false && (
                 <button
-                  onClick={handleRevealPhone}
+                  onClick={() => {
+                    setPhoneReveal(true);
+                    logContactClick(id);
+                  }}
                   className={`w-full flex items-center justify-center gap-2 py-3
                     font-bold rounded-2xl text-sm transition
                     ${
-                      phoneRevealed
-                        ? "bg-green-500 text-white hover:bg-green-400"
-                        : "bg-[#ffc105] text-black hover:bg-amber-400"
+                      phoneReveal
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                     }`}
                 >
-                  <IoCallOutline className="text-lg" />
-                  {phoneRevealed ? ad.contact.phone : "Show Phone Number"}
+                  <Phone size={15} />
+                  {phoneReveal ? ad.contact.phone : "Show Phone Number"}
                 </button>
               )}
-
-              {/* WhatsApp */}
               {waNumber && (
                 <a
                   href={`https://wa.me/${waNumber}?text=${waMsg}`}
@@ -666,12 +563,10 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                     bg-[#25D366] text-white font-bold rounded-2xl text-sm
                     hover:opacity-90 transition"
                 >
-                  <FaWhatsapp className="text-lg" />
+                  <MessageCircle size={15} />
                   Chat on WhatsApp
                 </a>
               )}
-
-              {/* In-app chat */}
               {!chatRoom ? (
                 <button
                   onClick={() => setChatRoom(true)}
@@ -679,40 +574,34 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                     border-2 border-gray-200 text-gray-700 font-bold rounded-2xl
                     text-sm hover:border-[#ffc105] hover:text-[#ffc105] transition"
                 >
-                  <IoChatboxEllipsesOutline className="text-lg" />
+                  <MessageCircle size={15} />
                   Start a Chat
                 </button>
               ) : (
                 <ChatRoom
-                  icon={<IoCloseOutline />}
+                  icon={<X size={15} />}
                   onClose={() => setChatRoom(false)}
                 />
               )}
             </div>
 
-            {/* Safety note */}
-            <p className="text-[11px] text-gray-400 text-center mt-4 leading-relaxed">
-              🔒 For your safety, meet in a public place. Never transfer money
-              in advance.
-            </p>
+            <div
+              className="flex items-center gap-1.5 text-[11px] text-gray-400
+              mt-4 justify-center"
+            >
+              <Shield size={12} className="text-gray-300" />
+              Meet in a public place. Never pay in advance.
+            </div>
           </Section>
 
-          {/* ── Ad stats ── */}
+          {/* Stats */}
           <Section>
             <div className="grid grid-cols-3 gap-3 text-center">
               {[
+                { icon: <Eye size={16} />, label: "Views", value: ad.views },
+                { icon: <Heart size={16} />, label: "Saves", value: ad.saves },
                 {
-                  icon: <IoEyeOutline className="text-lg" />,
-                  label: "Views",
-                  value: ad.views,
-                },
-                {
-                  icon: <IoHeartOutline className="text-lg" />,
-                  label: "Saves",
-                  value: ad.saves,
-                },
-                {
-                  icon: <IoCallOutline className="text-lg" />,
+                  icon: <Phone size={16} />,
                   label: "Contacts",
                   value: ad.contactClicks,
                 },
@@ -730,17 +619,18 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
           </Section>
 
-          {/* ── Owner actions (if own ad) ── */}
+          {/* Owner actions */}
           {isOwner && (
             <Section title="Manage your ad">
               <div className="space-y-2">
                 <Link
                   href={`/ads/${id}/edit`}
-                  className="w-full flex items-center justify-center py-2.5
+                  className="w-full flex items-center justify-center gap-2 py-2.5
                     bg-gray-100 text-gray-700 font-semibold rounded-xl text-sm
                     hover:bg-gray-200 transition"
                 >
-                  ✏️ Edit ad
+                  <Pencil size={14} />
+                  Edit ad
                 </Link>
                 <Link
                   href="/ads/my"
@@ -748,27 +638,16 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                     border border-gray-200 text-gray-600 font-medium rounded-xl
                     text-sm hover:bg-gray-50 transition"
                 >
-                  📋 My ads dashboard
+                  My ads dashboard
                 </Link>
               </div>
             </Section>
           )}
 
-          {/* ── Comments ── */}
-          <Section>
-            <AsideCard
-              href="/comments"
-              count={0}
-              text="Comments"
-              iconText="View"
-              icon={<FaAngleRight />}
-            />
-          </Section>
-
-          {/* ── Safety tips ── */}
+          {/* Safety */}
           <Section title="Safety Tips">
             <ul className="space-y-2">
-              {safetyTips.map((tip, i) => (
+              {safetyTips.map((tip: string, i: number) => (
                 <li
                   key={i}
                   className="flex items-start gap-2 text-sm text-gray-600"
@@ -784,8 +663,8 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
         </aside>
       </div>
 
-      {/* ── Related listings ── */}
-      <div className="mt-12 space-y-8">
+      {/* Related */}
+      <div className="mt-12">
         <FeaturedProducts
           category={(ad.category?.main as any) ?? "marketplace"}
           title={`Similar ${ad.category?.main ?? "listings"}`}

@@ -88,7 +88,7 @@ export default function MarketerRegisterPage() {
           </h2>
           <p className="text-gray-400 text-sm mb-7">
             Your marketer account is ready. Share your referral code with
-            vendors to earn 20% commission on every subscription.
+            vendors to earn 15% commission on every subscription.
           </p>
 
           {/* Referral code display */}
@@ -110,8 +110,8 @@ export default function MarketerRegisterPage() {
 
           <div className="grid grid-cols-3 gap-3 mb-7 text-center">
             {[
-              { label: "Your cut", value: "20%", sub: "per referral" },
-              { label: "Vendor gets", value: "20%", sub: "discount" },
+              { label: "Your cut", value: "15%", sub: "per referral" },
+              { label: "Vendor gets", value: "15%", sub: "discount" },
               { label: "Payout", value: "Weekly", sub: "to MoMo/Bank" },
             ].map((s) => (
               <div key={s.label} className="bg-[#1a1a1a] rounded-xl p-3">
@@ -148,7 +148,7 @@ export default function MarketerRegisterPage() {
           </h1>
           <p className="text-gray-400 text-sm">
             Refer vendors and earn{" "}
-            <span className="text-amber-400 font-bold">20%</span> commission on
+            <span className="text-amber-400 font-bold">15%</span> commission on
             every subscription they pay.
           </p>
         </div>
@@ -158,7 +158,7 @@ export default function MarketerRegisterPage() {
           {[
             { step: "1", text: "Register & get your unique code" },
             { step: "2", text: "Share code with vendors" },
-            { step: "3", text: "Earn 20% on each subscription" },
+            { step: "3", text: "Earn 15% on each subscription" },
           ].map((s) => (
             <div
               key={s.step}

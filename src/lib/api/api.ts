@@ -44,4 +44,9 @@ export const api = createApi({
   }),
 });
 
-export const { useRegisterUserMutation, useLoginUserMutation, useRegisterVendorMutation, useLoginVendorMutation } = api
+export const {
+  useRegisterUserMutation,
+  useLoginUserMutation,
+  useRegisterVendorMutation,
+  useLoginVendorMutation,
+} = api;

@@ -190,4 +190,13 @@ export type CreateAdPayload = {
   tags?: string[];
 };
 
+
+export type AdMode = "marketplace" | "food" | "apartments";
+
+export interface ModalProps {
+  ad: any;
+  sym: string;
+  onClose: () => void;
+}
+
 export type UpdateAdPayload = Partial<CreateAdPayload>;
