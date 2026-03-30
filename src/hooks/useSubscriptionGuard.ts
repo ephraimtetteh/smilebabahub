@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { useAppSelector } from "../app/redux";
 
+
 const RETURN_URL_KEY = "smilebaba_return_url";
 const RETURN_ACTION_KEY = "smilebaba_return_action";
 
@@ -72,7 +73,11 @@ export function useSubscriptionGuard() {
   const user = useAppSelector((state) => state.auth.user);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
-  const isVendor = isAuthenticated && user?.role === "vendor";
+  const isVendor =
+    isAuthenticated &&
+    (user?.role === "vendor" ||
+      user?.role === "admin" ||
+      user?.isAdmin === true);
 
   const redirectToSubscribe = useCallback(
     (action?: PendingAction) => {

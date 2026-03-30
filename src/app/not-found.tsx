@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   Frown,
 } from "lucide-react";
+import { MdAdsClick } from "react-icons/md";
 
 const LINKS = [
   {
@@ -41,11 +42,18 @@ const LINKS = [
     color: "bg-green-50 border-green-200 text-green-700 hover:bg-green-100",
   },
   {
-    href: "/vendor",
+    href: "/vendor/dashboard",
     icon: <LayoutDashboard size={16} />,
     label: "Vendor dashboard",
     desc: "Manage your listings & stats",
     color: "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100",
+  },
+  {
+    href: "/ads",
+    icon: <MdAdsClick size={16} />,
+    label: "Ads",
+    desc: "See All posted ads by vendors",
+    color: "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100",
   },
   {
     href: "/subscription",
