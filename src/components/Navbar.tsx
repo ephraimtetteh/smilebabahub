@@ -278,7 +278,7 @@ export default function Navbar() {
           </div>
 
           {/* ── Search ── */}
-          <div
+          {/* <div
             className="hidden md:flex items-center bg-white/10 border border-white/20
             rounded-full px-3 py-1.5 gap-2 min-w-0"
           >
@@ -297,7 +297,7 @@ export default function Navbar() {
               className="bg-transparent outline-none text-white text-sm w-32 lg:w-48
                 placeholder:text-white/40"
             />
-          </div>
+          </div> */}
 
           {/* ── Right actions ── */}
           <div className="flex items-center gap-2 sm:gap-3">
