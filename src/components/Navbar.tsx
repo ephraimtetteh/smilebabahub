@@ -14,6 +14,8 @@ import {
   MARKETER_LINK,
   NavCategory,
 } from "@/src/config/navCategories";
+import AdminCountryDropdown from "./admin/AdminCountryDropdown";
+import ChatNavBadge from "./Chat/ChatNavBadge";
 import NotificationBell from "../app/vendor/(components)/Notification";
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -326,6 +328,10 @@ export default function Navbar() {
               )}
             </div>
 
+            {/* Admin country switcher — only renders for admin users */}
+            <AdminCountryDropdown />
+
+            {user && <ChatNavBadge />}
             {user && <NotificationBell />}
 
             <div className="z-50">

@@ -67,12 +67,12 @@ export const packages = [
       {
         plan: "month",
         duration: "monthly",
-        price: 49.99,
+        price: 249.99,
       },
       {
         plan: "year",
         duration: "yearly",
-        price: 599.88,
+        price: 1199.99,
       },
     ],
     tile: "what's included",
@@ -123,12 +123,12 @@ export const packages = [
       {
         plan: "month",
         duration: "monthly",
-        price: 74.99,
+        price: 249.99,
       },
       {
         plan: "year",
         duration: "yearly",
-        price: 899.99,
+        price: 2999.88,
       },
     ],
     tile: "what's included",
@@ -179,12 +179,12 @@ export const packages = [
       {
         plan: "month",
         duration: "monthly",
-        price: 99.99,
+        price: 499.99,
       },
       {
         plan: "year",
         duration: "yearly",
-        price: 1199.0,
+        price: 5999.0,
       },
     ],
     tile: "what's included",

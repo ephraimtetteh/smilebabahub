@@ -218,6 +218,10 @@ export type UserProp = {
   currency?: "GHS" | "NGN";
   symbol?: string;
   locale?: string;
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  isAdmin?: boolean; // true when email is in ADMIN_EMAILS env var
+  detectedCountry?: string; // physical IP country — unaffected by admin view toggle
 };
 
 

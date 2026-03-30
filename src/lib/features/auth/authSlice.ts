@@ -17,6 +17,8 @@ interface AuthState {
   message: Message;
   guestCountry: string; // "Ghana" | "Nigeria" — detected from IP for unauthenticated visitors
   guestCurrency: string;
+  isAdmin: boolean;
+  adminViewCountry: string;
 }
 
 const initialState: AuthState = {
@@ -28,6 +30,8 @@ const initialState: AuthState = {
   message: { type: "", message: "" },
   guestCountry: "Ghana", // default until IP detection resolves
   guestCurrency: "GHS",
+  isAdmin: false,
+  adminViewCountry: "Ghana",
 };
 
 export const authSlice = createSlice({
@@ -55,6 +59,11 @@ export const authSlice = createSlice({
     ) => {
       state.guestCountry = action.payload.country;
       state.guestCurrency = action.payload.currency;
+    },
+    setAdminViewCountry: (state, action: PayloadAction<string>) => {
+      state.adminViewCountry = action.payload;
+      // Also update user.country so all feeds use the new country
+      if (state.user) state.user.country = action.payload;
     },
   },
 
@@ -94,6 +103,11 @@ export const authSlice = createSlice({
         state.isAuthenticating = false;
         state.isAuthenticated = true;
         state.user = action.payload.user; // includes currency/country
+        state.isAdmin = action.payload.user?.isAdmin ?? false;
+        // If admin, default their view country to their detected country
+        if (state.isAdmin && action.payload.user?.country) {
+          state.adminViewCountry = action.payload.user.country || "Ghana";
+        }
         state.hasCheckedAuth = true;
       })
       .addCase(login.rejected, (state) => {
@@ -121,6 +135,7 @@ export const {
   setUser,
   setMessage,
   setGuestLocation,
+  setAdminViewCountry,
 } = authSlice.actions;
 
 const authReducer = authSlice.reducer;

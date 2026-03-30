@@ -135,7 +135,7 @@ const Subscription = ({
         billingCycle: plan,
         currency: userCurrency,
         referralCode: referralCode.trim() || undefined,
-        returnUrl: returnUrl ?? "/vendor/dashboard",
+        returnUrl: returnUrl ?? "/vendor",
       });
 
       if (res.data.free) {
@@ -266,7 +266,7 @@ const Subscription = ({
 
             {/* Referral code input */}
             <div className="mt-3">
-              <label className="block text-xs text-gray-400 mb-1.5">
+              <label className="block text-xs text-gray-400 mb-2.5">
                 Referral code (optional)
               </label>
               <div className="flex gap-2">

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { Bell } from "lucide-react";
 
 type NotificationType =
   | "subscription_expiring_7"
@@ -118,7 +119,7 @@ export default function NotificationBell() {
         className="relative p-2 rounded-xl hover:bg-gray-100 transition"
         aria-label="Notifications"
       >
-        <span className="text-xl">🔔</span>
+        <span className="text-xl"><Bell /></span>
         {unreadCount > 0 && (
           <span
             className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500

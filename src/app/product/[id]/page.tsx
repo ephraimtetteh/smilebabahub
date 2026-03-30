@@ -9,7 +9,6 @@ import { toast } from "react-toastify";
 import {
   Phone,
   MessageCircle,
-  X,
   ChevronRight,
   MapPin,
   Clock,
@@ -31,7 +30,6 @@ import { useAds } from "@/src/hooks/useAds";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
 import { safetyTips } from "@/src/constants/safetyTips";
-
 import FeaturedProducts from "@/src/components/FeaturedProducts";
 
 // Sub-components
@@ -39,10 +37,10 @@ import FeaturedProducts from "@/src/components/FeaturedProducts";
 
 // Lazy-imported originals (still used for chat / offer)
 import Offer from "@/src/components/Offer";
-import ChatRoom from "@/src/components/ChatRoom";
 import Socials from "@/src/components/Socials";
-import { currencySym, resolveMode } from "../../ads/(components)/adHelpers";
+import ChatButton from "@/src/components/Chat/ChatButton";
 import { AdMode } from "@/src/types/ad.types";
+import { currencySym, resolveMode } from "../../ads/(components)/adHelpers";
 import { BOOST_BADGE, CONDITION_LABELS, formatAdPrice, formatDate } from "../../ads/(components)/ad.constants";
 import BuyModal from "../(components)/BuyModal";
 import BookingModal from "../(components)/BookingModal";
@@ -69,7 +67,6 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const [bookOpen, setBookOpen] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
-  const [chatRoom, setChatRoom] = useState(false);
 
   // Callback-request state
   const [callRequest, setCallRequest] = useState(false);
@@ -567,20 +564,13 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                   Chat on WhatsApp
                 </a>
               )}
-              {!chatRoom ? (
-                <button
-                  onClick={() => setChatRoom(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3
-                    border-2 border-gray-200 text-gray-700 font-bold rounded-2xl
-                    text-sm hover:border-[#ffc105] hover:text-[#ffc105] transition"
-                >
-                  <MessageCircle size={15} />
-                  Start a Chat
-                </button>
-              ) : (
-                <ChatRoom
-                  icon={<X size={15} />}
-                  onClose={() => setChatRoom(false)}
+              {/* In-app chat — routes to /chat?with=sellerId */}
+              {!isOwner && (
+                <ChatButton
+                  sellerId={String(ad.postedBy?._id ?? ad.postedBy ?? "")}
+                  sellerName={
+                    ad.contact?.name ?? ad.postedBy?.username ?? "Seller"
+                  }
                 />
               )}
             </div>
