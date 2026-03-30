@@ -132,12 +132,12 @@ const Sidebar = () => {
           label="History"
           isCollapsed={isSidebarCollapsed}
         />
-        <SidebarLink
+        {/* <SidebarLink
           href="/vendor/settings"
           icon={Settings}
           label="Settings"
           isCollapsed={isSidebarCollapsed}
-        />
+        /> */}
 
         <div className={`${isSidebarCollapsed ? "hidden" : "block"} mt-5`}>
           <Radio />
