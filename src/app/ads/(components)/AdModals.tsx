@@ -5,7 +5,7 @@ import { memo, useEffect, useState } from "react";
 import { Zap, Star, TrendingUp, Trash2, X } from "lucide-react";
 import { BoostTier } from "@/src/types/ad.types";
 import { BOOST_TIERS } from "./ad.constants";
-import { useAppSelector } from "@/src/app/redux";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import axiosInstance from "@/src/lib/api/axios";
 
 type PricedTier = {
@@ -37,7 +37,7 @@ export const BoostModal = memo(function BoostModal({
   onBoost,
   onClose,
 }: BoostModalProps) {
-  const userCurrency = useAppSelector((s) => s.auth.user?.currency ?? "GHS");
+  const { currency: userCurrency, paymentRegion } = useViewCountry();
   const [tiers, setTiers] = useState<PricedTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<BoostTier | null>(null);
@@ -73,10 +73,7 @@ export const BoostModal = memo(function BoostModal({
   const handlePay = async (tier: BoostTier) => {
     setPaying(tier);
     try {
-      const endpoint =
-        userCurrency === "NGN"
-          ? "/payments/boost/ng/initialize"
-          : "/payments/boost/gh/initialize";
+      const endpoint = `/payments/boost/${paymentRegion}/initialize`;
       const res = await axiosInstance.post(endpoint, {
         adId,
         tier,

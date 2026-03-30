@@ -9,30 +9,23 @@ import SubscriptionComponent from "@/src/components/SubscriptionComponent";
 import { SubscriptionPlanProps } from "@/src/types/types";
 import { consumeReturnState } from "@/src/hooks/useSubscriptionGuard";
 import axiosInstance from "@/src/lib/api/axios";
-import { useAppSelector } from "../redux";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 
-
-// ── Currency config ────────────────────────────────────────────────────────
-// Mirrors PRICING in config/pricing.js — keeps frontend display in sync
+// ── Pricing (mirrors config/pricing.js) ───────────────────────────────────
 const PRICES: Record<string, Record<string, Record<string, number>>> = {
   Basic: { monthly: { GHS: 0, NGN: 0 }, yearly: { GHS: 0, NGN: 0 } },
   standard: {
-    monthly: { GHS: 99.99, NGN: 650000 },
-    yearly: { GHS: 1199.88, NGN: 7800000 },
+    monthly: { GHS: 99.99, NGN: 6500 },
+    yearly: { GHS: 1199.88, NGN: 78000 },
   },
   popular: {
-    monthly: { GHS: 249.99, NGN: 1800000 },
-    yearly: { GHS: 2999.88, NGN: 21600000 },
+    monthly: { GHS: 249.99, NGN: 18000 },
+    yearly: { GHS: 2999.88, NGN: 216000 },
   },
   premium: {
-    monthly: { GHS: 499.99, NGN: 4999999 },
-    yearly: { GHS: 5999.88, NGN: 59999988 },
+    monthly: { GHS: 499.99, NGN: 49999 },
+    yearly: { GHS: 5999.88, NGN: 599999 },
   },
-};
-
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  GHS: "₵",
-  NGN: "₦",
 };
 
 const Subscription = ({
@@ -43,18 +36,13 @@ const Subscription = ({
   const params = useSearchParams();
   const isRenew = params.get("renew") === "1";
 
-  // ── Read currency from Redux (set from user's IP on login) ────────────────
-  const userCurrency =
-    useAppSelector((state) => state.auth.user?.currency) ?? "GHS";
-  const userSymbol = CURRENCY_SYMBOLS[userCurrency] ?? "₵";
-
-  // Country-prefixed endpoint — GHS → /gh | NGN → /ng | else → /intl
-  const paymentEndpoint =
-    userCurrency === "GHS"
-      ? "/payments/gh/initialize"
-      : userCurrency === "NGN"
-        ? "/payments/ng/initialize"
-        : "/payments/intl/initialize";
+  // Uses adminViewCountry when admin is viewing — switches with the country toggle
+  const {
+    currency: userCurrency,
+    sym: userSymbol,
+    paymentRegion,
+  } = useViewCountry();
+  const paymentEndpoint = `/payments/${paymentRegion}/initialize`;
 
   const [plan, setPlan] = useState<"monthly" | "yearly">("monthly");
   const [showSummary, setShowSummary] = useState(false);
@@ -135,7 +123,7 @@ const Subscription = ({
         billingCycle: plan,
         currency: userCurrency,
         referralCode: referralCode.trim() || undefined,
-        returnUrl: returnUrl ?? "/vendor",
+        returnUrl: returnUrl ?? "/vendor/dashboard",
       });
 
       if (res.data.free) {
@@ -266,7 +254,7 @@ const Subscription = ({
 
             {/* Referral code input */}
             <div className="mt-3">
-              <label className="block text-xs text-gray-400 mb-2.5">
+              <label className="block text-xs text-gray-400 mb-1.5">
                 Referral code (optional)
               </label>
               <div className="flex gap-2">

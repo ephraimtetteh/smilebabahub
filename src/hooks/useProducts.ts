@@ -3,6 +3,7 @@
 
 import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
+import { useViewCountry } from "./useViewCountry";
 
 // Thunks — real project path
 import {
@@ -26,6 +27,7 @@ import type { ProductFilters } from "@/src/types/product.types";
 
 export function useProducts() {
   const dispatch = useAppDispatch();
+  const { country: userCountry, currency: userCurrency } = useViewCountry();
 
   // ── State ─────────────────────────────────────────────────────────────────
   const products = useAppSelector((s) => s.products?.products ?? []);
@@ -52,26 +54,6 @@ export function useProducts() {
 
   const mutating = useAppSelector((s) => s.products?.mutating ?? false);
   const mutateError = useAppSelector((s) => s.products?.mutateError ?? null);
-
-  // Country resolution priority:
-  //   1. adminViewCountry — admin switched view (overrides everything)
-  //   2. user.country     — logged-in user's detected country
-  //   3. guestCountry     — guest IP detection
-  //   4. "Ghana"          — safe fallback
-  const userCountry = useAppSelector(
-    (s) =>
-      (s.auth as any)?.adminViewCountry ??
-      s.auth?.user?.country ??
-      (s.auth as any)?.guestCountry ??
-      "Ghana",
-  );
-  const userCurrency = useAppSelector((s) => {
-    const country =
-      (s.auth as any)?.adminViewCountry ?? s.auth?.user?.country ?? "";
-    return country.toLowerCase().includes("nigeria")
-      ? "NGN"
-      : (s.auth?.user?.currency ?? (s.auth as any)?.guestCurrency ?? "GHS");
-  });
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const loadProducts = useCallback(

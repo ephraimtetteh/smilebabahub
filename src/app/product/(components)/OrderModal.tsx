@@ -10,18 +10,19 @@ import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
 import axiosInstance from "@/src/lib/api/axios";
 import ModalShell from "./ModalShell";
-import { BtnSpinner } from "../../ads/(components)/AdUI";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { ModalProps } from "@/src/types/ad.types";
-
+import { BtnSpinner } from "../../ads/(components)/AdUI";
 
 export default function OrderModal({ ad, sym, onClose }: ModalProps) {
   const user = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { country: viewCountry } = useViewCountry();
 
   const [qty, setQty] = useState(1);
   const [address, setAddress] = useState(
-    user?.city ? `${user.city}, ${user.country}` : "",
+    user?.city ? `${user.city}, ${viewCountry}` : "",
   );
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);

@@ -4,7 +4,7 @@ import React, { memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Star, Trophy, ImageOff } from "lucide-react";
-import { useAppSelector } from "@/src/app/redux";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { Product, getCoverImage } from "@/src/types/product.types";
 
 // Supports the old CardComponentProps shape AND the new Product type
@@ -25,11 +25,6 @@ interface CardComponentProps {
   item: FeaturedCardItem;
   index: number;
 }
-
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  GHS: "₵",
-  NGN: "₦",
-};
 
 // Normalise item to consistent shape regardless of source
 function normalise(item: FeaturedCardItem) {
@@ -60,10 +55,10 @@ const FeaturedCard = memo(function FeaturedCard({
   item,
   index,
 }: CardComponentProps) {
-  const userCurrency = useAppSelector((state) => state.auth.user?.currency);
+  const { sym: viewSym } = useViewCountry();
   const { id, title, price, currency, city, region, seller, coverUrl } =
     normalise(item);
-  const sym = CURRENCY_SYMBOLS[userCurrency ?? currency ?? "GHS"] ?? "₵";
+  const sym = viewSym ?? (currency === "NGN" ? "₦" : "₵");
 
   return (
     <Link
@@ -123,9 +118,7 @@ const FeaturedCard = memo(function FeaturedCard({
         {/* Location */}
         {(city || region) && (
           <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1">
-            <span>
-              <MapPin size={11} className="text-gray-400" />{" "}
-            </span>
+            <MapPin size={10} className="flex-shrink-0" />
             <span className="truncate">
               {[city, region].filter(Boolean).join(", ")}
             </span>
@@ -138,7 +131,7 @@ const FeaturedCard = memo(function FeaturedCard({
 
 export default FeaturedCard;
 
-// ── 7-column grid ────────────────────────────────────────────────────────────
+// ── 6-column grid ────────────────────────────────────────────────────────────
 export const FeaturedGrid = memo(function FeaturedGrid({
   items,
 }: {
@@ -147,7 +140,7 @@ export const FeaturedGrid = memo(function FeaturedGrid({
   const capped = items.slice(0, 7);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 ">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 w-full">
       {capped.map((item, i) => (
         <FeaturedCard
           key={(item as any)._id ?? (item as any).id ?? i}

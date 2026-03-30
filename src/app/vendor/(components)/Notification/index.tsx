@@ -119,7 +119,7 @@ export default function NotificationBell() {
         className="relative p-2 rounded-xl hover:bg-gray-100 transition"
         aria-label="Notifications"
       >
-        <span className="text-xl"><Bell /></span>
+        <span className="text-xl"><Bell className="text-white" size={22} /></span>
         {unreadCount > 0 && (
           <span
             className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500
