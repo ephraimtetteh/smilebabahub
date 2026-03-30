@@ -7,6 +7,7 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAppSelector } from "@/src/app/redux";
 import { useChat, Conversation, ChatMessage } from "@/src/hooks/useChat";
 import { MessageCircle, ChevronRight, CheckCheck, Check } from "lucide-react";
@@ -123,11 +124,15 @@ export default function VendorMessages() {
                 {/* Avatar + online dot */}
                 <div className="relative flex-shrink-0">
                   {other?.profilePicture ? (
-                    <img
-                      src={other.profilePicture}
-                      alt={other.username}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                      <Image
+                        src={other.profilePicture}
+                        alt={other.username}
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                      />
+                    </div>
                   ) : (
                     <div
                       className="w-10 h-10 rounded-full bg-gray-100 flex items-center

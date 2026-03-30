@@ -3,6 +3,7 @@
 // Sidebar showing all conversations — used in chat page or as a panel.
 
 import React, { useEffect } from "react";
+import Image from "next/image";
 import { useAppSelector } from "@/src/app/redux";
 import { useChat, Conversation, ChatMessage } from "@/src/hooks/useChat";
 import { MessageCircle, Circle } from "lucide-react";
@@ -86,11 +87,15 @@ export default function ConversationList({
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
                   {other?.profilePicture ? (
-                    <img
-                      src={other.profilePicture}
-                      alt={other.username}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                      <Image
+                        src={other.profilePicture}
+                        alt={other.username}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    </div>
                   ) : (
                     <div
                       className="w-12 h-12 rounded-full bg-[#ffc105] flex items-center

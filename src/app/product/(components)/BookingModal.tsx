@@ -1,6 +1,7 @@
 "use client";
 // src/components/ads/ProductDetail/BookingModal.tsx
 
+import Image from "next/image";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,8 +10,8 @@ import { Home, Minus, Plus, CheckCircle2 } from "lucide-react";
 import { useAppSelector } from "@/src/app/redux";
 import axiosInstance from "@/src/lib/api/axios";
 import ModalShell from "./ModalShell";
-import { BtnSpinner } from "../../ads/(components)/AdUI";
 import { ModalProps } from "@/src/types/ad.types";
+import { BtnSpinner } from "../../ads/(components)/AdUI";
 
 
 export default function BookingModal({ ad, sym, onClose }: ModalProps) {
@@ -116,12 +117,14 @@ export default function BookingModal({ ad, sym, onClose }: ModalProps) {
       <div className="p-5 space-y-4">
         {/* Property snapshot */}
         <div className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
-          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+          <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
             {ad.images?.[0]?.url ? (
-              <img
+              <Image
                 src={ad.images[0].url}
                 alt={ad.title}
-                className="w-full h-full object-cover"
+                fill
+                sizes="56px"
+                className="object-cover"
               />
             ) : (
               <span className="block w-full h-full bg-gray-200 rounded-xl" />

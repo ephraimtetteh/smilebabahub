@@ -4,6 +4,7 @@
 // Usage: <ChatWindow otherId="<userId>" otherName="John" />
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 import { useAppSelector } from "@/src/app/redux";
 import { useChat, ChatMessage } from "@/src/hooks/useChat";
 import {
@@ -181,7 +182,7 @@ export default function ChatWindow({
   otherAvatar,
   onClose,
 }: ChatWindowProps) {
-  const myId = useAppSelector((s) => s.auth.user?._id ?? "");
+  const myId = useAppSelector((s) => s.auth.user?._id ?? s.auth.user?._id ?? "");
   const chat = useChat(myId || undefined);
 
   const [text, setText] = useState("");
@@ -274,11 +275,15 @@ export default function ChatWindow({
       <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
         <div className="relative flex-shrink-0">
           {otherAvatar ? (
-            <img
-              src={otherAvatar}
-              alt={otherName}
-              className="w-10 h-10 rounded-full object-cover"
-            />
+            <div className="relative w-10 h-10 rounded-full overflow-hidden">
+              <Image
+                src={otherAvatar}
+                alt={otherName}
+                fill
+                sizes="40px"
+                className="object-cover"
+              />
+            </div>
           ) : (
             <div
               className="w-10 h-10 rounded-full bg-[#ffc105] flex items-center

@@ -13,6 +13,7 @@ import ModalShell from "./ModalShell";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { ModalProps } from "@/src/types/ad.types";
 import { BtnSpinner } from "../../ads/(components)/AdUI";
+import Image from "next/image";
 
 export default function OrderModal({ ad, sym, onClose }: ModalProps) {
   const user = useAppSelector((s) => s.auth.user);
@@ -118,7 +119,9 @@ export default function OrderModal({ ad, sym, onClose }: ModalProps) {
         <div className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
           <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
             {ad.images?.[0]?.url ? (
-              <img
+              <Image
+                width={14}
+                height={14}
                 src={ad.images[0].url}
                 alt={ad.title}
                 className="w-full h-full object-cover"

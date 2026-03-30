@@ -1,10 +1,11 @@
 "use client";
-import { CheckCircle2, ImageOff } from "lucide-react";
-import Link from "next/link";
 // src/components/ads/ProductDetail/AdUI.tsx
 // Lightweight shared UI — DetailRow and Section card.
 
 import React from "react";
+import Image from "next/image";
+import { CheckCircle2, ImageOff } from "lucide-react";
+import Link from "next/link";
 
 export function DetailRow({
   label,
@@ -114,12 +115,14 @@ export function SuccessScreen({
 export function AdThumb({ ad }: { ad: any }) {
   return (
     <div className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
-      <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
         {ad.images?.[0]?.url ? (
-          <img
+          <Image
             src={ad.images[0].url}
             alt={ad.title}
-            className="w-full h-full object-cover"
+            fill
+            sizes="56px"
+            className="object-cover"
           />
         ) : (
           <ImageOff size={20} className="text-gray-300 m-auto mt-2" />

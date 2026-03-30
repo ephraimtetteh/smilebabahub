@@ -26,10 +26,11 @@ export type Conversation = {
   unread: number;
 };
 
+// ── Socket URL ────────────────────────────────────────────────────────────
+// next.config.ts derives this from NEXT_PUBLIC_API_BASE_URL at build time
+// (strips /smilebaba → just the origin). Falls back to localhost for dev.
 const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL ??
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/smilebaba", "") ??
-  "http://localhost:3001";
+  process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:3001";
 
 export function useChat(myUserId: string | undefined) {
   const socketRef = useRef<Socket | null>(null);
