@@ -33,6 +33,7 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const authPath = pathName.startsWith("/auth");
   const vendor = pathName.startsWith('/vendor')
   const marketer = pathName.startsWith('/marketer')
+  const admin = pathName.startsWith('/admin')
 
 
   useEffect(() => {
@@ -52,6 +53,8 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
         return !authPath;
       case pathName.startsWith("/marketer"):
         return !marketer;
+      case pathName.startsWith("/admin"):
+        return !admin;
 
       default:
         return !authPath ? <Navbar /> : null;
