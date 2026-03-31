@@ -359,7 +359,7 @@ function SuccessScreen({
   onPostAnother: () => void;
 }) {
   return (
-    <div className="max-w-xl mx-auto px-4 py-10 text-center">
+    <div className="max-w-xl mx-auto px-4 py-10 text-center pt-20">
       <div
         className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center
         text-4xl mx-auto mb-5 shadow-md shadow-green-100"
