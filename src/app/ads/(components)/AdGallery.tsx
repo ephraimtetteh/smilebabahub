@@ -42,7 +42,10 @@ export default function AdGallery({
             fill
             priority
             className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 60vw"
+            // Correct sizes so Next.js never requests w=1920 for a detail image.
+            // On mobile it's full-width (100vw), on desktop it's the left column (~60%).
+            // Max meaningful size is 1080px — matches our next.config deviceSizes.
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 60vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-50">

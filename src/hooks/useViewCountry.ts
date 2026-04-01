@@ -22,10 +22,17 @@ export type ViewCurrency = "GHS" | "NGN";
 export function useViewCountry() {
   const country: ViewCountry = useAppSelector((s) => {
     const admin = (s.auth as any)?.adminViewCountry as string | undefined;
-    const user = s.auth?.user?.country;
+    const userCountry = s.auth?.user?.country;
     const guest = (s.auth as any)?.guestCountry as string | undefined;
-    const raw = admin || user || guest || "Ghana";
-    // Normalise to canonical names
+
+    // Only trust user.country if it's a known valid value — never use "Unknown",
+    // "", "detecting…" or any other bad value that got stored during a CPU spike.
+    const VALID_COUNTRIES = ["Ghana", "Nigeria"];
+    const validUserCountry = VALID_COUNTRIES.includes(userCountry ?? "")
+      ? userCountry
+      : undefined;
+
+    const raw = admin || validUserCountry || guest || "Ghana";
     return raw.toLowerCase().includes("nigeria") ? "Nigeria" : "Ghana";
   });
 
