@@ -13,6 +13,7 @@ import Title from "@/src/components/Title";
 import { FeaturedGrid } from "./FeaturedCard";
 import Link from "next/link";
 import { useProducts } from "@/src/hooks/useProducts";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 
 interface FeaturedProps {
   className?: string;
@@ -63,19 +64,17 @@ const FeaturedProducts = ({
 }: FeaturedProps) => {
   const { featured, featuredLoading, loadFeatured, userCountry } =
     useProducts();
+  const { guestDetecting } = useViewCountry();
 
-  // Fetch on mount and whenever the country changes.
-  // userCountry resolves to:
-  //   1. user.country      — if logged in
-  //   2. guestCountry      — if guest + GuestLocationDetector ran
-  //   3. "Ghana"           — safe fallback (always produces results)
+  // RACE CONDITION FIX: do NOT fetch while country detection is in-flight.
+  // guestDetecting is true from the moment GuestLocationDetector mounts until
+  // /auth/guest-country responds. Without this guard, we'd fetch with "Ghana"
+  // (Redux default) and Nigerian users would see Ghana products first.
   useEffect(() => {
-    // Pass country as undefined if empty — the thunk resolves it from Redux state
-    // (user.country → guestCountry → "Ghana"). This ensures logged-in users
-    // whose user.country field is empty still get results.
+    if (guestDetecting) return; // wait — country not confirmed yet
     loadFeatured(userCountry || undefined, category);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userCountry, category]);
+  }, [userCountry, category, guestDetecting]);
 
   const items = (featured ?? {})[category] ?? [];
   const defaults = CATEGORY_DEFAULTS[category] ?? CATEGORY_DEFAULTS.all;

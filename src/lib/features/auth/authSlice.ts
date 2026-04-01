@@ -19,6 +19,7 @@ interface AuthState {
   guestCurrency: string;
   isAdmin: boolean;
   adminViewCountry: string;
+  guestDetecting: boolean; // true while /auth/guest-country is in-flight
 }
 
 const initialState: AuthState = {
@@ -32,6 +33,7 @@ const initialState: AuthState = {
   guestCurrency: "GHS",
   isAdmin: false,
   adminViewCountry: "Ghana",
+  guestDetecting: false,
 };
 
 export const authSlice = createSlice({
@@ -64,6 +66,9 @@ export const authSlice = createSlice({
       state.adminViewCountry = action.payload;
       // Also update user.country so all feeds use the new country
       if (state.user) state.user.country = action.payload;
+    },
+    setGuestDetecting: (state, action: PayloadAction<boolean>) => {
+      state.guestDetecting = action.payload;
     },
   },
 
@@ -139,6 +144,7 @@ export const {
   setUser,
   setMessage,
   setGuestLocation,
+  setGuestDetecting,
   setAdminViewCountry,
 } = authSlice.actions;
 

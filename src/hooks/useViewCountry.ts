@@ -36,14 +36,26 @@ export function useViewCountry() {
     return raw.toLowerCase().includes("nigeria") ? "Nigeria" : "Ghana";
   });
 
+  // True while GuestLocationDetector is waiting for /auth/guest-country response.
+  // Components should NOT fire country-scoped fetches while this is true —
+  // they'd use the "Ghana" default and then need to refetch when country arrives.
+  const guestDetecting = useAppSelector(
+    (s) => ((s.auth as any)?.guestDetecting as boolean) ?? false,
+  );
+
   const currency: ViewCurrency = country === "Nigeria" ? "NGN" : "GHS";
   const sym: string = currency === "NGN" ? "₦" : "₵";
-
   const isNigeria = country === "Nigeria";
   const isGhana = country === "Ghana";
-
-  // Country-specific payment endpoint segment
   const paymentRegion = currency === "NGN" ? "ng" : "gh";
 
-  return { country, currency, sym, isNigeria, isGhana, paymentRegion };
+  return {
+    country,
+    currency,
+    sym,
+    isNigeria,
+    isGhana,
+    paymentRegion,
+    guestDetecting,
+  };
 }
