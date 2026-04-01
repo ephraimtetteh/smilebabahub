@@ -30,6 +30,12 @@ import { useAds } from "@/src/hooks/useAds";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
 import { safetyTips } from "@/src/constants/safetyTips";
+import {
+  CONDITION_LABELS,
+  BOOST_BADGE,
+  formatAdPrice,
+  formatDate,
+} from "@/src/app/ads/(components)/ad.constants";
 import FeaturedProducts from "@/src/components/FeaturedProducts";
 
 // Sub-components
@@ -38,15 +44,15 @@ import FeaturedProducts from "@/src/components/FeaturedProducts";
 // Lazy-imported originals (still used for chat / offer)
 import Offer from "@/src/components/Offer";
 import Socials from "@/src/components/Socials";
-import ChatButton from "@/src/components/Chat/ChatButton";
-import { AdMode } from "@/src/types/ad.types";
 import { currencySym, resolveMode } from "../../ads/(components)/adHelpers";
-import { BOOST_BADGE, CONDITION_LABELS, formatAdPrice, formatDate } from "../../ads/(components)/ad.constants";
+import { AdMode } from "@/src/types/ad.types";
 import BuyModal from "../(components)/BuyModal";
 import BookingModal from "../(components)/BookingModal";
 import OrderModal from "../(components)/OrderModal";
 import AdGallery from "../../ads/(components)/AdGallery";
 import { DetailRow, Section } from "../../ads/(components)/AdUI";
+import ChatButton from "@/src/components/Chat/ChatButton";
+
 
 const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
@@ -126,6 +132,9 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const mode: AdMode = resolveMode(ad.category?.main, pathname);
   const sym = currencySym(ad.price?.currency);
+  const isNigeria =
+    ad.location?.country?.toLowerCase().includes("nigeria") ||
+    ad.price?.currency === "NGN";
   const isOwner =
     user && String(ad.postedBy?._id ?? ad.postedBy) === String(user._id);
   const boostBadge =
@@ -163,8 +172,11 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
     setCallPhone("");
   };
 
-  // Primary CTA config per mode
-  const cta = {
+  // Primary CTA config per mode — typed as Record<AdMode> so TS knows all keys are handled
+  const ctaMap: Record<
+    AdMode,
+    { label: string; icon: React.ReactNode; open: () => void }
+  > = {
     marketplace: {
       label: "Buy now",
       icon: <CreditCard size={16} />,
@@ -180,7 +192,8 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
       icon: <CalendarDays size={16} />,
       open: () => setBookOpen(true),
     },
-  }[mode];
+  };
+  const cta = ctaMap[mode];
 
   return (
     <div className="pt-28 pb-20 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto">
@@ -532,6 +545,24 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
 
             <div className="space-y-2.5">
+              {/* Nigeria: WhatsApp first (primary channel), phone second */}
+              {/* Ghana: phone reveal first, WhatsApp second */}
+
+              {isNigeria && waNumber && (
+                <a
+                  href={`https://wa.me/${waNumber}?text=${waMsg}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => logContactClick(id)}
+                  className="w-full flex items-center justify-center gap-2 py-3
+                    bg-[#25D366] text-white font-bold rounded-2xl text-sm
+                    hover:opacity-90 transition"
+                >
+                  <MessageCircle size={15} />
+                  Chat on WhatsApp
+                </a>
+              )}
+
               {ad.contact?.showPhone !== false && (
                 <button
                   onClick={() => {
@@ -550,7 +581,8 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                   {phoneReveal ? ad.contact.phone : "Show Phone Number"}
                 </button>
               )}
-              {waNumber && (
+
+              {!isNigeria && waNumber && (
                 <a
                   href={`https://wa.me/${waNumber}?text=${waMsg}`}
                   target="_blank"
@@ -564,7 +596,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                   Chat on WhatsApp
                 </a>
               )}
-              {/* In-app chat — routes to /chat?with=sellerId */}
+
               {!isOwner && (
                 <ChatButton
                   sellerId={String(ad.postedBy?._id ?? ad.postedBy ?? "")}
