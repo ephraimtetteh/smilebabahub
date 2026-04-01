@@ -1,52 +1,89 @@
 "use client";
 
 // src/components/GuestLocationDetector.tsx
-// Fires once per browser session for every visitor.
-// Reads their IP country from the backend → writes to Redux so all feeds
-// show the right country (Ghana / Nigeria) and currency (GHS / NGN).
+// Detects the visitor's country from IP and writes it to Redux.
 //
-// Uses sessionStorage to prevent re-calling on every page navigation —
-// the result is stable for the whole session.
+// Key behaviours:
+//  - Skips if user is logged in (their country comes from login response)
+//  - Only caches the result in sessionStorage when geo actually succeeded
+//    (detected: true) — failed/fallback results are retried on next load
+//  - Stores the detected country so we can verify it wasn't a bad fallback
+//  - 4s timeout on the backend Geoapify call prevents hanging during CPU spikes
 
 import React, { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../app/redux";
 import { setGuestLocation } from "../lib/features/auth/authSlice";
 import axiosInstance from "@/src/lib/api/axios";
 
-const SESSION_KEY = "smb_guest_country_detected";
+const SESSION_KEY = "smb_geo"; // stores { country, currency }
+const SESSION_DONE = "smb_geo_ok"; // set only when detected: true
+
+function readCache(): { country: string; currency: string } | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(country: string, currency: string) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ country, currency }));
+    sessionStorage.setItem(SESSION_DONE, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+function cacheIsGood(): boolean {
+  try {
+    return sessionStorage.getItem(SESSION_DONE) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export default function GuestLocationDetector() {
   const dispatch = useAppDispatch();
   const isLoggedIn = useAppSelector((s) => s.auth.isAuthenticated);
 
   useEffect(() => {
-    // Skip if logged in — their country comes from login/restoreSession
+    // Logged-in users get country from login/restoreSession — skip
     if (isLoggedIn) return;
 
-    // Skip if already detected this session
-    try {
-      if (sessionStorage.getItem(SESSION_KEY)) return;
-    } catch {
-      // sessionStorage blocked (private mode edge case) — just proceed
+    // If we already have a confirmed-good detection this session, rehydrate
+    // from cache and skip the network call
+    if (cacheIsGood()) {
+      const cached = readCache();
+      if (cached?.country && cached?.currency) {
+        dispatch(setGuestLocation(cached));
+        return;
+      }
     }
 
+    // Otherwise call the backend — it returns detected: false when geo fails
+    // (CPU spike, Geoapify timeout, etc.) so we know not to cache it
     axiosInstance
       .get("/auth/guest-country")
       .then((res) => {
-        const { country, currency } = res.data ?? {};
+        const { country, currency, detected } = res.data ?? {};
+
         if (country && currency) {
           dispatch(setGuestLocation({ country, currency }));
-          try {
-            sessionStorage.setItem(SESSION_KEY, "1");
-          } catch {
-            /* ignore */
+
+          // Only persist to sessionStorage when geo actually worked
+          // detected: false means it fell back to Ghana — don't cache
+          if (detected !== false) {
+            writeCache(country, currency);
           }
         }
       })
       .catch(() => {
-        // Silently fall back to "Ghana" already in Redux initialState
+        // Network error — dispatch nothing, stay on Redux initialState (Ghana)
+        // No cache write — will retry on next page load
       });
-  }, [isLoggedIn]); // re-run if auth state changes (logout → check again)
+  }, [isLoggedIn, dispatch]);
 
   return null;
 }

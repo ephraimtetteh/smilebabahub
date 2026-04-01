@@ -85,6 +85,10 @@ export const authSlice = createSlice({
         state.isAuthenticating = false;
         state.isAuthenticated = true;
         state.user = action.payload; // includes currency/country
+        state.isAdmin = action.payload?.isAdmin ?? false;
+        if (state.isAdmin && action.payload?.country) {
+          state.adminViewCountry = action.payload.country || "Ghana";
+        }
         state.hasCheckedAuth = true;
       })
       .addCase(restoreSession.rejected, (state) => {
