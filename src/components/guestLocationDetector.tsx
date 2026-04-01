@@ -15,8 +15,13 @@ import { useAppDispatch, useAppSelector } from "../app/redux";
 import { setGuestLocation } from "../lib/features/auth/authSlice";
 import axiosInstance from "@/src/lib/api/axios";
 
-const SESSION_KEY = "smb_geo_v2"; // stores { country, currency }
-const SESSION_DONE = "smb_geo_ok"; // set only when detected: true
+// ── Cache key versioning ───────────────────────────────────────────────────
+// Bump SESSION_VER whenever you need to force all users to re-detect their country.
+// This invalidates any existing sessionStorage entries with the old key.
+// Last bumped: 2026-04-01 (Nigerian users stuck on Ghana after CPU exhaustion)
+const SESSION_VER = "v2";
+const SESSION_KEY = `smb_geo_${SESSION_VER}`; // stores { country, currency }
+const SESSION_DONE = `smb_geo_ok_${SESSION_VER}`; // set only when detected: true
 
 function readCache(): { country: string; currency: string } | null {
   try {
@@ -47,6 +52,17 @@ function cacheIsGood(): boolean {
 export default function GuestLocationDetector() {
   const dispatch = useAppDispatch();
   const isLoggedIn = useAppSelector((s) => s.auth.isAuthenticated);
+
+  useEffect(() => {
+    // Clean up old versioned keys from previous deploys
+    try {
+      ["smb_geo", "smb_geo_ok", "smb_geo_v1", "smb_geo_ok_v1"].forEach((k) => {
+        sessionStorage.removeItem(k);
+      });
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     // Logged-in users get country from login/restoreSession — skip
