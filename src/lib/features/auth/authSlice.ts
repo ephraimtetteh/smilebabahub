@@ -15,11 +15,20 @@ interface AuthState {
   accessToken: null | string;
   user: UserProp | null;
   message: Message;
-  guestCountry: string; // "Ghana" | "Nigeria" — detected from IP for unauthenticated visitors
+
+  // ── Guest geo ────────────────────────────────────────────────────────────
+  guestCountry: string; // IP-detected country for unauthenticated visitors
   guestCurrency: string;
-  isAdmin: boolean;
-  adminViewCountry: string;
   guestDetecting: boolean; // true while /auth/guest-country is in-flight
+
+  // ── Universal country switcher ────────────────────────────────────────────
+  // Any user type (guest / vendor / admin) can pick a country.
+  // Empty string = auto-resolve from user.country or guestCountry.
+  selectedCountry: string;
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  isAdmin: boolean;
+  adminViewCountry: string; // kept for backward compat — use selectedCountry instead
 }
 
 const initialState: AuthState = {
@@ -29,11 +38,15 @@ const initialState: AuthState = {
   accessToken: null,
   user: null,
   message: { type: "", message: "" },
-  guestCountry: "Ghana", // default until IP detection resolves
+
+  guestCountry: "Ghana",
   guestCurrency: "GHS",
+  guestDetecting: false,
+
+  selectedCountry: "", // "" = auto-detect
+
   isAdmin: false,
   adminViewCountry: "Ghana",
-  guestDetecting: false,
 };
 
 export const authSlice = createSlice({
@@ -55,6 +68,8 @@ export const authSlice = createSlice({
     setMessage: (state, action: PayloadAction<Message>) => {
       state.message = action.payload;
     },
+
+    // Guest IP detection
     setGuestLocation: (
       state,
       action: PayloadAction<{ country: string; currency: string }>,
@@ -62,26 +77,35 @@ export const authSlice = createSlice({
       state.guestCountry = action.payload.country;
       state.guestCurrency = action.payload.currency;
     },
-    setAdminViewCountry: (state, action: PayloadAction<string>) => {
-      state.adminViewCountry = action.payload;
-      // Also update user.country so all feeds use the new country
-      if (state.user) state.user.country = action.payload;
-    },
     setGuestDetecting: (state, action: PayloadAction<boolean>) => {
       state.guestDetecting = action.payload;
+    },
+
+    // Universal country switcher — works for everyone, instant, no API call
+    setSelectedCountry: (state, action: PayloadAction<string>) => {
+      state.selectedCountry = action.payload;
+    },
+
+    // Admin backward-compat alias — still works for AdminCountryDropdown
+    // No longer mutates user.country (useViewCountry reads selectedCountry first)
+    setAdminViewCountry: (state, action: PayloadAction<string>) => {
+      state.adminViewCountry = action.payload;
+      state.selectedCountry = action.payload; // unified — drives useViewCountry
     },
   },
 
   extraReducers: (builder) => {
     builder
-      // ── Register ──
+      // ── Register ──────────────────────────────────────────────────────────
       .addCase(register.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.hasCheckedAuth = true;
+        // Clear any guest-era manual country pick so user's detected country is used
+        state.selectedCountry = "";
       })
 
-      // ── Restore session (browser refresh) ──
+      // ── Restore session ───────────────────────────────────────────────────
       .addCase(restoreSession.pending, (state) => {
         state.isAuthenticating = true;
         state.hasCheckedAuth = false;
@@ -89,35 +113,35 @@ export const authSlice = createSlice({
       .addCase(restoreSession.fulfilled, (state, action) => {
         state.isAuthenticating = false;
         state.isAuthenticated = true;
-        state.user = action.payload; // includes currency/country
+        state.user = action.payload; // IS the user (not .user)
         state.isAdmin = action.payload?.isAdmin ?? false;
-        if (state.isAdmin && action.payload?.country) {
-          state.adminViewCountry = action.payload.country || "Ghana";
-        }
         state.hasCheckedAuth = true;
+        // Clear any stale guest selectedCountry so login country is used
+        state.selectedCountry = "";
       })
       .addCase(restoreSession.rejected, (state) => {
         state.isAuthenticating = false;
         state.isAuthenticated = false;
         state.user = null;
         state.hasCheckedAuth = true;
-        // guestCountry remains as-is — GuestLocationDetector will update it via IP
+        // guestCountry stays — GuestLocationDetector manages it
       })
 
-      // ── Login ──
+      // ── Login ─────────────────────────────────────────────────────────────
       .addCase(login.pending, (state) => {
         state.isAuthenticating = true;
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isAuthenticating = false;
         state.isAuthenticated = true;
-        state.user = action.payload.user; // includes currency/country
+        state.user = action.payload.user;
         state.isAdmin = action.payload.user?.isAdmin ?? false;
-        // If admin, default their view country to their detected country
-        if (state.isAdmin && action.payload.user?.country) {
-          state.adminViewCountry = action.payload.user.country || "Ghana";
-        }
         state.hasCheckedAuth = true;
+        // ── CRITICAL: clear guest selectedCountry on login ──────────────────
+        // Otherwise a guest who manually picked "Nigeria" would stay on Nigeria
+        // even if their account country is "Ghana", confusing them.
+        // They can always re-select via CountrySwitcher after login.
+        state.selectedCountry = "";
       })
       .addCase(login.rejected, (state) => {
         state.isAuthenticating = false;
@@ -126,13 +150,21 @@ export const authSlice = createSlice({
         state.hasCheckedAuth = true;
       })
 
-      // ── Logout ──
+      // ── Logout ────────────────────────────────────────────────────────────
       .addCase(logout.fulfilled, (state) => {
         state.isAuthenticating = false;
         state.isAuthenticated = false;
         state.user = null;
         state.accessToken = null;
         state.hasCheckedAuth = true;
+        state.isAdmin = false;
+        state.adminViewCountry = "Ghana";
+        // ── CRITICAL: clear selectedCountry on logout ───────────────────────
+        // Next visitor (guest) should get their own IP-detected country,
+        // not inherit the previous user's manual selection.
+        state.selectedCountry = "";
+        // Keep guestCountry/guestCurrency — GuestLocationDetector re-sets these
+        // on the next page load if session cache is stale.
       });
   },
 });
@@ -145,6 +177,7 @@ export const {
   setMessage,
   setGuestLocation,
   setGuestDetecting,
+  setSelectedCountry,
   setAdminViewCountry,
 } = authSlice.actions;
 

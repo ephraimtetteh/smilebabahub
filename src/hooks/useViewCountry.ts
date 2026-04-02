@@ -3,51 +3,67 @@
 // SINGLE SOURCE OF TRUTH for country/currency in the UI.
 //
 // Resolution priority:
-//   1. adminViewCountry  — admin has toggled the country switcher (overrides all)
-//   2. user.country      — logged-in user's IP-detected country
-//   3. guestCountry      — unauthenticated visitor's IP-detected country
-//   4. "Ghana"           — safe fallback (always produces results)
+//   1. selectedCountry  — any user manually picked a country (overrides all)
+//   2. user.country     — logged-in user's IP-detected country (from login)
+//   3. guestCountry     — unauthenticated visitor's IP-detected country
+//   4. "Ghana"          — safe fallback (always produces results)
 //
-// Every component/page that needs country or currency should import this hook.
-// When the admin switches country, ALL consumers re-render automatically.
-// ─────────────────────────────────────────────────────────────────────────────
+// Anyone — guest, vendor, admin — can call setSelectedCountry to switch.
 
 "use client";
 
-import { useAppSelector } from "@/src/app/redux";
+import { useAppDispatch, useAppSelector } from "@/src/app/redux";
+import { useCallback } from "react";
+import { setSelectedCountry } from "@/src/lib/features/auth/authSlice";
 
 export type ViewCountry = "Ghana" | "Nigeria";
 export type ViewCurrency = "GHS" | "NGN";
 
+const VALID = ["Ghana", "Nigeria"] as const;
+function canonical(raw: string | undefined): ViewCountry | undefined {
+  if (!raw) return undefined;
+  const lc = raw.toLowerCase();
+  if (lc.includes("nigeria")) return "Nigeria";
+  if (lc.includes("ghana")) return "Ghana";
+  return undefined;
+}
+
 export function useViewCountry() {
+  const dispatch = useAppDispatch();
+
   const country: ViewCountry = useAppSelector((s) => {
-    const admin = (s.auth as any)?.adminViewCountry as string | undefined;
-    const userCountry = s.auth?.user?.country;
-    const guest = (s.auth as any)?.guestCountry as string | undefined;
+    // 1. Manual selection (any user type)
+    const selected = canonical((s.auth as any)?.selectedCountry);
+    if (selected) return selected;
 
-    // Only trust user.country if it's a known valid value — never use "Unknown",
-    // "", "detecting…" or any other bad value that got stored during a CPU spike.
-    const VALID_COUNTRIES = ["Ghana", "Nigeria"];
-    const validUserCountry = VALID_COUNTRIES.includes(userCountry ?? "")
-      ? userCountry
-      : undefined;
+    // 2. Logged-in user's detected country (validated — rejects bad DB values)
+    const userCountry = canonical(s.auth?.user?.country);
+    if (userCountry) return userCountry;
 
-    const raw = admin || validUserCountry || guest || "Ghana";
-    return raw.toLowerCase().includes("nigeria") ? "Nigeria" : "Ghana";
+    // 3. Guest IP-detected country
+    const guestCountry = canonical((s.auth as any)?.guestCountry);
+    if (guestCountry) return guestCountry;
+
+    // 4. Safe fallback
+    return "Ghana";
   });
 
-  // True while GuestLocationDetector is waiting for /auth/guest-country response.
-  // Components should NOT fire country-scoped fetches while this is true —
-  // they'd use the "Ghana" default and then need to refetch when country arrives.
+  // True while GuestLocationDetector is in-flight
   const guestDetecting = useAppSelector(
     (s) => ((s.auth as any)?.guestDetecting as boolean) ?? false,
   );
 
   const currency: ViewCurrency = country === "Nigeria" ? "NGN" : "GHS";
-  const sym: string = currency === "NGN" ? "₦" : "₵";
+  const sym = currency === "NGN" ? "₦" : "₵";
   const isNigeria = country === "Nigeria";
   const isGhana = country === "Ghana";
   const paymentRegion = currency === "NGN" ? "ng" : "gh";
+
+  // Universal switcher — works for everyone, no API call needed
+  const switchCountry = useCallback(
+    (c: ViewCountry) => dispatch(setSelectedCountry(c)),
+    [dispatch],
+  );
 
   return {
     country,
@@ -57,5 +73,6 @@ export function useViewCountry() {
     isGhana,
     paymentRegion,
     guestDetecting,
+    switchCountry,
   };
 }

@@ -6,6 +6,8 @@ import { Menu, X, ShoppingCart, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { assets } from "../assets/assets";
 import UserMenu from "./UserMenu";
+import CountrySwitcher from "./CountrySwitcher";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { useAppSelector } from "../app/redux";
 import { useRouter } from "next/navigation";
 import { useSubscriptionGuard } from "@/src/hooks/useSubscriptionGuard";
@@ -14,14 +16,8 @@ import {
   MARKETER_LINK,
   NavCategory,
 } from "@/src/config/navCategories";
-import AdminCountryDropdown from "./admin/AdminCountryDropdown";
 import ChatNavBadge from "./Chat/ChatNavBadge";
 import NotificationBell from "../app/vendor/(components)/Notification";
-
-const COUNTRY_FLAGS: Record<string, string> = {
-  Ghana: "🇬🇭",
-  Nigeria: "🇳🇬",
-};
 
 // ── Desktop dropdown for one nav category ─────────────────────────────────
 function NavDropdown({ cat }: { cat: NavCategory }) {
@@ -199,11 +195,12 @@ export default function Navbar() {
   const router = useRouter();
   const { guard } = useSubscriptionGuard();
 
-  const flag = COUNTRY_FLAGS[user?.country ?? ""] ?? null;
-  const countryCode =
-    user?.currency === "NGN" ? "NG" : user?.currency === "GHS" ? "GH" : null;
+  // Use universal country hook — works for guests, vendors, admins
+  const { country, currency, sym, isNigeria } = useViewCountry();
+  const flag = country === "Nigeria" ? "🇳🇬" : "🇬🇭";
+  const countryCode = country === "Nigeria" ? "NG" : "GH";
 
-  // Filter categories by country (null = show everywhere)
+  // Filter nav categories by currently viewed country
   const visibleCategories = NAV_CATEGORIES.filter(
     (c) => !c.country || c.country === countryCode,
   );
@@ -248,15 +245,13 @@ export default function Navbar() {
             className="text-xl sm:text-2xl font-bold text-white flex-shrink-0"
           >
             Smile<span className="text-yellow-400">Baba</span>Hub
-            {flag && countryCode && (
-              <span
-                className="ml-2 text-[11px] bg-white/10 border border-white/20
-                px-2 py-0.5 rounded-full font-normal align-middle hidden sm:inline-flex
-                items-center gap-1"
-              >
-                {flag} {countryCode}
-              </span>
-            )}
+            <span
+              className="ml-2 text-[11px] bg-white/10 border border-white/20
+              px-2 py-0.5 rounded-full font-normal align-middle hidden sm:inline-flex
+              items-center gap-1"
+            >
+              {flag} {countryCode}
+            </span>
           </Link>
 
           {/* ── Desktop nav — built from NAV_CATEGORIES config ── */}
@@ -278,7 +273,7 @@ export default function Navbar() {
           </div>
 
           {/* ── Search ── */}
-          {/* <div
+          <div
             className="hidden md:flex items-center bg-white/10 border border-white/20
             rounded-full px-3 py-1.5 gap-2 min-w-0"
           >
@@ -297,7 +292,7 @@ export default function Navbar() {
               className="bg-transparent outline-none text-white text-sm w-32 lg:w-48
                 placeholder:text-white/40"
             />
-          </div> */}
+          </div>
 
           {/* ── Right actions ── */}
           <div className="flex items-center gap-2 sm:gap-3">
@@ -328,8 +323,8 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Admin country switcher — only renders for admin users */}
-            <AdminCountryDropdown />
+            {/* Country switcher — available to everyone: guests, vendors, admins */}
+            <CountrySwitcher />
 
             {user && <ChatNavBadge />}
             {user && <NotificationBell />}
@@ -418,12 +413,13 @@ export default function Navbar() {
             Post Ad
           </button>
 
-          {/* Country badge */}
-          {flag && countryCode && (
-            <p className="text-sm text-white/50 flex items-center gap-1.5">
-              {flag} {countryCode} · Prices in {user?.currency}
+          {/* Country switcher in mobile menu */}
+          <div className="pt-2 border-t border-white/10">
+            <p className="text-xs text-white/40 mb-2 font-medium uppercase tracking-wider">
+              Your market
             </p>
-          )}
+            <CountrySwitcher />
+          </div>
         </div>
       </div>
     </>
