@@ -2,7 +2,7 @@
 // src/components/ads/ProductDetail/AdGallery.tsx
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
+import SafeImage from "@/src/components/SafeImage";
 import { ImageOff } from "lucide-react";
 
 interface AdImage {
@@ -36,15 +36,12 @@ export default function AdGallery({
       {/* Main image */}
       <div className="relative aspect-[4/3]">
         {mainImage ? (
-          <Image
+          <SafeImage
             src={mainImage}
             alt={title}
             fill
             priority
             className="object-cover"
-            // Correct sizes so Next.js never requests w=1920 for a detail image.
-            // On mobile it's full-width (100vw), on desktop it's the left column (~60%).
-            // Max meaningful size is 1080px — matches our next.config deviceSizes.
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 60vw"
           />
         ) : (
@@ -90,7 +87,7 @@ export default function AdGallery({
                     : "border-transparent hover:border-gray-300"
                 }`}
             >
-              <Image
+              <SafeImage
                 src={img.url}
                 alt={`thumb ${i}`}
                 fill

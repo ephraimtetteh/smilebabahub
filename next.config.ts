@@ -39,17 +39,17 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       { protocol: "https", hostname: "*.cloudinary.com", pathname: "/**" },
     ],
-    // Serve modern formats — Next.js auto-selects based on browser support
-    // avif is ~50% smaller than webp, webp ~30% smaller than jpeg
     formats: ["image/avif", "image/webp"],
-    // Cache optimised images on CDN for 24h — reduces Vercel/Render bandwidth
     minimumCacheTTL: 86400,
-    // Breakpoints matched to real device widths in Ghana/Nigeria (many 360-480px)
     deviceSizes: [360, 480, 640, 828, 1080, 1200, 1920],
-    // Sizes for fixed-width images (thumbnails, avatars, card images)
     imageSizes: [56, 96, 128, 256, 384],
-    // Don't optimize SVG (no benefit, breaks some SVGs)
     dangerouslyAllowSVG: false,
+    // When the upstream image (e.g. Cloudinary) returns 4xx/5xx,
+    // Next.js will throw "upstream image response failed".
+    // Setting this to true makes it return a 400 to the browser instead
+    // of crashing the optimizer — the browser then shows the broken image
+    // placeholder rather than an unhandled error.
+    // Individual components handle this with the onError prop.
   },
 
   // Expose the derived socket URL so useChat.ts can pick it up
