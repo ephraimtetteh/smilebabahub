@@ -34,6 +34,7 @@ export type AdFormData = {
   deliveryNote: string;
 
   // ── Step 4: Location ───────────────────────────────────────────────────
+  country: string; // "Ghana" | "Nigeria" — set from useViewCountry
   region: string;
   city: string;
   address: string;
@@ -66,6 +67,7 @@ export const EMPTY_AD_FORM: AdFormData = {
   deliveryFee: "",
   deliveryNote: "",
   region: "",
+  country: "Ghana",
   city: "",
   address: "",
   name: "",

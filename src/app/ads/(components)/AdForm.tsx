@@ -1,11 +1,28 @@
 "use client";
 
 // src/components/ads/AdForm.tsx
+// Fully dynamic for Ghana 🇬🇭 and Nigeria 🇳🇬.
+// All country-specific content (regions, currency, phone format, placeholders,
+// city examples, address examples) switches with the active country from
+// useViewCountry — no stale user.currency reads.
+
 import React, { useState, useCallback, useEffect, useRef, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "react-toastify";
-import { Camera, Globe, Home, Wrench, Sparkles, ImageOff, AlertTriangle } from "lucide-react";
+import {
+  Camera,
+  Globe,
+  Home,
+  Wrench,
+  Sparkles,
+  ImageOff,
+  AlertTriangle,
+  X,
+  UtensilsCrossed,
+  CheckCircle2,
+  Truck,
+} from "lucide-react";
 import { AdFormData, EMPTY_AD_FORM } from "@/src/types/adForm.types";
 import {
   AdCondition,
@@ -15,10 +32,95 @@ import {
   AdImage,
 } from "@/src/types/ad.types";
 import { useAppSelector } from "@/src/app/redux";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { uploadManyToCloudinary } from "@/src/utils/uploadToCloudinary";
 
+// ── Country config — everything that differs between Ghana and Nigeria ──────
+const COUNTRY_CONFIG = {
+  Ghana: {
+    currency: "GHS" as AdCurrency,
+    sym: "₵",
+    flag: "🇬🇭",
+    regionLabel: "Region",
+    regionPlaceholder: "Select region",
+    regions: [
+      "Greater Accra",
+      "Ashanti",
+      "Western",
+      "Eastern",
+      "Central",
+      "Northern",
+      "Upper East",
+      "Upper West",
+      "Volta",
+      "Brong-Ahafo",
+      "Western North",
+      "Ahafo",
+      "Bono East",
+      "Oti",
+      "North East",
+      "Savannah",
+    ],
+    cityPlaceholder: "e.g. Tema, Labone, Kumasi",
+    addressPlaceholder: "e.g. Near Accra Mall, Spintex Road",
+    phonePlaceholder: "+233 244 000 000",
+    whatsappPlaceholder: "+233 244 000 000",
+    deliveryNotePlaceholder: "e.g. Free in Accra",
+  },
+  Nigeria: {
+    currency: "NGN" as AdCurrency,
+    sym: "₦",
+    flag: "🇳🇬",
+    regionLabel: "State",
+    regionPlaceholder: "Select state",
+    regions: [
+      "Lagos",
+      "Abuja FCT",
+      "Kano",
+      "Oyo",
+      "Rivers",
+      "Kaduna",
+      "Delta",
+      "Ogun",
+      "Anambra",
+      "Imo",
+      "Plateau",
+      "Edo",
+      "Borno",
+      "Enugu",
+      "Katsina",
+      "Adamawa",
+      "Cross River",
+      "Akwa Ibom",
+      "Sokoto",
+      "Kwara",
+      "Osun",
+      "Ondo",
+      "Bauchi",
+      "Niger",
+      "Gombe",
+      "Kebbi",
+      "Zamfara",
+      "Yobe",
+      "Taraba",
+      "Ebonyi",
+      "Ekiti",
+      "Nassarawa",
+      "Bayelsa",
+      "Jigawa",
+      "Benue",
+      "Abia",
+      "Kogi",
+    ],
+    cityPlaceholder: "e.g. Ikeja, Lekki, Victoria Island",
+    addressPlaceholder: "e.g. Near Ikeja City Mall, Allen Avenue",
+    phonePlaceholder: "+234 801 000 0000",
+    whatsappPlaceholder: "+234 801 000 0000",
+    deliveryNotePlaceholder: "e.g. Free on Lagos Island",
+  },
+} as const;
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// ── Step config ─────────────────────────────────────────────────────────────
 const STEPS = [
   "Basic info",
   "Photos",
@@ -35,7 +137,7 @@ const MAIN_CATEGORIES = [
   {
     id: "food",
     label: "Food",
-    icon: <Home size={18} className="text-orange-500" />,
+    icon: <UtensilsCrossed size={18} className="text-orange-500" />,
   },
   {
     id: "apartments",
@@ -96,65 +198,7 @@ const CONDITIONS: { id: AdCondition; label: string; icon: React.ReactNode }[] =
     },
   ];
 
-const GH_REGIONS = [
-  "Greater Accra",
-  "Ashanti",
-  "Western",
-  "Eastern",
-  "Central",
-  "Northern",
-  "Upper East",
-  "Upper West",
-  "Volta",
-  "Brong-Ahafo",
-  "Western North",
-  "Ahafo",
-  "Bono East",
-  "Oti",
-  "North East",
-  "Savannah",
-];
-const NG_STATES = [
-  "Lagos",
-  "Abuja FCT",
-  "Kano",
-  "Oyo",
-  "Rivers",
-  "Kaduna",
-  "Delta",
-  "Ogun",
-  "Anambra",
-  "Imo",
-  "Plateau",
-  "Edo",
-  "Borno",
-  "Enugu",
-  "Katsina",
-  "Adamawa",
-  "Cross River",
-  "Akwa Ibom",
-  "Sokoto",
-  "Kwara",
-  "Osun",
-  "Ondo",
-  "Bauchi",
-  "Niger",
-  "Gombe",
-  "Kebbi",
-  "Zamfara",
-  "Yobe",
-  "Taraba",
-  "Ebonyi",
-  "Ekiti",
-  "Nassarawa",
-  "Bayelsa",
-  "Jigawa",
-  "Benue",
-  "Abia",
-  "Kogi",
-];
-
-// ── Styles ─────────────────────────────────────────────────────────────────
+// ── Styles ──────────────────────────────────────────────────────────────────
 const inputBase =
   "w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 bg-white outline-none transition";
 const inputNormal = `${inputBase} border-gray-200 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400`;
@@ -162,7 +206,7 @@ const inputError = `${inputBase} border-red-400 focus:ring-2 focus:ring-red-300 
 const labelCls = "block text-xs font-semibold text-gray-500 mb-1.5";
 const errMsg = "flex items-center gap-1 text-xs text-red-500 mt-1";
 
-// ── Field wrapper ──────────────────────────────────────────────────────────
+// ── Field wrapper ────────────────────────────────────────────────────────────
 const Field = memo(function Field({
   label,
   error,
@@ -185,7 +229,7 @@ const Field = memo(function Field({
       {children}
       {error && (
         <p className={errMsg}>
-          <AlertTriangle size={12} className="inline mr-1" />
+          <AlertTriangle size={11} className="inline mr-1 flex-shrink-0" />
           {error}
         </p>
       )}
@@ -196,7 +240,7 @@ const Field = memo(function Field({
   );
 });
 
-// ── Step bar ───────────────────────────────────────────────────────────────
+// ── Step bar ─────────────────────────────────────────────────────────────────
 function StepBar({ current }: { current: number }) {
   return (
     <div className="mb-6">
@@ -240,7 +284,7 @@ function StepBar({ current }: { current: number }) {
   );
 }
 
-// ── Image slot ─────────────────────────────────────────────────────────────
+// ── Image slot ───────────────────────────────────────────────────────────────
 function ImageSlot({
   file,
   previewUrl,
@@ -268,7 +312,6 @@ function ImageSlot({
   }, [file]);
 
   const src = objUrl ?? previewUrl;
-
   return (
     <div
       onClick={() => ref.current?.click()}
@@ -291,9 +334,9 @@ function ImageSlot({
               onRemove(index);
             }}
             className="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full
-              text-[10px] flex items-center justify-center hover:bg-red-500 transition"
+              flex items-center justify-center hover:bg-red-500 transition"
           >
-            ✕
+            <X size={10} />
           </button>
           {index === 0 && (
             <span
@@ -325,7 +368,7 @@ function ImageSlot({
   );
 }
 
-// ── Progress bar ───────────────────────────────────────────────────────────
+// ── Progress bar ─────────────────────────────────────────────────────────────
 function UploadProgress({
   progress,
   label,
@@ -350,7 +393,7 @@ function UploadProgress({
   );
 }
 
-// ── Success screen ─────────────────────────────────────────────────────────
+// ── Success screen ────────────────────────────────────────────────────────────
 function SuccessScreen({
   adId,
   onPostAnother,
@@ -359,16 +402,16 @@ function SuccessScreen({
   onPostAnother: () => void;
 }) {
   return (
-    <div className="max-w-xl mx-auto px-4 py-10 text-center pt-20">
+    <div className="max-w-xl mx-auto px-4 py-10 text-center">
       <div
         className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center
-        text-4xl mx-auto mb-5 shadow-md shadow-green-100"
+        mx-auto mb-5 shadow-md shadow-green-100"
       >
-        🎉
+        <CheckCircle2 size={36} className="text-green-600" />
       </div>
       <h2 className="text-2xl font-black text-gray-900 mb-2">Ad posted!</h2>
       <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-        Your ad is now under review and will go live once approved.
+        Your ad is now live and visible to buyers in your area.
       </p>
       <div className="flex flex-col gap-3 max-w-xs mx-auto">
         {adId !== "pending" && (
@@ -387,13 +430,6 @@ function SuccessScreen({
         >
           My ads dashboard
         </Link>
-        <Link
-          href="/ads"
-          className="w-full py-3 bg-white border border-gray-200 text-gray-700
-            font-semibold rounded-2xl text-sm hover:bg-gray-50 transition"
-        >
-          Browse all ads
-        </Link>
         <button
           onClick={onPostAnother}
           className="text-sm text-gray-400 hover:text-gray-600 transition mt-1"
@@ -405,7 +441,7 @@ function SuccessScreen({
   );
 }
 
-// ── Card wrapper — defined OUTSIDE AdForm so it never remounts on re-render ──
+// ── Card wrapper ──────────────────────────────────────────────────────────────
 function Card({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 space-y-5">
@@ -414,12 +450,10 @@ function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ── AdForm props ───────────────────────────────────────────────────────────
+// ── AdForm props ──────────────────────────────────────────────────────────────
 interface AdFormProps {
   initialValues?: Partial<AdFormData>;
-  // For edit mode: existing uploaded image URLs [{url, publicId, isCover}]
   existingImages?: AdImage[];
-  // Called after Cloudinary upload with the final image array + form data
   onSubmit: (
     images: AdImage[],
     data: AdFormData,
@@ -429,7 +463,7 @@ interface AdFormProps {
   mode?: "create" | "edit";
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
 export default function AdForm({
   initialValues,
   existingImages = [],
@@ -439,9 +473,23 @@ export default function AdForm({
   mode = "create",
 }: AdFormProps) {
   const user = useAppSelector((s) => s.auth.user);
-  const userCurrency = (user?.currency ?? "GHS") as AdCurrency;
-  const sym = userCurrency === "NGN" ? "₦" : "₵";
-  const regions = userCurrency === "NGN" ? NG_STATES : GH_REGIONS;
+
+  // ── Always read country from useViewCountry — never from user.currency ──
+  // This is the fix: user.currency may be stale in the DB ("GHS" for a Nigerian).
+  // useViewCountry resolves: manual pick → login country → IP detection → Ghana.
+  const { country, currency, sym, isNigeria } = useViewCountry();
+  const cfg = COUNTRY_CONFIG[country]; // all country-specific strings in one place
+
+  // When country changes mid-session (e.g. Nigerian switches to Ghana),
+  // sync the form's currency field so the DB gets the right value.
+  const [form, setForm] = useState<AdFormData>(() => ({
+    ...EMPTY_AD_FORM,
+    currency: cfg.currency,
+    country,
+    name: user?.username ?? "",
+    phone: user?.phone ?? "",
+    ...initialValues,
+  }));
 
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -452,19 +500,21 @@ export default function AdForm({
   const submitRef = useRef(false);
   const errorsRef = useRef<Record<string, string>>({});
 
-  const emptyForm: AdFormData = {
-    ...EMPTY_AD_FORM,
-    currency: userCurrency,
-    name: user?.username ?? "",
-    phone: user?.phone ?? "",
-  };
+  // Sync currency + country + reset region whenever the country switcher changes.
+  // e.g. a Nigerian switches to Ghana — currency becomes GHS, region list changes.
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      currency: cfg.currency,
+      country,
+      // Reset region only if it's not valid for the new country
+      region: (cfg.regions as readonly string[]).includes(prev.region)
+        ? prev.region
+        : "",
+    }));
+  }, [country, cfg.currency]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [form, setForm] = useState<AdFormData>({
-    ...emptyForm,
-    ...initialValues,
-  });
-
-  // ── Single updater — clears error in ref, one setState per keystroke ───
+  // ── Single updater ────────────────────────────────────────────────────────
   const set = <K extends keyof AdFormData>(k: K, v: AdFormData[K]) => {
     if (errorsRef.current[k as string]) {
       delete errorsRef.current[k as string];
@@ -512,7 +562,7 @@ export default function AdForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Validation ─────────────────────────────────────────────────────────
+  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = (s: number): boolean => {
     const e: Record<string, string> = {};
     if (s === 1) {
@@ -523,9 +573,8 @@ export default function AdForm({
         e.description = "Description must be at least 20 characters";
     }
     if (s === 2) {
-      const hasNew = form.images.some(Boolean);
-      const hasExisting = existingImages.length > 0;
-      if (!hasNew && !hasExisting) e.images = "Add at least one photo";
+      if (!form.images.some(Boolean) && existingImages.length === 0)
+        e.images = "Add at least one photo";
     }
     if (s === 3) {
       const p = Number(form.price);
@@ -533,7 +582,8 @@ export default function AdForm({
         e.price = "Enter a valid price greater than 0";
     }
     if (s === 4) {
-      if (!form.region) e.region = "Select your region";
+      if (!form.region)
+        e.region = `Select your ${cfg.regionLabel.toLowerCase()}`;
       if (!form.name.trim()) e.name = "Your name is required";
       if (!form.phone.trim()) e.phone = "Phone number is required";
       else if (form.phone.replace(/\D/g, "").length < 9)
@@ -559,53 +609,40 @@ export default function AdForm({
     errorsRef.current = {};
   };
 
-  // ── Submit — Cloudinary upload first, then onSubmit ────────────────────
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
-    if (!validate(4)) return;
-    if (submitRef.current) return;
-    if (submitting) return;
-
+    if (!validate(4) || submitRef.current || submitting) return;
     submitRef.current = true;
     setSubmitting(true);
 
     try {
-      // ── Step 1: Upload new images to Cloudinary ────────────────────────
       const newFiles = form.images.filter((f): f is File => f !== null);
       let uploadedImages: AdImage[] = [];
 
       if (newFiles.length > 0) {
         setProgressLabel("Uploading photos…");
         setProgress(5);
-
-        const results = await uploadManyToCloudinary(newFiles, (pct) => {
-          // Scale cloudinary progress to 5-70%
-          setProgress(5 + Math.round(pct * 0.65));
-        });
-
+        const results = await uploadManyToCloudinary(newFiles, (pct) =>
+          setProgress(5 + Math.round(pct * 0.65)),
+        );
         uploadedImages = results.map((r, i) => ({
           url: r.url,
           publicId: r.publicId,
-          isCover: i === 0 && existingImages.length === 0, // first new image is cover only if no existing
+          isCover: i === 0 && existingImages.length === 0,
         }));
       }
 
-      // ── Step 2: Merge with existing images (edit mode) ─────────────────
-      // existingImages are already on Cloudinary — keep them as-is
-      // New uploads are appended after existing, unless no existing (create mode)
       const finalImages: AdImage[] =
         mode === "edit"
           ? [
-              // Keep existing images, re-mark cover
               ...existingImages.map((img, i) => ({
                 ...img,
                 isCover: i === 0 && uploadedImages.length === 0,
               })),
-              // Append new uploads (not cover since existing image is cover)
               ...uploadedImages.map((img) => ({ ...img, isCover: false })),
             ]
           : uploadedImages.map((img, i) => ({ ...img, isCover: i === 0 }));
 
-      // ── Step 3: Call parent with final image array + form data ─────────
       setProgressLabel("Saving your ad…");
       setProgress(75);
 
@@ -613,29 +650,25 @@ export default function AdForm({
 
       setProgress(100);
       setProgressLabel("");
-
-      toast.success(
-        mode === "edit"
-          ? "Ad updated successfully! ✓"
-          : "Ad posted successfully! 🎉",
-        { toastId: "ad-success", autoClose: 4000 },
-      );
-
+      toast.success(mode === "edit" ? "Ad updated!" : "Ad posted!", {
+        toastId: "ad-success",
+        autoClose: 4000,
+      });
       localStorage.removeItem("adFormDraft");
 
       if (mode === "create") {
-        // Use the _id from the returned ad object
         const adId = (result as any)?._id ?? (result as any)?.adId ?? "pending";
         setSuccessAdId(adId);
       }
     } catch (err: any) {
       setProgress(0);
       setProgressLabel("");
-      const msg =
+      toast.error(
         err?.response?.data?.message ??
-        err?.message ??
-        "Something went wrong. Please try again.";
-      toast.error(msg, { toastId: "ad-error", autoClose: 5000 });
+          err?.message ??
+          "Something went wrong. Please try again.",
+        { toastId: "ad-error", autoClose: 5000 },
+      );
     } finally {
       setSubmitting(false);
       submitRef.current = false;
@@ -645,24 +678,46 @@ export default function AdForm({
 
   const handlePostAnother = useCallback(() => {
     setSuccessAdId(null);
-    setForm({ ...emptyForm });
+    setForm({
+      ...EMPTY_AD_FORM,
+      currency: cfg.currency,
+      country,
+      name: user?.username ?? "",
+      phone: user?.phone ?? "",
+    });
     setStep(1);
     setErrors({});
     errorsRef.current = {};
     setProgress(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cfg.currency, country]);
 
   const isSubmitting = submitting || loading;
-
-  if (successAdId) {
+  if (successAdId)
     return (
       <SuccessScreen adId={successAdId} onPostAnother={handlePostAnother} />
     );
-  }
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6">
+      {/* Country context banner */}
+      <div
+        className="mb-4 flex items-center gap-2 px-4 py-2.5 bg-gray-50 border
+        border-gray-100 rounded-xl text-xs text-gray-500"
+      >
+        <span className="text-base">{cfg.flag}</span>
+        <span>
+          Posting in <strong className="text-gray-800">{country}</strong>
+          {" · "}Prices in{" "}
+          <strong className="text-gray-800">
+            {cfg.currency} ({cfg.sym})
+          </strong>
+        </span>
+        <span className="ml-auto text-gray-400 text-[10px]">
+          Wrong? Use the switcher in the nav ↑
+        </span>
+      </div>
+
       <StepBar current={step} />
 
       {/* ── Step 1: Basic info ── */}
@@ -769,7 +824,11 @@ export default function AdForm({
           >
             <input
               value={form.tags}
-              placeholder="e.g. iphone, apple, phone, accra, 256gb"
+              placeholder={
+                isNigeria
+                  ? "e.g. iphone, apple, phone, lagos, 256gb"
+                  : "e.g. iphone, apple, phone, accra, 256gb"
+              }
               className={inputNormal}
               onChange={(e) => set("tags", e.target.value)}
             />
@@ -786,7 +845,6 @@ export default function AdForm({
             error={errors.images}
             hint="First photo is the cover shown in search results. Up to 5 photos."
           >
-            {/* Show existing images in edit mode */}
             {mode === "edit" && existingImages.length > 0 && (
               <div className="mb-3">
                 <p className="text-xs text-gray-500 mb-2">
@@ -816,13 +874,8 @@ export default function AdForm({
                     </div>
                   ))}
                 </div>
-                <p className="text-[11px] text-gray-400 mt-1">
-                  To replace photos, add new ones below. New photos will be
-                  appended.
-                </p>
               </div>
             )}
-
             <div className="grid grid-cols-3 gap-2 mt-1">
               {form.images.map((file, i) => (
                 <ImageSlot
@@ -835,10 +888,9 @@ export default function AdForm({
                 />
               ))}
             </div>
-
             {form.images.filter(Boolean).length > 0 && (
               <p className="text-xs text-green-600 font-medium mt-2">
-                ✓ {form.images.filter(Boolean).length} new photo
+                ✓ {form.images.filter(Boolean).length} photo
                 {form.images.filter(Boolean).length !== 1 ? "s" : ""} ready to
                 upload
               </p>
@@ -863,13 +915,13 @@ export default function AdForm({
       {step === 3 && (
         <Card>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Price" required error={errors.price}>
+            <Field label={`Price (${cfg.sym})`} required error={errors.price}>
               <div className="relative">
                 <span
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400
                   text-sm font-semibold pointer-events-none"
                 >
-                  {sym}
+                  {cfg.sym}
                 </span>
                 <input
                   type="number"
@@ -898,27 +950,25 @@ export default function AdForm({
             </Field>
           </div>
 
-          <div>
-            <label
-              className="flex items-center gap-3 cursor-pointer p-3 rounded-xl
-              border border-gray-100 hover:border-yellow-300 hover:bg-yellow-50 transition"
-            >
-              <input
-                type="checkbox"
-                checked={form.delivery}
-                onChange={(e) => set("delivery", e.target.checked)}
-                className="w-4 h-4 rounded accent-yellow-400"
-              />
-              <div>
-                <p className="text-sm font-semibold text-gray-800">
-                  Offer delivery 🚚
-                </p>
-                <p className="text-xs text-gray-400">
-                  Let buyers know you can deliver
-                </p>
-              </div>
-            </label>
-          </div>
+          <label
+            className="flex items-center gap-3 cursor-pointer p-3 rounded-xl
+            border border-gray-100 hover:border-yellow-300 hover:bg-yellow-50 transition"
+          >
+            <input
+              type="checkbox"
+              checked={form.delivery}
+              onChange={(e) => set("delivery", e.target.checked)}
+              className="w-4 h-4 rounded accent-yellow-400"
+            />
+            <div>
+              <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                <Truck size={15} className="text-blue-500" /> Offer delivery
+              </p>
+              <p className="text-xs text-gray-400">
+                Let buyers know you can deliver
+              </p>
+            </div>
+          </label>
 
           {form.delivery && (
             <>
@@ -936,13 +986,16 @@ export default function AdForm({
                 </select>
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label={`Delivery fee (${sym})`} hint="Enter 0 for free">
+                <Field
+                  label={`Delivery fee (${cfg.sym})`}
+                  hint="Enter 0 for free"
+                >
                   <div className="relative">
                     <span
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400
                       text-sm font-semibold pointer-events-none"
                     >
-                      {sym}
+                      {cfg.sym}
                     </span>
                     <input
                       type="number"
@@ -958,7 +1011,7 @@ export default function AdForm({
                 <Field label="Delivery note">
                   <input
                     value={form.deliveryNote}
-                    placeholder="e.g. Free in Accra"
+                    placeholder={cfg.deliveryNotePlaceholder}
                     className={inputNormal}
                     onChange={(e) => set("deliveryNote", e.target.value)}
                   />
@@ -973,24 +1026,26 @@ export default function AdForm({
       {step === 4 && (
         <Card>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Region" required error={errors.region}>
+            {/* Region/State — fully dynamic label and options */}
+            <Field label={cfg.regionLabel} required error={errors.region}>
               <select
                 value={form.region}
                 className={errors.region ? inputError : inputNormal}
                 onChange={(e) => set("region", e.target.value)}
               >
-                <option value="">Select region</option>
-                {regions.map((r) => (
+                <option value="">{cfg.regionPlaceholder}</option>
+                {cfg.regions.map((r) => (
                   <option key={r} value={r}>
                     {r}
                   </option>
                 ))}
               </select>
             </Field>
+
             <Field label="City / Area">
               <input
                 value={form.city}
-                placeholder="e.g. Tema, Labone"
+                placeholder={cfg.cityPlaceholder}
                 className={inputNormal}
                 onChange={(e) => set("city", e.target.value)}
               />
@@ -1003,7 +1058,7 @@ export default function AdForm({
           >
             <input
               value={form.address}
-              placeholder="e.g. Near Accra Mall, Spintex Road"
+              placeholder={cfg.addressPlaceholder}
               className={inputNormal}
               onChange={(e) => set("address", e.target.value)}
             />
@@ -1028,23 +1083,28 @@ export default function AdForm({
                   value={form.phone}
                   type="tel"
                   inputMode="tel"
-                  placeholder="+233 244 000 000"
+                  placeholder={cfg.phonePlaceholder}
                   className={errors.phone ? inputError : inputNormal}
                   onChange={(e) => set("phone", e.target.value)}
                   autoComplete="tel"
                 />
               </Field>
             </div>
-            <Field label="WhatsApp number" hint="Leave blank if same as phone">
+
+            <Field
+              label="WhatsApp number"
+              hint="Leave blank if same as phone number"
+            >
               <input
                 value={form.whatsapp}
                 type="tel"
                 inputMode="tel"
-                placeholder="Optional — +233 ..."
+                placeholder={cfg.whatsappPlaceholder}
                 className={inputNormal}
                 onChange={(e) => set("whatsapp", e.target.value)}
               />
             </Field>
+
             <label
               className="flex items-center gap-3 cursor-pointer mt-3 p-3 rounded-xl
               border border-gray-100 hover:border-yellow-300 hover:bg-yellow-50 transition"
@@ -1057,7 +1117,7 @@ export default function AdForm({
               />
               <div>
                 <p className="text-sm font-semibold text-gray-800">
-                  Show phone number on listing
+                  Show phone on listing
                 </p>
                 <p className="text-xs text-gray-400">
                   Buyers will be able to see and call you
@@ -1082,7 +1142,6 @@ export default function AdForm({
             ← Back
           </button>
         )}
-
         {step < STEPS.length ? (
           <button
             type="button"
