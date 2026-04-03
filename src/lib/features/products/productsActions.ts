@@ -3,15 +3,45 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/src/lib/api/axios";
 
-// Always resolve to a valid country — never send an empty string to backend.
-// Priority: explicit arg → logged-in user.country → guestCountry → "Ghana"
-function resolveCountry(explicit: string | undefined, state: any): string {
-  return (
-    explicit ||
-    state?.auth?.user?.country ||
-    state?.auth?.guestCountry ||
-    "Ghana"
-  );
+// Resolve country for API calls — mirrors useViewCountry priority.
+// Returns null when country detection is still in-flight (guestDetecting=true)
+// so callers can skip the fetch rather than sending "Ghana" to a Nigerian user.
+function resolveCountry(
+  explicit: string | undefined,
+  state: any,
+): string | null {
+  const VALID = ["Ghana", "Nigeria"];
+
+  // If geo detection is in-flight for a guest, don't guess — skip the fetch.
+  // FeaturedProducts already guards on guestDetecting, but thunks called
+  // from elsewhere need this safety net too.
+  const isAuthenticated = state?.auth?.isAuthenticated;
+  const guestDetecting = state?.auth?.guestDetecting;
+  if (!isAuthenticated && guestDetecting) return null;
+
+  // 1. Manual CountrySwitcher selection wins over everything
+  const selected = state?.auth?.selectedCountry;
+  if (selected && VALID.includes(selected)) return selected;
+
+  // 2. Explicit caller override (e.g. URL query param)
+  if (explicit) {
+    if (VALID.includes(explicit)) return explicit;
+    const lc = explicit.toLowerCase();
+    if (lc.includes("nigeria")) return "Nigeria";
+    if (lc.includes("ghana")) return "Ghana";
+  }
+
+  // 3. Logged-in user's IP-detected country (validated — rejects stale values)
+  const userCountry = state?.auth?.user?.country;
+  if (userCountry && VALID.includes(userCountry)) return userCountry;
+
+  // 4. Guest IP-detected country
+  const guestCountry = state?.auth?.guestCountry;
+  if (guestCountry && VALID.includes(guestCountry)) return guestCountry;
+
+  // 5. Fallback — only reached before any detection has run at all
+  //    (first paint before GuestLocationDetector mounts)
+  return "Ghana";
 }
 
 // ── Fetch product feed ────────────────────────────────────────────────────────
@@ -20,6 +50,9 @@ export const fetchProducts = createAsyncThunk(
   async (filters: Record<string, any>, { rejectWithValue, getState }) => {
     try {
       const country = resolveCountry(filters.country, getState());
+      // null means geo detection is in-flight — abort to avoid fetching with wrong country
+      if (country === null) return rejectWithValue("detecting");
+
       const params = Object.fromEntries(
         Object.entries({ ...filters, country }).filter(
           ([, v]) => v !== undefined && v !== "",
@@ -47,8 +80,9 @@ export const fetchFeaturedProducts = createAsyncThunk(
     { rejectWithValue, getState },
   ) => {
     try {
-      // Always resolve — never send empty country to backend
       const resolvedCountry = resolveCountry(country, getState());
+      // null means geo detection is in-flight — wait for it to complete
+      if (resolvedCountry === null) return rejectWithValue("detecting");
 
       const params: Record<string, any> = {
         country: resolvedCountry,

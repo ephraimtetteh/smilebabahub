@@ -3,14 +3,35 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/src/lib/api/axios";
 
-// Always resolve to a valid country — never send empty string to backend.
-function resolveCountry(explicit: string | undefined, state: any): string {
-  return (
-    explicit ||
-    state?.auth?.user?.country ||
-    state?.auth?.guestCountry ||
-    "Ghana"
-  );
+// Resolve country for API calls — mirrors useViewCountry priority.
+// Returns null when geo detection is in-flight so callers skip the fetch.
+function resolveCountry(
+  explicit: string | undefined,
+  state: any,
+): string | null {
+  const VALID = ["Ghana", "Nigeria"];
+
+  const isAuthenticated = state?.auth?.isAuthenticated;
+  const guestDetecting = state?.auth?.guestDetecting;
+  if (!isAuthenticated && guestDetecting) return null;
+
+  const selected = state?.auth?.selectedCountry;
+  if (selected && VALID.includes(selected)) return selected;
+
+  if (explicit) {
+    if (VALID.includes(explicit)) return explicit;
+    const lc = explicit.toLowerCase();
+    if (lc.includes("nigeria")) return "Nigeria";
+    if (lc.includes("ghana")) return "Ghana";
+  }
+
+  const userCountry = state?.auth?.user?.country;
+  if (userCountry && VALID.includes(userCountry)) return userCountry;
+
+  const guestCountry = state?.auth?.guestCountry;
+  if (guestCountry && VALID.includes(guestCountry)) return guestCountry;
+
+  return "Ghana";
 }
 
 // ── Fetch public feed ─────────────────────────────────────────────────────────
@@ -19,6 +40,8 @@ export const fetchAds = createAsyncThunk(
   async (filters: Record<string, any>, { rejectWithValue, getState }) => {
     try {
       const country = resolveCountry(filters.country, getState());
+      if (country === null) return rejectWithValue("detecting");
+
       const params = Object.fromEntries(
         Object.entries({ ...filters, country }).filter(
           ([, v]) => v !== undefined && v !== "",

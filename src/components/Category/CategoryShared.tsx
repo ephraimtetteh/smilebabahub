@@ -43,6 +43,7 @@ import {
 
 import FeaturedProducts from "@/src/components/FeaturedProducts";
 import { useAds } from "@/src/hooks/useAds";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { useAppSelector } from "@/src/app/redux";
 import { Ad } from "@/src/types/ad.types";
 
@@ -304,12 +305,19 @@ export function CategoryQuickLinks({
   links: CategoryLink[];
   country?: string;
 }) {
+  // Build the correct query string — use ? if no query yet, & if one exists
+  function buildHref(base: string, c?: string): string {
+    if (!c) return base;
+    const hasQuery = base.includes("?");
+    return `${base}${hasQuery ? "&" : "?"}country=${encodeURIComponent(c)}`;
+  }
+
   return (
     <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3">
       {links.map((cat) => (
         <Link
           key={cat.href}
-          href={`${cat.href}${country ? `&country=${country}` : ""}`}
+          href={buildHref(cat.href, country)}
           className="flex flex-col items-center gap-2 bg-white rounded-2xl
             border border-gray-100 shadow-sm py-3.5 px-2 hover:border-yellow-300
             hover:shadow-md transition group text-center"
@@ -367,11 +375,12 @@ export function CategoryLandingLayout({
   } = config;
 
   const { ads, feedLoading, loadAds, userCountry, userCurrency } = useAds();
+  const { guestDetecting } = useViewCountry();
 
-  // Fetch on mount and whenever country changes — no auth gate.
-  // userCountry always resolves to something (Ghana fallback) so this
-  // fires immediately for every visitor regardless of login state.
+  // Wait for country detection before fetching — prevents Nigerian users
+  // from getting Ghana listings on first load
   useEffect(() => {
+    if (guestDetecting) return;
     loadAds({
       country: userCountry as any,
       category,
@@ -380,7 +389,7 @@ export function CategoryLandingLayout({
       limit: 24,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userCountry]);
+  }, [userCountry, guestDetecting]);
 
   const bestSelling = [...ads]
     .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
@@ -394,11 +403,12 @@ export function CategoryLandingLayout({
     .slice(0, 7);
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 pt-30">
+    <div className="w-full min-h-screen bg-gray-50">
       {showRadio && <Radio />}
 
       <div
-        className="flex flex-col gap-10 py-10"
+        className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12
+        flex flex-col gap-10 py-10"
       >
         <CountryChip
           country={userCountry}
