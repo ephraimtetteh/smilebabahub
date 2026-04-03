@@ -108,7 +108,7 @@ export default function MarketplaceLayout({
       />
 
       {/* SEO header — visible to crawlers and users */}
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-20 sm:pt-8">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-20 sm:pt-8 mt-10">
         <div className="max-w-5xl mx-auto">
           {/* Breadcrumb */}
           <nav aria-label="breadcrumb" className="mb-3">
