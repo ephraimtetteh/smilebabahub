@@ -1,91 +1,97 @@
-'use client'
+"use client";
+// src/app/chat/page.tsx
+// Full-page chat — left sidebar (conversations) + right panel (active chat).
+// On mobile: shows one panel at a time.
 
-import { assets } from '@/src/assets/assets';
-import Button from '@/src/components/Button';
-import ChatRoom from '@/src/components/ChatRoom'
-import Image from 'next/image';
-import { useState } from 'react';
-import { IoChatboxEllipsesOutline, IoCloseOutline } from "react-icons/io5";
+import React, { useState } from "react";
+import { useAppSelector } from "@/src/app/redux";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-const MessagePage = () => {
+import { MessageCircle } from "lucide-react";
+import ProtectedRoute from "@/src/components/ProtectRoute";
+import ConversationList from "@/src/components/Chat/ChatConversation";
+import ChatWindow from "@/src/components/Chat/ChatWindow";
 
-  const [openChat, setOpenChat] = useState(true)
-  const [messageRead, setMessageRead] = useState(false)
+export default function ChatPage() {
+  const user = useAppSelector((s) => s.auth.user);
+  const router = useRouter();
+
+  const [selected, setSelected] = useState<{
+    otherId: string;
+    otherName: string;
+    otherAvatar?: string;
+  } | null>(null);
+
+  // Read ?with= query param so ProductDetails can deep-link to a chat
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const withId = params.get("with");
+    const withName = params.get("name") ?? "User";
+    if (withId) setSelected({ otherId: withId, otherName: withName });
+  }, []);
+
   return (
-    <article className="flex flex-col gap-6 py-4 sm:py-6 px-4 sm:px-6 lg:px-8 border border-gray-200 rounded-xl">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold">Notifications</h1>
-
-        <Button
-          text="Mark All as Read"
-          icon={<IoChatboxEllipsesOutline />}
-          className="bg-transparent border border-[#ffc105] flex items-center gap-2 w-full sm:w-auto"
-          onClick={() => setMessageRead((prev) => !prev)}
-        />
-      </div>
-
-      {/* MAIN */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* NOTIFICATIONS */}
-        <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
-          <div
-            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded p-3 ${
-              messageRead ? "bg-[#ffc10561]" : "bg-[#ffc105]"
-            }`}
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 pt-20">
+        <div
+          className="max-w-6xl mx-auto h-[calc(100vh-80px)] flex overflow-hidden
+          rounded-2xl border border-gray-100 shadow-sm"
+        >
+          {/* ── Conversation sidebar ── */}
+          <aside
+            className={`w-full sm:w-80 flex-shrink-0 border-r border-gray-100
+            bg-white overflow-hidden flex flex-col
+            ${selected ? "hidden sm:flex" : "flex"}`}
           >
-            <div
-              className="flex items-start gap-3 cursor-pointer"
-              onClick={() => setMessageRead(!messageRead)}
-            >
-              <span
-                className={`p-1.5 rounded-full ${
-                  messageRead ? "bg-black/20" : "bg-black/50"
-                }`}
-              ></span>
+            <ConversationList
+              selectedRoom={selected?.otherId}
+              onSelect={(id, name, avatar) =>
+                setSelected({
+                  otherId: id,
+                  otherName: name,
+                  otherAvatar: avatar,
+                })
+              }
+            />
+          </aside>
 
-              <Image
-                src={assets.profile_icon}
-                alt="profile"
-                width={35}
-                height={35}
-                className="rounded-full"
+          {/* ── Chat panel ── */}
+          <main
+            className={`flex-1 flex flex-col overflow-hidden
+            ${selected ? "flex" : "hidden sm:flex"}`}
+          >
+            {selected ? (
+              <ChatWindow
+                key={selected.otherId}
+                otherId={selected.otherId}
+                otherName={selected.otherName}
+                otherAvatar={selected.otherAvatar}
+                onClose={() => setSelected(null)}
               />
-
-              <div className="text-sm">
-                <h3 className="font-medium">
-                  Example notification from customer
+            ) : (
+              <div
+                className="flex-1 flex flex-col items-center justify-center
+                text-center p-8 bg-gray-50"
+              >
+                <div
+                  className="w-20 h-20 bg-white rounded-full shadow-sm
+                  flex items-center justify-center mb-4"
+                >
+                  <MessageCircle size={36} className="text-[#ffc105]" />
+                </div>
+                <h3 className="text-xl font-black text-gray-800 mb-2">
+                  Your messages
                 </h3>
-                <p className="text-xs text-gray-700">example@gmail.com</p>
+                <p className="text-sm text-gray-500 max-w-xs">
+                  Select a conversation from the sidebar, or start one from any
+                  seller&apos;s listing page.
+                </p>
               </div>
-            </div>
-
-            <div className="text-xs text-right">
-              <p>12:20pm</p>
-              <p>11-11-25</p>
-            </div>
-          </div>
-        </div>
-
-        {/* CHAT */}
-        <div className="w-full">
-          {!openChat ? (
-            <Button
-              text="Start a Chat"
-              icon={<IoChatboxEllipsesOutline />}
-              className="bg-transparent border border-[#ffc105] w-full flex items-center justify-center gap-2 py-3"
-              onClick={() => setOpenChat(true)}
-            />
-          ) : (
-            <ChatRoom
-              icon={<IoCloseOutline />}
-              onClose={() => setOpenChat(false)}
-            />
-          )}
+            )}
+          </main>
         </div>
       </div>
-    </article>
+    </ProtectedRoute>
   );
 }
-
-export default MessagePage
