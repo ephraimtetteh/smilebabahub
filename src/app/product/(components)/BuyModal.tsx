@@ -1,6 +1,7 @@
 "use client";
 // src/components/ads/ProductDetail/BuyModal.tsx
 
+import Image from "next/image";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,10 +10,9 @@ import { Package, CheckCircle2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
 import axiosInstance from "@/src/lib/api/axios";
-import { useViewCountry } from "@/src/hooks/useViewCountry";
 import ModalShell from "./ModalShell";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { BtnSpinner } from "../../ads/(components)/AdUI";
-import Image from "next/image";
 import { ModalProps } from "@/src/types/ad.types";
 
 export default function BuyModal({ ad, sym, onClose }: ModalProps) {
@@ -49,11 +49,17 @@ export default function BuyModal({ ad, sym, onClose }: ModalProps) {
       dispatch(
         addToCart({
           id: ad._id,
+          adId: ad._id,
           title: ad.title,
           price: ad.price?.amount ?? 0,
           image: ad.images?.[0]?.url ?? "",
           category: ad.category?.main ?? "marketplace",
+          currency: ad.price?.currency ?? "GHS",
           amount: 1,
+          vendorId: String(ad.seller?._id ?? ad.postedBy ?? ""),
+          vendorName: ad.seller?.name ?? ad.contact?.name ?? "Vendor",
+          deliveryAvailable: ad.delivery?.available ?? false,
+          deliveryFee: ad.delivery?.fee ?? 0,
         }),
       );
       dispatch(calculateTotals());
@@ -111,14 +117,14 @@ export default function BuyModal({ ad, sym, onClose }: ModalProps) {
       <div className="p-5 space-y-4">
         {/* Product snapshot */}
         <div className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
-          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+          <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
             {ad.images?.[0]?.url ? (
               <Image
                 src={ad.images[0].url}
                 alt={ad.title}
-                className="w-full h-full object-cover"
-                width={14}
-                height={14}
+                fill
+                sizes="56px"
+                className="object-cover"
               />
             ) : (
               <span className="block w-full h-full bg-gray-200 rounded-xl" />

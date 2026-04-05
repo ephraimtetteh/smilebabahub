@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, ShoppingCart, ChevronDown } from "lucide-react";
+import {
+  Menu,
+  X,
+  ShoppingCart,
+  ChevronDown,
+  LayoutDashboard,
+  Megaphone,
+} from "lucide-react";
 import Image from "next/image";
 import { assets } from "../assets/assets";
 import UserMenu from "./UserMenu";
@@ -24,7 +31,6 @@ function NavDropdown({ cat }: { cat: NavCategory }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node))
@@ -109,7 +115,7 @@ function NavDropdown({ cat }: { cat: NavCategory }) {
   );
 }
 
-// ── Mobile nav item (accordion) ────────────────────────────────────────────
+// ── Mobile nav item ────────────────────────────────────────────────────────
 function MobileNavItem({
   cat,
   onNavigate,
@@ -156,7 +162,6 @@ function MobileNavItem({
           className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </button>
-
       {open && (
         <div className="mt-2 pl-4 border-l border-white/10 space-y-2">
           <Link
@@ -190,12 +195,22 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { amount } = useAppSelector((state) => state.cart);
-  const { user } = useAppSelector((state) => state.auth);
   const router = useRouter();
   const { guard } = useSubscriptionGuard();
 
-  // Use universal country hook — works for guests, vendors, admins
+  // ── Auth state ──────────────────────────────────────────────────────────
+  const { user, isAdmin } = useAppSelector((state) => state.auth);
+
+  // ── Cart — derive total item count from cartItems array ─────────────────
+  // state.cart.amount does NOT exist — count is sum of item.amount values
+  const cartCount = useAppSelector((state) =>
+    (state.cart.cartItems ?? []).reduce(
+      (sum: number, item: any) => sum + (item.amount ?? 1),
+      0,
+    ),
+  );
+
+  // ── Country ─────────────────────────────────────────────────────────────
   const { country, currency, sym, isNigeria } = useViewCountry();
   const flag = country === "Nigeria" ? "🇳🇬" : "🇬🇭";
   const countryCode = country === "Nigeria" ? "NG" : "GH";
@@ -211,7 +226,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Lock body scroll when mobile menu open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => {
@@ -254,13 +268,36 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* ── Desktop nav — built from NAV_CATEGORIES config ── */}
+          {/* ── Desktop nav ── */}
           <div className="hidden lg:flex items-center gap-5 xl:gap-7 text-white">
             {visibleCategories.map((cat) => (
               <NavDropdown key={cat.href} cat={cat} />
             ))}
 
-            {/* Marketer link — always last, styled distinctly */}
+            {/* ── Ads link — always visible ── */}
+            <Link
+              href="/ads"
+              className="flex items-center gap-1.5 text-sm hover:text-yellow-400
+                transition"
+            >
+              <Megaphone size={14} />
+              All Ads
+            </Link>
+
+            {/* ── Admin dashboard — only for admins ── */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 text-sm text-purple-300
+                  hover:text-purple-200 transition border border-purple-400/30
+                  px-3 py-1 rounded-full hover:bg-purple-400/10"
+              >
+                <LayoutDashboard size={14} />
+                Admin
+              </Link>
+            )}
+
+            {/* Marketer link */}
             <Link
               href={MARKETER_LINK.href}
               className="flex items-center gap-1.5 text-yellow-400 hover:text-yellow-300
@@ -272,28 +309,6 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* ── Search ── */}
-          {/* <div
-            className="hidden md:flex items-center bg-white/10 border border-white/20
-            rounded-full px-3 py-1.5 gap-2 min-w-0"
-          >
-            <Image
-              src={assets.searchIcon}
-              alt="search"
-              width={16}
-              height={16}
-            />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch}
-              className="bg-transparent outline-none text-white text-sm w-32 lg:w-48
-                placeholder:text-white/40"
-            />
-          </div> */}
-
           {/* ── Right actions ── */}
           <div className="flex items-center gap-2 sm:gap-3">
             <button
@@ -304,26 +319,25 @@ export default function Navbar() {
               Post Ad
             </button>
 
-            {/* Cart */}
-            <div className="relative">
-              <Link href="/cart">
-                <ShoppingCart
-                  size={22}
-                  className="text-white hover:text-yellow-400 cursor-pointer transition"
-                />
-              </Link>
-              {amount > 0 && (
+            {/* ── Cart with live count ── */}
+            <Link href="/cart" className="relative" aria-label="Cart">
+              <ShoppingCart
+                size={22}
+                className="text-white hover:text-yellow-400 cursor-pointer transition"
+              />
+              {cartCount > 0 && (
                 <span
-                  className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4
-                  bg-yellow-400 text-black text-[10px] font-bold rounded-full
-                  flex items-center justify-center px-0.5 leading-none"
+                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px]
+                  bg-yellow-400 text-black text-[10px] font-black rounded-full
+                  flex items-center justify-center px-0.5 leading-none shadow-sm
+                  animate-in zoom-in duration-200"
                 >
-                  {amount > 9 ? "9+" : amount}
+                  {cartCount > 9 ? "9+" : cartCount}
                 </span>
               )}
-            </div>
+            </Link>
 
-            {/* Country switcher — available to everyone: guests, vendors, admins */}
+            {/* Country switcher */}
             <CountrySwitcher />
 
             {user && <ChatNavBadge />}
@@ -355,7 +369,6 @@ export default function Navbar() {
           className="flex flex-col items-center justify-start min-h-full
           gap-6 pt-20 pb-10 px-6"
         >
-          {/* Close */}
           <button
             onClick={closeMobile}
             className="absolute top-4 right-4 text-white p-2"
@@ -390,6 +403,31 @@ export default function Navbar() {
             <MobileNavItem key={cat.href} cat={cat} onNavigate={closeMobile} />
           ))}
 
+          {/* Ads */}
+          <Link
+            href="/ads"
+            onClick={closeMobile}
+            className="flex items-center gap-2 text-lg text-white
+              hover:text-yellow-400 transition"
+          >
+            <Megaphone size={18} className="text-white/70" />
+            All Ads
+          </Link>
+
+          {/* Admin — mobile, only for admins */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={closeMobile}
+              className="flex items-center gap-2 text-lg text-purple-300
+                hover:text-purple-200 transition border border-purple-400/30
+                px-6 py-2.5 rounded-full hover:bg-purple-400/10"
+            >
+              <LayoutDashboard size={18} />
+              Admin Dashboard
+            </Link>
+          )}
+
           {/* Marketer link */}
           <Link
             onClick={closeMobile}
@@ -413,8 +451,26 @@ export default function Navbar() {
             Post Ad
           </button>
 
-          {/* Country switcher in mobile menu */}
-          <div className="pt-2 border-t border-white/10">
+          {/* Cart — mobile quick access */}
+          <Link
+            href="/cart"
+            onClick={closeMobile}
+            className="flex items-center gap-2 text-white hover:text-yellow-400 transition"
+          >
+            <ShoppingCart size={18} className="text-white/70" />
+            <span className="text-base">Cart</span>
+            {cartCount > 0 && (
+              <span
+                className="bg-yellow-400 text-black text-[10px] font-black
+                px-2 py-0.5 rounded-full"
+              >
+                {cartCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Country switcher */}
+          <div className="pt-2 border-t border-white/10 w-full max-w-xs">
             <p className="text-xs text-white/40 mb-2 font-medium uppercase tracking-wider">
               Your market
             </p>
