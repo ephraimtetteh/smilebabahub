@@ -65,7 +65,7 @@ const LayoutShell = ({ children }: { children: React.ReactNode }) => {
     <>
       {navBarDispaly()}
       {children}
-      {!authPath && !vendor && <Footer />}
+      {!authPath && !vendor && !marketer && !admin && <Footer />}
     </>
   );
 };
