@@ -143,7 +143,7 @@ export default function MarketerLandingPage() {
       },
       {
         q: "Do I earn on renewals?",
-        a: "Yes. Every time a vendor you referred renews their subscription, you earn 20% of that payment.",
+        a: "Yes. Every time a vendor you referred renews their subscription, you earn 15% of that payment.",
       },
       {
         q: "Is there a minimum payout?",
