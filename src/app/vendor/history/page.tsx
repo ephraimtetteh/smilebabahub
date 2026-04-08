@@ -237,6 +237,7 @@ function SummaryStrip({
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function PurchaseHistoryPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [activePlan, setActivePlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -250,7 +251,12 @@ export default function PurchaseHistoryPage() {
     setError(null);
     axiosInstance
       .get("/payments/history")
-      .then((res) => setPurchases(res.data.purchases ?? []))
+      .then((res) => {
+        setPurchases(res.data.purchases ?? []);
+        // activePlan comes directly from User.subscription — always accurate
+        // even when there's no Purchase record yet (e.g. free plan or admin grant)
+        setActivePlan(res.data.activePlan ?? null);
+      })
       .catch(() =>
         setError("Failed to load purchase history. Please try again."),
       )
@@ -261,11 +267,13 @@ export default function PurchaseHistoryPage() {
     fetchHistory();
   }, []);
 
-  // Current active subscription (most recent active purchase)
-  const activePlan = purchases.find((p) => daysLeft(p.periodEnd) > 0);
+  // Fall back to finding active plan from purchases if API didn't return one
+  const resolvedActivePlan =
+    activePlan ??
+    purchases.find((p) => p.periodEnd && daysLeft(p.periodEnd) > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 pt-20">
       <div className="max-w-3xl mx-auto">
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-6">
@@ -292,7 +300,7 @@ export default function PurchaseHistoryPage() {
         </div>
 
         {/* ── Active plan banner ── */}
-        {activePlan && !loading && (
+        {resolvedActivePlan && !loading && (
           <div
             className="bg-gradient-to-r from-amber-50 to-yellow-50 border
             border-yellow-200 rounded-2xl p-4 mb-5 flex items-center
@@ -303,18 +311,28 @@ export default function PurchaseHistoryPage() {
                 className="w-10 h-10 rounded-xl bg-[#ffc105] flex items-center
                 justify-center"
               >
-                {PLAN_ICONS[activePlan.planId] ?? (
-                  <Star size={18} className="text-black" />
-                )}
+                {PLAN_ICONS[
+                  resolvedActivePlan.planId ?? resolvedActivePlan.plan
+                ] ?? <Star size={18} className="text-black" />}
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
                   <Sparkles size={13} className="text-yellow-600" />
-                  {activePlan.title}
+                  {resolvedActivePlan.title ??
+                    `${resolvedActivePlan.plan ?? resolvedActivePlan.planId} Plan`}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Active · expires {formatDate(activePlan.periodEnd)} (
-                  {daysLeft(activePlan.periodEnd)} days left)
+                  Active · expires{" "}
+                  {formatDate(
+                    resolvedActivePlan.periodEnd ??
+                      resolvedActivePlan.expiresAt,
+                  )}{" "}
+                  (
+                  {daysLeft(
+                    resolvedActivePlan.periodEnd ??
+                      resolvedActivePlan.expiresAt,
+                  )}{" "}
+                  days left)
                 </p>
               </div>
             </div>

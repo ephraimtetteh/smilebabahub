@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/src/lib/api/axios";
+import { validateEmailClient } from "@/src/utils/ValidateEmail";
 import { safeStorage } from "@/src/utils/safeStorage";
 
 export default function MarketerLoginPage() {
@@ -20,11 +21,19 @@ export default function MarketerLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Client-side email check before hitting the network
+    const emailCheck = validateEmailClient(form.email);
+    if (!emailCheck.valid) {
+      setError(emailCheck.reason ?? "Invalid email");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await axiosInstance.post("/marketers/login", form);
-  
+      // Save marketer token separately from vendor/user token
       safeStorage.set("marketerAccessToken", res.data.accessToken);
       router.push("/marketer/dashboard");
     } catch (err: unknown) {

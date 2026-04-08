@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import axiosInstance from "@/src/lib/api/axios";
+import { validateEmailClient } from "@/src/utils/ValidateEmail";
 
 type FormState = {
   name: string;
@@ -36,6 +37,13 @@ export default function MarketerRegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+      // Client-side email check before hitting the network
+        const emailCheck = validateEmailClient(form.email);
+        if (!emailCheck.valid) {
+          setError(emailCheck.reason ?? "Invalid email");
+          return;
+        }
 
     if (form.password !== form.confirm) {
       setError("Passwords do not match");

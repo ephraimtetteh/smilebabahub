@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../redux';
 import { login, register } from '@/src/lib/features/auth/authActions';
 import { useRouter } from "next/navigation";
 import { toast } from 'react-toastify';
+import { validateEmailClient } from '@/src/utils/ValidateEmail';
 
 const AuthRegister
  = () => {
@@ -47,6 +48,13 @@ const AuthRegister
     
 
     try {
+
+      // Client-side email check before hitting the network
+        const emailCheck = validateEmailClient(user.email);
+        if (!emailCheck.valid) {
+          setError(emailCheck.reason ?? "Invalid email");
+          return;
+        }
       
       if (!isValidPhone(user.phone)) {
         const message = "Please enter a valid phone number";
