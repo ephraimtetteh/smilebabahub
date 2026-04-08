@@ -87,16 +87,22 @@ export default function StoreTab() {
   const handleSave = async () => {
     let storeBanner = user?.storeBanner ?? "";
     let storeLogo = user?.storeLogo ?? "";
+
     if (bannerFile) {
       try {
         storeBanner = (await uploadToCloudinary(bannerFile)).url;
+        setBanner(storeBanner);
+        setBannerFile(null);
       } catch {}
     }
     if (logoFile) {
       try {
         storeLogo = (await uploadToCloudinary(logoFile)).url;
+        setLogo(storeLogo);
+        setLogoFile(null);
       } catch {}
     }
+
     await saveProfile({
       ...store,
       storeBanner,

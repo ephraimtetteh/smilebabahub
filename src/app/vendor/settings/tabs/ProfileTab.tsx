@@ -17,6 +17,8 @@ import {
 import { uploadToCloudinary } from "@/src/utils/uploadToCloudinary";
 import { useVendorSettings } from "@/src/hooks/useVendorSettings";
 
+
+
 const GH_REGIONS = [
   "Greater Accra",
   "Ashanti",
@@ -115,15 +117,21 @@ export default function ProfileTab() {
 
   const handleSave = async () => {
     let profilePicture = user?.profilePicture ?? "";
+
     if (avatarFile) {
       try {
-        const res = await uploadToCloudinary(avatarFile);
-        profilePicture = res.url;
+        const result = await uploadToCloudinary(avatarFile);
+        profilePicture = result.url;
+        setAvatar(profilePicture); // update preview immediately
+        setAvatarFile(null); // clear so re-save doesn't re-upload
       } catch {
-        /* keep existing */
+        // Keep existing picture — upload failed silently
       }
     }
-    await saveProfile({ ...form, profilePicture });
+
+    // Rename countryPref → country before sending to backend
+    const { countryPref, ...rest } = form;
+    await saveProfile({ ...rest, country: countryPref, profilePicture });
   };
 
   return (

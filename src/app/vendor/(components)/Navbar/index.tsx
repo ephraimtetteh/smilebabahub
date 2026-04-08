@@ -1,52 +1,66 @@
 "use client";
+// vendor/(components)/Navbar.tsx
 
 import { Bell, BellIcon, Menu, Settings, Sun } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { setIsDarkMode, setIsSidebarCollapsed } from "@/src/lib";
-import { assets } from "@/src/assets/assets";
 import NotificationBell from "../Notification";
+import SafeImage from "@/src/components/SafeImage";
 
 const COUNTRY_FLAGS: Record<string, string> = {
   Ghana: "🇬🇭",
   Nigeria: "🇳🇬",
 };
 
-function getFirstName(username: string = ''): string {
+function getFirstName(username = ""): string {
   const clean = username.replace(/_/g, "").trim();
-  const first = clean.split(" ")[0]
-  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
+  const first = clean.split(" ")[0];
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
+
+// Fallback avatar using the vendor's initials
+function InitialsAvatar({ username }: { username: string }) {
+  const initials = username
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+  return (
+    <div
+      className="w-9 h-9 rounded-full bg-[#ffc105] flex items-center
+      justify-center text-black text-sm font-black flex-shrink-0"
+    >
+      {initials || "V"}
+    </div>
+  );
 }
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
-  const isSidebarCollapsed = useAppSelector(
-    (state) => state.global.isSidebarCollapsed,
-  );
-  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const { user } = useAppSelector((state) => state.auth)
+  const isSidebarCollapsed = useAppSelector((s) => s.global.isSidebarCollapsed);
+  const isDarkMode = useAppSelector((s) => s.global.isDarkMode);
+  const { user } = useAppSelector((s) => s.auth);
+
   const flag = COUNTRY_FLAGS[user?.country ?? ""] ?? "";
-  const firstName = getFirstName(user?.username)
+  const firstName = getFirstName(user?.username);
   const countryCode =
     user?.currency === "NGN" ? "NG" : user?.currency === "GHS" ? "GH" : null;
 
-  const toggleSidebarCollapsed = () => {
-    dispatch(setIsSidebarCollapsed(!isSidebarCollapsed));
-  };
-
-  const toggleDarkMode = () => {
-    dispatch(setIsDarkMode(!isDarkMode));
-  };
+  // Use storeLogo if set, then profilePicture, then initials fallback
+  const avatarSrc = user?.storeLogo || user?.profilePicture || "";
 
   return (
-    <div className="w-full sticky top-0 backdrop-blur bg-white/80 flex justify-between items-center px-4 py-3 shadow-sm mb-6">
-      {/* left side */}
+    <div
+      className="w-full sticky top-0 backdrop-blur bg-white/80 flex
+      justify-between items-center px-4 py-3 shadow-sm mb-6 z-20"
+    >
+      {/* Left */}
       <div className="flex items-center gap-5">
         <button
           className="px-3 py-3 bg-gray-300 rounded-full hover:bg-blue-100"
-          onClick={toggleSidebarCollapsed}
+          onClick={() => dispatch(setIsSidebarCollapsed(!isSidebarCollapsed))}
         >
           <Menu className="w-4 h-4" />
         </button>
@@ -55,44 +69,71 @@ const Navbar = () => {
           <input
             type="search"
             placeholder="Start typing to search..."
-            className="pl-10 pr-4 py-2 w-40 md:w-80 border border-gray-300 bg-white rounded-lg focus:outline-none focus:border-blue-500"
+            className="pl-10 pr-4 py-2 w-40 md:w-80 border border-gray-300
+              bg-white rounded-lg focus:outline-none focus:border-blue-500"
           />
-
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div
+            className="absolute inset-y-0 left-0 pl-3 flex items-center
+            pointer-events-none"
+          >
             <BellIcon className="text-gray-500" size={18} />
           </div>
         </div>
       </div>
 
-      {/* right side */}
+      {/* Right */}
       <div className="flex items-center gap-5">
         <div className="hidden md:flex items-center gap-5">
-          {/* dark mode */}
-          <button onClick={toggleDarkMode}>
+          {/* Dark mode */}
+          <button onClick={() => dispatch(setIsDarkMode(!isDarkMode))}>
             <Sun className="cursor-pointer text-gray-500" size={22} />
           </button>
 
-          {/* notifications */}
+          {/* Notifications */}
           <div className="relative">
-            {/* <Bell className="cursor-pointer text-gray-500" size={22} />
-            <span className="absolute -top-2 -right-2 px-[0.4rem] py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
-              0
-            </span> */}
             <NotificationBell />
           </div>
 
           <hr className="h-6 border-gray-300" />
 
-          {/* profile */}
+          {/* Profile */}
           <div className="flex items-center gap-3 cursor-pointer">
-            <div className="w-9 h-9">
-              <Image src={assets.profile_icon} alt="profile" />
+            <div
+              className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0
+              border-2 border-[#ffc105]/30"
+            >
+              {avatarSrc ? (
+                <SafeImage
+                  src={avatarSrc}
+                  alt={user?.username ?? "profile"}
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-cover"
+                  fallbackIcon={
+                    <InitialsAvatar username={user?.username ?? ""} />
+                  }
+                />
+              ) : (
+                <InitialsAvatar username={user?.username ?? ""} />
+              )}
             </div>
-            <span className="font-semibold">{firstName}</span>
+
+            <div className="flex flex-col leading-tight">
+              <span className="font-semibold text-sm text-gray-800">
+                {firstName}
+              </span>
+              {user?.storeName && (
+                <span className="text-[10px] text-gray-400 truncate max-w-[100px]">
+                  {user.storeName}
+                </span>
+              )}
+            </div>
+
             {countryCode && (
               <span
-                className="hidden sm:inline text-[10px] bg-white/15 border border-white/20
-                px-1.5 py-0.5 rounded-full font-semibold tracking-wide"
+                className="hidden sm:inline text-[10px] bg-gray-100
+                border border-gray-200 px-1.5 py-0.5 rounded-full font-semibold
+                tracking-wide text-gray-600"
               >
                 {flag} {countryCode}
               </span>
@@ -100,8 +141,8 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* settings */}
-        <Link href={"/vendor/settings"}>
+        {/* Settings */}
+        <Link href="/vendor/settings">
           <Settings className="cursor-pointer text-gray-500" size={24} />
         </Link>
       </div>

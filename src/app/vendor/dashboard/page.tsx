@@ -4,12 +4,15 @@
 
 import React, { useEffect } from "react";
 import { LayoutDashboard, Sparkles } from "lucide-react";
+
 import { useAds } from "@/src/hooks/useAds";
 import { useAppSelector } from "@/src/app/redux";
-import ProtectedRoute from "@/src/components/ProtectRoute";
+import ExpiryModal from "../(components)/ExpiryModal";
 import FilterCards from "../(components)/FilterCards";
 import PerformanceMetrics from "../(components)/PerformanceMetrics";
 import VendorMessages from "../(components)/VendorMessages";
+import ProtectedRoute from "@/src/components/ProtectRoute";
+
 
 function DashboardInner() {
   const { loadMyAds } = useAds();
@@ -22,6 +25,9 @@ function DashboardInner() {
 
   return (
     <div className="px-3 sm:px-4 py-4 min-h-screen bg-gray-50">
+      {/* Expiry alert — shows once per session when vendor has expired/expiring ads */}
+      <ExpiryModal />
+
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
