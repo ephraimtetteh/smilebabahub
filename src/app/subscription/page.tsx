@@ -18,20 +18,21 @@ import axiosInstance from "@/src/lib/api/axios";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { useAppSelector } from "@/src/app/redux";
 
+
 // ── Pricing (mirrors config/pricing.js) ───────────────────────────────────────
 const PRICES: Record<string, Record<string, Record<string, number>>> = {
   Basic: { monthly: { GHS: 0, NGN: 0 }, yearly: { GHS: 0, NGN: 0 } },
   standard: {
-    monthly: { GHS: 99.99, NGN: 6500 },
-    yearly: { GHS: 1199.88, NGN: 78000 },
+    monthly: { GHS: 99.99, NGN: 650000 },
+    yearly: { GHS: 1199.88, NGN: 7800000 },
   },
   popular: {
-    monthly: { GHS: 249.99, NGN: 18000 },
-    yearly: { GHS: 2999.88, NGN: 216000 },
+    monthly: { GHS: 249.99, NGN: 1800000 },
+    yearly: { GHS: 2999.88, NGN: 21600000 },
   },
   premium: {
-    monthly: { GHS: 499.99, NGN: 49999 },
-    yearly: { GHS: 5999.88, NGN: 599999 },
+    monthly: { GHS: 499.99, NGN: 4999999 },
+    yearly: { GHS: 5999.88, NGN: 59999988 },
   },
 };
 
@@ -133,6 +134,7 @@ const Subscription = ({
   const currentPlanId = user?.subscription?.plan ?? null;
   const expiresAt = user?.subscription?.expiresAt ?? null;
   const currentBilling = user?.subscription?.billingCycle ?? null;
+  const REFERRAL_DISCOUNT_PCT = 20; // must match backend REFERRAL_DISCOUNT * 100
   const isSubscribed =
     !!currentPlanId && !!expiresAt && new Date(expiresAt) > new Date();
   const currentTier = PLAN_TIERS[currentPlanId ?? ""] ?? -1;
@@ -148,6 +150,21 @@ const Subscription = ({
   } | null>(null);
   const [referralError, setReferralError] = useState<string | null>(null);
   const [checkingCode, setCheckingCode] = useState(false);
+  // savedReferral: marketer who referred this user on the free plan.
+  // Shown on upgrade so the vendor knows they'll get credit automatically.
+  const savedReferralId = user?.subscription?.referredBy ?? null;
+  const [savedReferralName, setSavedReferralName] = useState<string | null>(
+    null,
+  );
+
+  // Look up the saved marketer name once on mount
+  useEffect(() => {
+    if (!savedReferralId) return;
+    axiosInstance
+      .get(`/marketers/referral/by-id/${savedReferralId}`)
+      .then((r) => setSavedReferralName(r.data.name ?? null))
+      .catch(() => {});
+  }, [savedReferralId]);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const [selectedPackage, setSelectedPackage] = useState(
@@ -487,8 +504,37 @@ const Subscription = ({
 
             {/* Referral code */}
             <div className="mt-3 mb-5">
-              <label className="block text-xs text-gray-400 mb-2.5">
-                Referral code (optional)
+              {/* Show saved referral notice on upgrade */}
+              {savedReferralId && !referralInfo && (
+                <div
+                  className="mb-3 flex items-start gap-2 bg-amber-900/20 border
+                  border-amber-400/20 rounded-xl px-3 py-2.5"
+                >
+                  <span className="text-amber-400 text-sm flex-shrink-0">
+                    🤝
+                  </span>
+                  <p className="text-xs text-amber-300 leading-relaxed">
+                    {activePrice === 0 ? (
+                      <>
+                        Referral code saved — your marketer
+                        {savedReferralName ? ` (${savedReferralName})` : ""}{" "}
+                        will earn commission when you upgrade to a paid plan.
+                      </>
+                    ) : (
+                      <>
+                        Referred by {savedReferralName ?? "a marketer"} — your{" "}
+                        {REFERRAL_DISCOUNT_PCT}% discount and their commission
+                        will be applied automatically.
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
+
+              <label className="block text-xs text-gray-400 mb-1.5">
+                {savedReferralId && !referralInfo
+                  ? "Override referral code (optional)"
+                  : "Referral code (optional)"}
               </label>
               <div className="flex gap-2">
                 <input
