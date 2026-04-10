@@ -19,20 +19,17 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
   const isBoosted = ad.boost?.isBoosted;
   const boostTier = ad.boost?.boostTier;
   const badge = isBoosted && boostTier ? BOOST_BADGE[boostTier] : null;
-  const isExpired = ad.isExpired;
+  // Note: expired ads are filtered out server-side for the public feed.
+  // daysLeft warning badge is still shown for ads expiring within 3 days
+  // so vendors can see it if they're browsing their own listings.
   const daysLeft = ad.daysLeft ?? null;
-  const expiringSoon = !isExpired && daysLeft !== null && daysLeft <= 3;
+  const expiringSoon = daysLeft !== null && daysLeft <= 3 && daysLeft > 0;
 
   return (
     <Link
       href={`/ads/${ad._id}`}
-      className={`group relative bg-white rounded-2xl border shadow-sm
-        hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col
-        ${
-          isExpired
-            ? "border-gray-200 opacity-60 hover:opacity-80"
-            : "border-gray-100"
-        }`}
+      className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm
+        hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col"
     >
       {/* Image */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-100">
@@ -42,8 +39,7 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
             alt={ad.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-            className={`object-cover group-hover:scale-105 transition-transform duration-300
-              ${isExpired ? "grayscale-[40%]" : ""}`}
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -52,7 +48,7 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
         )}
 
         {/* Boost badge */}
-        {badge && !isExpired && (
+        {badge && (
           <span
             className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5
             rounded-full ${badge.cardCls}`}
@@ -62,7 +58,7 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
         )}
 
         {/* Condition */}
-        {ad.condition && ad.condition !== "not_applicable" && !isExpired && (
+        {ad.condition && ad.condition !== "not_applicable" && (
           <span
             className="absolute top-2 right-2 text-[10px] font-medium px-2 py-0.5
             bg-black/50 text-white rounded-full capitalize"
@@ -80,19 +76,7 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
           </div>
         )}
 
-        {/* EXPIRED overlay */}
-        {isExpired && (
-          <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center">
-            <span
-              className="bg-gray-800/80 text-white text-[11px] font-bold
-              px-3 py-1 rounded-full tracking-wide flex items-center gap-1.5"
-            >
-              <Clock size={10} /> Listing expired
-            </span>
-          </div>
-        )}
-
-        {/* Expiring soon warning */}
+        {/* Expiring soon warning — visible to vendor browsing their own listings */}
         {expiringSoon && (
           <span
             className="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5
@@ -106,16 +90,14 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
       {/* Body */}
       <div className="p-3 flex flex-col flex-1">
         <h3
-          className={`font-semibold line-clamp-2 mb-1
-          ${isExpired ? "text-gray-400" : "text-gray-800"}
+          className={`font-semibold text-gray-800 line-clamp-2 mb-1
           ${compact ? "text-xs" : "text-sm"}`}
         >
           {ad.title}
         </h3>
 
         <p
-          className={`font-black mb-1
-          ${isExpired ? "text-gray-400" : "text-gray-900"}
+          className={`font-black text-gray-900 mb-1
           ${compact ? "text-sm" : "text-base"}`}
         >
           {formatAdPrice(
@@ -123,7 +105,7 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
             ad.price?.currency,
             ad.price?.display,
           )}
-          {!compact && ad.negotiable === "yes" && !isExpired && (
+          {!compact && ad.negotiable === "yes" && (
             <span className="text-xs text-green-600 font-medium ml-2">
               (Negotiable)
             </span>
@@ -139,17 +121,10 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
           </span>
         </div>
 
-        {!compact && ad.delivery?.available && !isExpired && (
+        {!compact && ad.delivery?.available && (
           <span className="flex items-center gap-1 text-[10px] text-blue-600 font-medium mt-1">
             <Truck size={11} /> Delivery available
           </span>
-        )}
-
-        {/* Expired note at bottom of card */}
-        {isExpired && !compact && (
-          <p className="text-[10px] text-orange-500 font-medium mt-1.5 flex items-center gap-1">
-            <Clock size={9} /> Renew to make active again
-          </p>
         )}
       </div>
     </Link>

@@ -1,8 +1,23 @@
 import axios from "axios";
 import { safeStorage } from "@/src/utils/safeStorage";
 
+// In production: NEXT_PUBLIC_API_BASE_URL = https://smilebababackend.onrender.com/smilebaba
+// In dev: direct to localhost:3001/smilebaba
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001/smilebaba";
+
+// The refresh token cookie is httpOnly and is set on the backend origin.
+// When the frontend (localhost:3000) calls the backend (localhost:3001) directly,
+// the browser blocks the cookie under SameSite rules.
+// Solution: route the refresh call through the Next.js rewrite proxy (/api/*)
+// so it appears same-origin to the browser and the cookie is forwarded.
+const REFRESH_URL =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "/api/auth/refresh" // dev — goes through Next.js proxy, cookie forwarded
+    : `${API_BASE}/auth/refresh`; // prod — same domain, cookie works directly
+
 const axiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: API_BASE,
   withCredentials: true,
 });
 
@@ -59,7 +74,11 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axiosInstance.post("/auth/refresh");
+        const res = await axios.post(
+          REFRESH_URL,
+          {},
+          { withCredentials: true },
+        );
         const newToken = res.data.accessToken;
 
         safeStorage.set("accessToken", newToken);

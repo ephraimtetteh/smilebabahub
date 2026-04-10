@@ -1,4 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 import {
   setIsAuthenticated,
   setIsAuthenticating,
@@ -14,6 +15,13 @@ import {
   UserProp,
 } from "@/src/types/types";
 import { safeStorage } from "@/src/utils/safeStorage";
+
+// Route refresh through Next.js proxy in dev so the httpOnly cookie is forwarded.
+// In production the frontend and backend share the same domain so direct call works.
+const REFRESH_URL =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "/api/auth/refresh"
+    : `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}/auth/refresh`;
 
 // ── REGISTER ───────────────────────────────────────────────────────────────
 export const register = createAsyncThunk<
@@ -109,7 +117,11 @@ export const restoreSession = createAsyncThunk<
 >("auth/refresh", async (_, { dispatch, rejectWithValue }) => {
   try {
     // 1. Get a fresh access token using the httpOnly refreshToken cookie
-    const refreshRes = await axiosInstance.post("/auth/refresh");
+    const refreshRes = await axios.post(
+      REFRESH_URL,
+      {},
+      { withCredentials: true },
+    );
     const newToken = refreshRes.data.accessToken;
 
     if (newToken) {
