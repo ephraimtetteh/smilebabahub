@@ -137,7 +137,7 @@ export const FeaturedGrid = memo(function FeaturedGrid({
 }: {
   items: FeaturedCardItem[];
 }) {
-  const capped = items.slice(0, 7);
+  const capped = items.slice(0, 12);
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 w-full">

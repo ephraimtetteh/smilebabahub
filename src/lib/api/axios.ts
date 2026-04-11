@@ -11,10 +11,16 @@ const API_BASE =
 // the browser blocks the cookie under SameSite rules.
 // Solution: route the refresh call through the Next.js rewrite proxy (/api/*)
 // so it appears same-origin to the browser and the cookie is forwarded.
-const REFRESH_URL =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "/api/auth/refresh" // dev — goes through Next.js proxy, cookie forwarded
-    : `${API_BASE}/auth/refresh`; // prod — same domain, cookie works directly
+// Always route refresh through /api/auth/refresh (Next.js rewrite proxy).
+// In dev: Next.js proxies localhost:3000/api/* → localhost:3001/smilebaba/*
+// In prod: Next.js proxies smilebabahub.com/api/* → smilebababackend.onrender.com/smilebaba/*
+//
+// Why this matters: the refreshToken cookie is set by the backend domain.
+// When the browser calls the backend directly cross-origin, iOS Safari and
+// some Android browsers block the cookie regardless of SameSite=None.
+// Routing through the Next.js proxy makes the request appear same-origin,
+// so the cookie is always forwarded and the backend receives it.
+const REFRESH_URL = "/api/auth/refresh";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE,
@@ -90,13 +96,18 @@ axiosInstance.interceptors.response.use(
         processQueue(err, null);
         safeStorage.remove("accessToken");
 
-        const isProductRoute = originalRequest.url?.includes("/products");
-        if (isProductRoute) {
-          const draft = localStorage.getItem("sellFormDraft");
-          if (draft) localStorage.setItem("pendingUpload", draft);
-          window.location.href = "/auth/login?reason=session_expired";
-        } else {
-          window.location.href = "/auth/login";
+        // Only redirect in the browser — never during SSR
+        if (typeof window !== "undefined") {
+          const isProductRoute = originalRequest.url?.includes("/products");
+          if (isProductRoute) {
+            try {
+              const draft = localStorage.getItem("sellFormDraft");
+              if (draft) localStorage.setItem("pendingUpload", draft);
+            } catch {}
+            window.location.href = "/auth/login?reason=session_expired";
+          } else {
+            window.location.href = "/auth/login";
+          }
         }
 
         return Promise.reject(err);

@@ -16,12 +16,10 @@ import {
 } from "@/src/types/types";
 import { safeStorage } from "@/src/utils/safeStorage";
 
-// Route refresh through Next.js proxy in dev so the httpOnly cookie is forwarded.
-// In production the frontend and backend share the same domain so direct call works.
-const REFRESH_URL =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "/api/auth/refresh"
-    : `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}/auth/refresh`;
+// Always route refresh through the Next.js rewrite proxy.
+// This ensures the httpOnly refreshToken cookie is forwarded correctly in
+// all environments — both dev (localhost) and production (cross-domain).
+const REFRESH_URL = "/api/auth/refresh";
 
 // ── REGISTER ───────────────────────────────────────────────────────────────
 export const register = createAsyncThunk<

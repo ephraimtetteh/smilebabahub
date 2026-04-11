@@ -44,12 +44,8 @@ const nextConfig: NextConfig = {
     deviceSizes: [360, 480, 640, 828, 1080, 1200, 1920],
     imageSizes: [56, 96, 128, 256, 384],
     dangerouslyAllowSVG: false,
-    // When the upstream image (e.g. Cloudinary) returns 4xx/5xx,
-    // Next.js will throw "upstream image response failed".
-    // Setting this to true makes it return a 400 to the browser instead
-    // of crashing the optimizer — the browser then shows the broken image
-    // placeholder rather than an unhandled error.
-    // Individual components handle this with the onError prop.
+    // SafeImage handles Cloudinary 404s client-side via onError → fallback UI.
+    // No custom loader needed — the default Next.js loader is used.
   },
 
   // Expose the derived socket URL so useChat.ts can pick it up
@@ -60,12 +56,17 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
+    const backend =
+      process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001/smilebaba";
     return [
       {
-        // All /api/* calls from the browser are proxied to your Express backend.
-        // Avoids CORS issues and never exposes the backend URL in client code.
+        // All /api/* requests from the browser are proxied to the Express backend.
+        // This keeps auth cookies working cross-domain: the browser sends cookies
+        // to smilebabahub.com/api/*, Next.js forwards them to the backend.
+        // The backend sets cookies on the Vercel/Next.js domain response,
+        // so subsequent requests from the browser include the cookie correctly.
         source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,
+        destination: `${backend}/:path*`,
       },
     ];
   },
