@@ -134,7 +134,7 @@ const Subscription = ({
   const currentPlanId = user?.subscription?.plan ?? null;
   const expiresAt = user?.subscription?.expiresAt ?? null;
   const currentBilling = user?.subscription?.billingCycle ?? null;
-  const REFERRAL_DISCOUNT_PCT = 20; // must match backend REFERRAL_DISCOUNT * 100
+  const REFERRAL_DISCOUNT_PCT = 15; // must match backend REFERRAL_DISCOUNT * 100
   const isSubscribed =
     !!currentPlanId && !!expiresAt && new Date(expiresAt) > new Date();
   const currentTier = PLAN_TIERS[currentPlanId ?? ""] ?? -1;
@@ -167,9 +167,15 @@ const Subscription = ({
   }, [savedReferralId]);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
-  const [selectedPackage, setSelectedPackage] = useState(
-    selectedPlanId ?? packages.find((p) => p.popular)?.id ?? packages[0].id,
-  );
+  const defaultPkg =
+    selectedPlanId ?? packages.find((p) => p.popular)?.id ?? packages[0].id;
+  const [selectedPackage, setSelectedPackage] = useState(defaultPkg);
+
+  // Sync when the parent passes a new selectedPlanId (e.g. from URL param)
+  useEffect(() => {
+    if (selectedPlanId) setSelectedPackage(selectedPlanId);
+  }, [selectedPlanId]);
+
   const activePlanId = selectedPlanId ?? selectedPackage;
   const activePkg = packages.find((p) => p.id === activePlanId);
   const activeTier = PLAN_TIERS[activePlanId] ?? 0;
@@ -285,6 +291,8 @@ const Subscription = ({
         setError(msg ?? "Payment initialization failed. Please try again.");
       }
       setShowSummary(false);
+    } finally {
+      // Clear loading. Button is also disabled via !!redirectUrl during navigation.
       setLoading(false);
     }
   };
@@ -575,7 +583,7 @@ const Subscription = ({
             <div className="flex gap-3">
               <button
                 onClick={handlePayNow}
-                disabled={loading}
+                disabled={loading || !!redirectUrl}
                 className="flex-1 py-2.5 bg-[#ffc105] text-black font-bold rounded-xl
                   hover:bg-amber-400 transition disabled:opacity-60 text-sm"
               >
