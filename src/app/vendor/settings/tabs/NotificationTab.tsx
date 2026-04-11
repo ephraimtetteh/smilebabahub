@@ -2,9 +2,11 @@
 // Vendor Settings → Notifications tab
 // Loads preferences from user.notifications. Saves via PATCH /auth/notifications.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SectionCard, Toggle, SaveButton } from "../(components)/UI";
 import { useVendorSettings } from "@/src/hooks/useVendorSettings";
+
+
 
 
 type NotifState = {
@@ -44,9 +46,14 @@ export default function NotificationsTab() {
   const toggle = (k: keyof NotifState) =>
     setNotifs((p) => ({ ...p, [k]: !p[k] }));
 
+  const seededRef = useRef(false);
   useEffect(() => {
-    if (user?.notifications) setNotifs({ ...DEFAULTS, ...user.notifications });
-  }, [user]);
+    if (!user?.notifications) return;
+    if (seededRef.current) return;
+    seededRef.current = true;
+    setNotifs({ ...DEFAULTS, ...user.notifications });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, user?.updatedAt]);
 
   const handleSave = () => saveNotifications({ notifications: notifs });
 

@@ -3,7 +3,7 @@
 // Dynamic: GH shows MoMo networks, NG shows OPay/PalmPay.
 // Saves via PATCH /auth/payment-details.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   SectionCard,
   Field,
@@ -12,6 +12,7 @@ import {
   SaveButton,
 } from "../(components)/UI";
 import { useVendorSettings } from "@/src/hooks/useVendorSettings";
+
 
 
 type PayMethod = "momo" | "bank" | "both";
@@ -100,8 +101,13 @@ export default function PaymentsTab() {
   });
 
   // Sync from Redux once user loads (e.g. after page refresh)
+  // Seed form once on initial load — don't reset after user saves
+  const seededRef = useRef(false);
+
   useEffect(() => {
     if (!user) return;
+    if (seededRef.current) return; // already seeded — don't overwrite user edits
+    seededRef.current = true;
     setPayMethod((user.payoutMethod as PayMethod) ?? "momo");
     setMomo({
       network: user.momoDetails?.network ?? "",
@@ -125,7 +131,9 @@ export default function PaymentsTab() {
       minAmount: user.payoutSchedule?.minAmount ?? "100",
       currency,
     });
-  }, [user, currency]);
+    // Use stable primitive deps to avoid re-resetting form on every Redux state change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, user?.updatedAt, currency]);
 
   const handleSave = () =>
     savePayments({

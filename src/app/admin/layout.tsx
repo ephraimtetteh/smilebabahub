@@ -16,7 +16,11 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
+  ChartArea,
+  ChartNoAxesColumn,
+  MonitorCog,
 } from "lucide-react";
+import { IoAnalytics } from "react-icons/io5";
 
 const NAV = [
   { href: "/admin", icon: <LayoutDashboard size={16} />, label: "Overview" },
@@ -32,6 +36,17 @@ const NAV = [
     label: "Marketers",
   },
   { href: "/admin/ads", icon: <ShoppingBag size={16} />, label: "Ads" },
+  {
+    href: "/admin/analytics",
+    label: "Analytics",
+    icon: <ChartArea size={16} />,
+  },
+  {
+    href: "/admin/marketers/stats",
+    label: "Marketer Stats",
+    icon: <ChartNoAxesColumn size={16} />,
+  },
+  { href: "/admin/system", label: "System", icon: <MonitorCog size={16} /> },
 ];
 
 export default function AdminLayout({

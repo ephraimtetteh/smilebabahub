@@ -33,6 +33,20 @@ type Commission = {
   createdAt: string;
 };
 
+type DailyPoint = {
+  date: string;
+  label: string;
+  earningsGHS: number;
+  earningsNGN: number;
+  count: number;
+};
+type PlanPoint = {
+  plan: string;
+  count: number;
+  earningsGHS: number;
+  earningsNGN: number;
+};
+
 type DashboardData = {
   marketer: Marketer;
   recentCommissions: Commission[];
@@ -43,6 +57,17 @@ type DashboardData = {
     totalEarningsNGN: number;
     pendingPayoutGHS: number;
     pendingPayoutNGN: number;
+    // New dynamic fields
+    thisWeekGHS: number;
+    lastWeekGHS: number;
+    weekChange: number;
+    monthEarningsGHS: number;
+    monthEarningsNGN: number;
+    monthReferrals: number;
+  };
+  charts: {
+    dailyEarnings: DailyPoint[];
+    planBreakdown: PlanPoint[];
   };
 };
 
@@ -53,6 +78,55 @@ function formatDate(iso: string) {
     month: "short",
     year: "numeric",
   });
+}
+
+function fmt(n: number) {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n.toFixed(2);
+}
+
+// Mini bar chart for earnings sparkline
+function EarningsChart({
+  data,
+  currency = "GHS",
+}: {
+  data: DailyPoint[];
+  currency?: "GHS" | "NGN";
+}) {
+  const values = data.map((d) =>
+    currency === "NGN" ? d.earningsNGN : d.earningsGHS,
+  );
+  const max = Math.max(...values, 0.01);
+  const hasData = values.some((v) => v > 0);
+
+  if (!hasData)
+    return (
+      <div className="flex items-center justify-center h-16 text-xs text-gray-600">
+        No earnings yet this month
+      </div>
+    );
+
+  return (
+    <div className="flex items-end gap-0.5 h-16">
+      {data.map((d, i) => {
+        const v = currency === "NGN" ? d.earningsNGN : d.earningsGHS;
+        const pct = Math.max((v / max) * 100, v > 0 ? 5 : 1);
+        const isToday = i === data.length - 1;
+        return (
+          <div
+            key={d.date}
+            className="flex-1 group relative"
+            title={`${d.label}: ${currency === "NGN" ? "₦" : "₵"}${v.toFixed(2)}`}
+          >
+            <div
+              className={`w-full rounded-sm transition-all duration-300
+                ${isToday ? "bg-[#ffc105]" : v > 0 ? "bg-[#ffc105]/40 group-hover:bg-[#ffc105]/70" : "bg-white/5"}`}
+              style={{ height: `${pct}%` }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function getFirstName(name: string) {
@@ -92,7 +166,9 @@ export default function MarketerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "commissions" | "payout">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "commissions" | "payout"
+  >("overview");
   const [payoutForm, setPayoutForm] = useState({
     payoutMethod: "",
     accountName: "",
@@ -142,19 +218,38 @@ export default function MarketerDashboard() {
     const sseBase =
       process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001/smilebaba";
 
-    const es = new EventSource(`${sseBase}/marketers/stream`, {
-      withCredentials: true,
-    });
-    esRef.current = es;
+    let retryCount = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    es.addEventListener("stats-update", () => {
-      // Re-fetch when backend signals a new commission
-      fetchDashboard();
-    });
+    const connect = () => {
+      const es = new EventSource(`${sseBase}/marketers/stream`, {
+        withCredentials: true,
+      });
+      esRef.current = es;
 
-    es.onerror = () => es.close();
+      es.addEventListener("stats-update", () => {
+        retryCount = 0; // reset backoff on successful event
+        fetchDashboard();
+      });
 
-    return () => es.close();
+      // Exponential backoff: 2s, 4s, 8s, max 30s — prevents reconnect flood
+      es.onerror = () => {
+        es.close();
+        if (retryCount < 6) {
+          const delay = Math.min(2000 * Math.pow(2, retryCount), 30_000);
+          retryCount++;
+          retryTimer = setTimeout(connect, delay);
+        }
+        // After 6 attempts (~2min), give up silently — dashboard still works via fetchDashboard poll
+      };
+    };
+
+    connect();
+
+    return () => {
+      esRef.current?.close();
+      if (retryTimer) clearTimeout(retryTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -291,7 +386,7 @@ export default function MarketerDashboard() {
               {marketer.referralCode}
             </p>
             <p className="text-xs text-gray-500 mt-1.5">
-              Share this code with vendors. They get 15% off, you earn 15%
+              Share this code with vendors. They get 20% off, you earn 20%
               commission.
             </p>
           </div>
@@ -305,7 +400,7 @@ export default function MarketerDashboard() {
         </div>
 
         {/* ── Stats grid ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {[
             {
               label: "Total referrals",
@@ -317,14 +412,10 @@ export default function MarketerDashboard() {
               value: stats.activeReferrals,
               icon: "✅",
             },
-            {
-              label: "Earnings (GHS)",
-              value: `₵${stats.totalEarningsGHS.toFixed(2)}`,
-              icon: "💰",
-            },
+            { label: "This month", value: stats.monthReferrals, icon: "📅" },
             {
               label: "Pending payout",
-              value: `₵${stats.pendingPayoutGHS.toFixed(2)}`,
+              value: `₵${fmt(stats.pendingPayoutGHS)}`,
               icon: "⏳",
             },
           ].map((s) => (
@@ -344,26 +435,106 @@ export default function MarketerDashboard() {
           ))}
         </div>
 
-        {/* NGN earnings row (shown only if non-zero) */}
-        {stats.totalEarningsNGN > 0 && (
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-[#1a1a1a] border border-white/8 rounded-2xl p-4">
-              <p className="text-xl mb-1">💰</p>
-              <p className="text-2xl font-black text-white">
-                ₦{stats.totalEarningsNGN.toLocaleString()}
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Total earnings (NGN)
-              </p>
+        {/* ── Earnings overview ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          {/* GHS earnings card + sparkline */}
+          <div className="bg-[#1a1a1a] border border-white/8 rounded-2xl p-4">
+            <div className="flex items-start justify-between mb-1">
+              <div>
+                <p className="text-xs text-gray-500">Total earnings (GHS)</p>
+                <p className="text-2xl font-black text-[#ffc105]">
+                  ₵
+                  {stats.totalEarningsGHS.toLocaleString("en-GH", {
+                    minimumFractionDigits: 2,
+                  })}
+                </p>
+              </div>
+              {stats.weekChange !== 0 && (
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full
+                  ${stats.weekChange > 0 ? "bg-green-900/40 text-green-400" : "bg-red-900/40 text-red-400"}`}
+                >
+                  {stats.weekChange > 0 ? "↑" : "↓"}
+                  {Math.abs(stats.weekChange)}% WoW
+                </span>
+              )}
             </div>
-            <div className="bg-[#1a1a1a] border border-white/8 rounded-2xl p-4">
-              <p className="text-xl mb-1">⏳</p>
-              <p className="text-2xl font-black text-white">
-                ₦{stats.pendingPayoutNGN.toLocaleString()}
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Pending payout (NGN)
-              </p>
+            <p className="text-xs text-gray-600 mb-3">
+              This month: ₵{fmt(stats.monthEarningsGHS)} · This week: ₵
+              {fmt(stats.thisWeekGHS)}
+            </p>
+            {data.charts && (
+              <EarningsChart data={data.charts.dailyEarnings} currency="GHS" />
+            )}
+            <p className="text-[10px] text-gray-700 mt-1 text-right">
+              last 30 days
+            </p>
+          </div>
+
+          {/* NGN earnings (shown always, greyed out if zero) */}
+          <div className="bg-[#1a1a1a] border border-white/8 rounded-2xl p-4">
+            <div className="flex items-start justify-between mb-1">
+              <div>
+                <p className="text-xs text-gray-500">Total earnings (NGN)</p>
+                <p
+                  className={`text-2xl font-black ${stats.totalEarningsNGN > 0 ? "text-green-400" : "text-gray-700"}`}
+                >
+                  ₦{stats.totalEarningsNGN.toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-600 mb-3">
+              This month: ₦{fmt(stats.monthEarningsNGN)} · Pending: ₦
+              {fmt(stats.pendingPayoutNGN)}
+            </p>
+            {data.charts && stats.totalEarningsNGN > 0 ? (
+              <EarningsChart data={data.charts.dailyEarnings} currency="NGN" />
+            ) : (
+              <div className="flex items-center justify-center h-16 text-xs text-gray-700">
+                Refer Nigerian vendors to earn ₦
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Plan breakdown ── */}
+        {data.charts?.planBreakdown?.length > 0 && (
+          <div className="bg-[#1a1a1a] border border-white/8 rounded-2xl p-4 mb-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+              By plan referred
+            </p>
+            <div className="space-y-2">
+              {data.charts.planBreakdown
+                .sort((a, b) => b.count - a.count)
+                .map((p) => {
+                  const total = data.charts.planBreakdown.reduce(
+                    (s, x) => s + x.count,
+                    0,
+                  );
+                  const pct =
+                    total > 0 ? Math.round((p.count / total) * 100) : 0;
+                  return (
+                    <div key={p.plan} className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400 capitalize w-24 flex-shrink-0">
+                        {p.plan}
+                      </span>
+                      <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#ffc105] rounded-full"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-gray-300 w-6 text-right">
+                        {p.count}
+                      </span>
+                      {p.earningsGHS > 0 && (
+                        <span className="text-[10px] text-[#ffc105] w-20 text-right">
+                          ₵{p.earningsGHS.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
@@ -391,7 +562,11 @@ export default function MarketerDashboard() {
           <div className="space-y-4">
             <div className="bg-[#1a1a1a] border border-white/8 rounded-2xl p-5">
               <h3 className="font-bold text-sm mb-4">
-                How to maximise your earnings
+                {stats.totalReferrals === 0
+                  ? "Getting started guide"
+                  : stats.weekChange < 0
+                    ? "📉 Boost your referrals this week"
+                    : "How to maximise your earnings"}
               </h3>
               <div className="space-y-3">
                 {[

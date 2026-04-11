@@ -3,7 +3,7 @@
 // Loads store data from user. Saves via PATCH /auth/profile.
 // Banner and logo upload to Cloudinary.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   SectionCard,
   Field,
@@ -16,6 +16,7 @@ import {
 } from "../(components)/UI";
 import { uploadToCloudinary } from "@/src/utils/uploadToCloudinary";
 import { useVendorSettings } from "@/src/hooks/useVendorSettings";
+
 
 const DAYS = [
   "Monday",
@@ -59,8 +60,13 @@ export default function StoreTab() {
     storePhone: user?.storePhone ?? "",
   });
 
+  // Seed form once on initial load — don't reset after user saves
+  const seededRef = useRef(false);
+
   useEffect(() => {
     if (!user) return;
+    if (seededRef.current) return; // already seeded — don't overwrite user edits
+    seededRef.current = true;
     setBanner(user.storeBanner ?? "");
     setLogo(user.storeLogo ?? "");
     setStore({
@@ -79,7 +85,8 @@ export default function StoreTab() {
       businessType: user.businessType ?? "individual",
       storePhone: user.storePhone ?? "",
     });
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, user?.updatedAt]);
 
   const set = (k: keyof typeof store, v: string) =>
     setStore((p) => ({ ...p, [k]: v }));

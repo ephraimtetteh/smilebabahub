@@ -300,6 +300,8 @@ export type UserProp = {
   email: string;
   role: UserRole;
   isAdmin?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 
   phone?: string;
   profilePicture?: string;

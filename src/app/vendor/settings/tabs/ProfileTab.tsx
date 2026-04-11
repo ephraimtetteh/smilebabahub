@@ -3,7 +3,7 @@
 // Loads real user data from Redux. Saves via PATCH /auth/profile.
 // Region list is dynamic based on selected country.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   SectionCard,
   Field,
@@ -94,8 +94,13 @@ export default function ProfileTab() {
   });
 
   // Sync form when user loads (after auth restores session)
+  // Seed form once on initial load — don't reset after user saves
+  const seededRef = useRef(false);
+
   useEffect(() => {
     if (!user) return;
+    if (seededRef.current) return; // already seeded — don't overwrite user edits
+    seededRef.current = true;
     setAvatar(user.profilePicture ?? "");
     setForm({
       username: user.username ?? "",
@@ -107,7 +112,8 @@ export default function ProfileTab() {
       dateOfBirth: user.dateOfBirth ?? "",
       countryPref: user.country ?? country,
     });
-  }, [user, country]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, user?.updatedAt, country]);
 
   const set = (k: keyof typeof form, v: string) =>
     setForm((p) => ({ ...p, [k]: v }));
