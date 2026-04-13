@@ -22,7 +22,7 @@ const HomePage = () => {
               <Video />
             </div>
           </div>
-       
+
           <FeaturedProducts category="food" />
           <FeaturedProducts category="marketplace" />
         </div>

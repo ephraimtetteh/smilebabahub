@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo } from "react";
-import Image from "next/image";
+import SafeImage from "@/src/components/SafeImage";
 import Link from "next/link";
 import { MapPin, Star, Trophy, ImageOff } from "lucide-react";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
@@ -70,7 +70,7 @@ const FeaturedCard = memo(function FeaturedCard({
       {/* Image */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-100">
         {coverUrl ? (
-          <Image
+          <SafeImage
             src={coverUrl}
             alt={title}
             fill
@@ -131,7 +131,7 @@ const FeaturedCard = memo(function FeaturedCard({
 
 export default FeaturedCard;
 
-// ── 6-column grid ────────────────────────────────────────────────────────────
+// ── 7-column grid ────────────────────────────────────────────────────────────
 export const FeaturedGrid = memo(function FeaturedGrid({
   items,
 }: {

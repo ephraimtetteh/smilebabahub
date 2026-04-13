@@ -1,7 +1,7 @@
 "use client";
 // src/components/ads/ProductDetail/BuyModal.tsx
 
-import Image from "next/image";
+import SafeImage from "@/src/components/SafeImage";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,9 +11,10 @@ import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
 import axiosInstance from "@/src/lib/api/axios";
 import ModalShell from "./ModalShell";
+
+import type { ModalProps } from "./ad.types";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { BtnSpinner } from "../../ads/(components)/AdUI";
-import { ModalProps } from "@/src/types/ad.types";
 
 export default function BuyModal({ ad, sym, onClose }: ModalProps) {
   const user = useAppSelector((s) => s.auth.user);
@@ -56,8 +57,16 @@ export default function BuyModal({ ad, sym, onClose }: ModalProps) {
           category: ad.category?.main ?? "marketplace",
           currency: ad.price?.currency ?? "GHS",
           amount: 1,
-          vendorId: String(ad.seller?._id ?? ad.postedBy ?? ""),
-          vendorName: ad.seller?.name ?? ad.contact?.name ?? "Vendor",
+          vendorId:
+            typeof ad.postedBy === "object"
+              ? String((ad.postedBy as any)?._id ?? "")
+              : String(ad.postedBy ?? ""),
+          vendorName:
+            ad.contact?.name ??
+            (typeof ad.postedBy === "object"
+              ? (ad.postedBy as any)?.username
+              : undefined) ??
+            "Vendor",
           deliveryAvailable: ad.delivery?.available ?? false,
           deliveryFee: ad.delivery?.fee ?? 0,
         }),
@@ -119,7 +128,7 @@ export default function BuyModal({ ad, sym, onClose }: ModalProps) {
         <div className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
           <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
             {ad.images?.[0]?.url ? (
-              <Image
+              <SafeImage
                 src={ad.images[0].url}
                 alt={ad.title}
                 fill

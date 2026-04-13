@@ -96,8 +96,90 @@ export default function SellPage() {
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean),
-      attributes: data.attributes,
       videoUrl: data.videoUrl || null,
+
+      // Merge category-specific fields into attributes (EAV)
+      // so delivery + pharmacy details are searchable and displayable
+      attributes: [
+        ...(data.attributes ?? []),
+
+        // Delivery fields
+        ...(data.category === "delivery"
+          ? [
+              data.deliveryServiceType && {
+                key: "vehicle_type",
+                value: data.deliveryServiceType,
+                label: "Vehicle type",
+              },
+              data.deliveryCoverageArea && {
+                key: "coverage_area",
+                value: data.deliveryCoverageArea,
+                label: "Coverage area",
+              },
+              data.deliveryWorkingHours && {
+                key: "working_hours",
+                value: data.deliveryWorkingHours,
+                label: "Working hours",
+              },
+              data.deliveryMinOrder && {
+                key: "min_order",
+                value: data.deliveryMinOrder,
+                label: "Min order",
+              },
+              {
+                key: "has_tracking",
+                value: data.deliveryHasTracking ? "yes" : "no",
+                label: "Live tracking",
+              },
+            ].filter(Boolean)
+          : []),
+
+        // Pharmacy fields
+        ...(data.category === "pharmacy"
+          ? [
+              data.pharmacyProductType && {
+                key: "product_type",
+                value: data.pharmacyProductType,
+                label: "Product type",
+              },
+              data.pharmacyBrand && {
+                key: "brand",
+                value: data.pharmacyBrand,
+                label: "Brand",
+              },
+              data.pharmacyDosage && {
+                key: "dosage",
+                value: data.pharmacyDosage,
+                label: "Dosage",
+              },
+              data.pharmacyPackSize && {
+                key: "pack_size",
+                value: data.pharmacyPackSize,
+                label: "Pack size",
+              },
+              data.pharmacyExpiryDate && {
+                key: "expiry",
+                value: data.pharmacyExpiryDate,
+                label: "Expiry date",
+              },
+              data.pharmacyNafdacNo && {
+                key: "nafdac_no",
+                value: data.pharmacyNafdacNo,
+                label: "NAFDAC / FDA",
+              },
+              data.pharmacyStorageInfo && {
+                key: "storage",
+                value: data.pharmacyStorageInfo,
+                label: "Storage",
+              },
+              {
+                key: "prescription_required",
+                value: data.pharmacyPrescription ? "yes" : "no",
+                label: "Prescription",
+              },
+            ].filter(Boolean)
+          : []),
+      ] as any[],
     });
 
     // Return the new ad's _id so AdForm can show "View my ad" button

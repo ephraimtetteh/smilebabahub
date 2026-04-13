@@ -6,14 +6,8 @@
 
 import React, { useEffect, memo } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage from "@/src/components/SafeImage";
 import {
-  ChevronRight,
-  MapPin,
-  Eye,
-  Flame,
-  Clock,
-  Tag,
   Car,
   Smartphone,
   Shirt,
@@ -22,12 +16,6 @@ import {
   UtensilsCrossed,
   Home,
   Wrench,
-  Building2,
-  BedDouble,
-  BedSingle,
-  CalendarDays,
-  KeyRound,
-  Map,
   Beef,
   CupSoda,
   ShoppingCart,
@@ -35,10 +23,47 @@ import {
   ChefHat,
   Coffee,
   Utensils,
-  Star,
+  BedDouble,
+  BedSingle,
+  Building2,
+  CalendarDays,
+  KeyRound,
+  Map,
   Zap,
+  BookOpen,
+  Dumbbell,
+  Package,
+  Layers,
+  Castle,
+  Building,
+  TreePine,
+  Store,
+  Sparkles,
+  ShoppingBag,
+  Gem,
+  Watch,
+  Palette,
+  Footprints,
+  Baby,
+  Pill,
+  Leaf,
+  HeartPulse,
+  Stethoscope,
+  Cross,
+  Bike,
+  Truck,
+  MapPin,
+  Navigation,
+  Plus,
+  ChevronRight,
+  Search,
+  SlidersHorizontal,
+  Star,
   ImageOff,
-  TrendingUp,
+  Tag,
+  Flame,
+  Clock,
+  Eye,
 } from "lucide-react";
 
 import FeaturedProducts from "@/src/components/FeaturedProducts";
@@ -46,6 +71,7 @@ import { useAds } from "@/src/hooks/useAds";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { useAppSelector } from "@/src/app/redux";
 import { Ad } from "@/src/types/ad.types";
+
 
 import Radio from "@/src/components/Radio";
 import Video from "@/src/components/Video";
@@ -129,7 +155,7 @@ export const AdCard = memo(function AdCard({ ad }: { ad: Ad }) {
     >
       <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden">
         {cover ? (
-          <Image
+          <SafeImage
             src={cover}
             alt={ad.title}
             fill
@@ -216,12 +242,12 @@ export function AdCardGrid({
   emptyHref?: string;
 }) {
   const gridCls =
-    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3";
+    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3";
 
   if (loading) {
     return (
       <div className={gridCls}>
-        {Array.from({ length: 7 }).map((_, i) => (
+        {Array.from({ length: 12 }).map((_, i) => (
           <AdCardSkeleton key={i} />
         ))}
       </div>
@@ -393,17 +419,17 @@ export function CategoryLandingLayout({
 
   const bestSelling = [...ads]
     .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
-    .slice(0, 7);
+    .slice(0, 12);
 
   const recentlyPosted = [...ads]
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
-    .slice(0, 7);
+    .slice(0, 12);
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 pt-20">
+    <div className="w-full min-h-screen bg-gray-50 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 mt-10">
       {showRadio && <Radio />}
 
       <div
@@ -495,10 +521,10 @@ export const MARKETPLACE_LINKS: CategoryLink[] = [
     href: "/ads?category=marketplace&sub=electronics",
   },
   {
-    label: "Fashion",
-    icon: <Shirt size={20} className="text-pink-600" />,
-    color: "bg-pink-50",
-    href: "/ads?category=marketplace&sub=fashion",
+    label: "Phones",
+    icon: <Phone size={20} className="text-green-600" />,
+    color: "bg-green-50",
+    href: "/ads?category=marketplace&sub=phones",
   },
   {
     label: "Furniture",
@@ -507,28 +533,28 @@ export const MARKETPLACE_LINKS: CategoryLink[] = [
     href: "/ads?category=marketplace&sub=furniture",
   },
   {
-    label: "Phones",
-    icon: <Phone size={20} className="text-green-600" />,
-    color: "bg-green-50",
-    href: "/ads?category=marketplace&sub=phones",
+    label: "Appliances",
+    icon: <Zap size={20} className="text-yellow-600" />,
+    color: "bg-yellow-50",
+    href: "/ads?category=marketplace&sub=appliances",
   },
   {
-    label: "Food",
-    icon: <UtensilsCrossed size={20} className="text-orange-600" />,
+    label: "Books",
+    icon: <BookOpen size={20} className="text-orange-600" />,
     color: "bg-orange-50",
-    href: "/food",
+    href: "/ads?category=marketplace&sub=books",
   },
   {
-    label: "Apartments",
-    icon: <Home size={20} className="text-teal-600" />,
-    color: "bg-teal-50",
-    href: "/restate",
+    label: "Sports",
+    icon: <Dumbbell size={20} className="text-red-600" />,
+    color: "bg-red-50",
+    href: "/ads?category=marketplace&sub=sports",
   },
   {
-    label: "Services",
-    icon: <Wrench size={20} className="text-gray-600" />,
+    label: "Other",
+    icon: <Package size={20} className="text-gray-600" />,
     color: "bg-gray-100",
-    href: "/ads?category=marketplace&sub=services",
+    href: "/ads?category=marketplace&sub=other",
   },
 ];
 
@@ -571,7 +597,7 @@ export const FOOD_LINKS: CategoryLink[] = [
   },
   {
     label: "Beverages",
-    icon: <Coffee size={20} className="text-brown-600 text-yellow-800" />,
+    icon: <Coffee size={20} className="text-yellow-800" />,
     color: "bg-yellow-50",
     href: "/ads?category=food&sub=beverages",
   },
@@ -615,21 +641,192 @@ export const REALESTATE_LINKS: CategoryLink[] = [
     href: "/ads?category=apartments&sub=3-bedroom-plus",
   },
   {
+    label: "Duplex",
+    icon: <Layers size={20} className="text-rose-600" />,
+    color: "bg-rose-50",
+    href: "/ads?category=apartments&sub=duplex",
+  },
+  {
+    label: "Villa",
+    icon: <Castle size={20} className="text-amber-600" />,
+    color: "bg-amber-50",
+    href: "/ads?category=apartments&sub=villa",
+  },
+  {
+    label: "Condo",
+    icon: <Building size={20} className="text-cyan-600" />,
+    color: "bg-cyan-50",
+    href: "/ads?category=apartments&sub=condo",
+  },
+  {
+    label: "Land / Plot",
+    icon: <TreePine size={20} className="text-green-700" />,
+    color: "bg-green-50",
+    href: "/ads?category=apartments&sub=land",
+  },
+  {
+    label: "Commercial",
+    icon: <Store size={20} className="text-orange-600" />,
+    color: "bg-orange-50",
+    href: "/ads?category=apartments&sub=commercial",
+  },
+  {
     label: "Short Stay",
     icon: <CalendarDays size={20} className="text-pink-600" />,
     color: "bg-pink-50",
     href: "/ads?category=apartments&sub=short-stay",
   },
   {
-    label: "Buy",
-    icon: <KeyRound size={20} className="text-amber-600" />,
-    color: "bg-amber-50",
+    label: "For Sale",
+    icon: <KeyRound size={20} className="text-yellow-600" />,
+    color: "bg-yellow-50",
     href: "/ads?category=apartments&negotiable=no",
   },
+];
+
+export const FASHION_LINKS: CategoryLink[] = [
   {
-    label: "All Properties",
-    icon: <Map size={20} className="text-gray-600" />,
+    label: "Men's Wear",
+    icon: <Shirt size={20} className="text-blue-600" />,
+    color: "bg-blue-50",
+    href: "/ads?category=fashion&sub=mens",
+  },
+  {
+    label: "Women's Wear",
+    icon: <Sparkles size={20} className="text-pink-600" />,
+    color: "bg-pink-50",
+    href: "/ads?category=fashion&sub=womens",
+  },
+  {
+    label: "Kids' Wear",
+    icon: <Baby size={20} className="text-yellow-600" />,
+    color: "bg-yellow-50",
+    href: "/ads?category=fashion&sub=kids",
+  },
+  {
+    label: "Shoes",
+    icon: <Footprints size={20} className="text-brown-700 text-amber-800" />,
+    color: "bg-amber-50",
+    href: "/ads?category=fashion&sub=shoes",
+  },
+  {
+    label: "Bags",
+    icon: <ShoppingBag size={20} className="text-purple-600" />,
+    color: "bg-purple-50",
+    href: "/ads?category=fashion&sub=bags",
+  },
+  {
+    label: "Jewellery",
+    icon: <Gem size={20} className="text-rose-600" />,
+    color: "bg-rose-50",
+    href: "/ads?category=fashion&sub=jewellery",
+  },
+  {
+    label: "Watches",
+    icon: <Watch size={20} className="text-gray-600" />,
     color: "bg-gray-100",
-    href: "/ads?category=apartments",
+    href: "/ads?category=fashion&sub=watches",
+  },
+  {
+    label: "Traditional",
+    icon: <Palette size={20} className="text-orange-600" />,
+    color: "bg-orange-50",
+    href: "/ads?category=fashion&sub=traditional",
+  },
+];
+
+export const PHARMACY_LINKS: CategoryLink[] = [
+  {
+    label: "OTC Drugs",
+    icon: <Pill size={20} className="text-blue-600" />,
+    color: "bg-blue-50",
+    href: "/ads?category=pharmacy&sub=otc-drugs",
+  },
+  {
+    label: "Vitamins",
+    icon: <Leaf size={20} className="text-green-600" />,
+    color: "bg-green-50",
+    href: "/ads?category=pharmacy&sub=vitamins",
+  },
+  {
+    label: "First Aid",
+    icon: <HeartPulse size={20} className="text-red-600" />,
+    color: "bg-red-50",
+    href: "/ads?category=pharmacy&sub=first-aid",
+  },
+  {
+    label: "Baby Care",
+    icon: <Baby size={20} className="text-pink-600" />,
+    color: "bg-pink-50",
+    href: "/ads?category=pharmacy&sub=baby-care",
+  },
+  {
+    label: "Personal Care",
+    icon: <Sparkles size={20} className="text-purple-600" />,
+    color: "bg-purple-50",
+    href: "/ads?category=pharmacy&sub=personal-care",
+  },
+  {
+    label: "Equipment",
+    icon: <Stethoscope size={20} className="text-teal-600" />,
+    color: "bg-teal-50",
+    href: "/ads?category=pharmacy&sub=medical-equip",
+  },
+  {
+    label: "All Pharmacy",
+    icon: <Cross size={20} className="text-gray-600" />,
+    color: "bg-gray-100",
+    href: "/ads?category=pharmacy",
+  },
+];
+
+export const DELIVERY_LINKS: CategoryLink[] = [
+  {
+    label: "Same-day",
+    icon: <Zap size={20} className="text-yellow-600" />,
+    color: "bg-yellow-50",
+    href: "/ads?category=delivery&sub=same-day",
+  },
+  {
+    label: "Courier",
+    icon: <Package size={20} className="text-blue-600" />,
+    color: "bg-blue-50",
+    href: "/ads?category=delivery&sub=courier",
+  },
+  {
+    label: "Food Delivery",
+    icon: <Bike size={20} className="text-orange-600" />,
+    color: "bg-orange-50",
+    href: "/ads?category=delivery&sub=food",
+  },
+  {
+    label: "Haulage",
+    icon: <Truck size={20} className="text-gray-700" />,
+    color: "bg-gray-100",
+    href: "/ads?category=delivery&sub=haulage",
+  },
+  {
+    label: "Pickup & Drop",
+    icon: <Car size={20} className="text-indigo-600" />,
+    color: "bg-indigo-50",
+    href: "/ads?category=delivery&sub=pickup",
+  },
+  {
+    label: "Errands",
+    icon: <MapPin size={20} className="text-green-600" />,
+    color: "bg-green-50",
+    href: "/ads?category=delivery&sub=errand",
+  },
+  {
+    label: "With Tracking",
+    icon: <Navigation size={20} className="text-teal-600" />,
+    color: "bg-teal-50",
+    href: "/ads?category=delivery&sub=tracking",
+  },
+  {
+    label: "All Delivery",
+    icon: <Truck size={20} className="text-gray-600" />,
+    color: "bg-gray-100",
+    href: "/ads?category=delivery",
   },
 ];

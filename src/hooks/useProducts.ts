@@ -69,7 +69,7 @@ export function useProducts() {
           // Pass undefined if empty so thunk reads from Redux state directly
           country: country || undefined,
           category,
-          limit: 7,
+          limit: 12,
         }),
       ),
     [dispatch],

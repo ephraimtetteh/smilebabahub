@@ -51,7 +51,7 @@ function useCurrency(): CurrencyConfig {
 
 // ── Earnings rows ──────────────────────────────────────────────────────────
 function earningsRows(cfg: CurrencyConfig) {
-  const commission = 0.15;
+  const commission = 0.2;
   return [5, 20, 50].map((n) => ({
     referrals: n,
     monthly: `${cfg.symbol}${(cfg.planMonthly * n * commission).toLocaleString()}`,
@@ -302,7 +302,7 @@ export default function MarketerLandingPage() {
                 n: "2",
                 icon: "📣",
                 title: "Refer vendors",
-                desc: `Share your code with business owners. They enter it at checkout and get 15% off their subscription.`,
+                desc: `Share your code with business owners. They enter it at checkout and get 15% off their first paid plan.`,
               },
               {
                 n: "3",

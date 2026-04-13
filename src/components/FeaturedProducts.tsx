@@ -17,7 +17,15 @@ import { useViewCountry } from "@/src/hooks/useViewCountry";
 
 interface FeaturedProps {
   className?: string;
-  category?: "marketplace" | "food" | "apartments" | "all";
+  category?:
+    | "marketplace"
+    | "food"
+    | "apartments"
+    | "fashion"
+    | "pharmacy"
+    | "delivery"
+    | "services"
+    | "all";
   title?: string;
   viewAllHref?: string;
   viewAllLabel?: string;
@@ -27,6 +35,13 @@ const CATEGORY_DEFAULTS: Record<string, { title: string; href: string }> = {
   food: { title: "Food & Restaurants", href: "/food" },
   marketplace: { title: "Browse our marketplace", href: "/marketPlace" },
   apartments: { title: "Apartments & Short Stays", href: "/restate" },
+  fashion: { title: "Fashion & Accessories", href: "/ads?category=fashion" },
+  pharmacy: { title: "Health & Pharmacy", href: "/ads?category=pharmacy" },
+  delivery: {
+    title: "Delivery Riders Near You",
+    href: "/ads?category=delivery",
+  },
+  services: { title: "Local Services", href: "/ads?category=services" },
   all: { title: "Browse our marketplace", href: "/marketPlace" },
 };
 
@@ -37,7 +52,7 @@ function FeaturedSkeleton({ className }: { className?: string }) {
         <div className="h-7 bg-gray-100 rounded-xl w-64 animate-pulse" />
         <div className="h-8 bg-gray-100 rounded-xl w-24 animate-pulse" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
         {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}

@@ -25,7 +25,7 @@ const PLANS = {
   },
 } as const;
 
-const COMMISSION_RATE = 0.15; // 15% of the full undiscounted price
+const COMMISSION_RATE = 0.2; // 20% of the full undiscounted price
 const REFERRAL_COUNTS = [5, 10, 20] as const;
 
 // ── Formatters ──────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export default function EarningsSection() {
                 {vendorPays.toLocaleString()}
               </p>
               <p className="text-[11px] text-gray-500 mt-0.5">
-                20% discount applied
+                15% discount applied
               </p>
             </div>
 
@@ -147,7 +147,7 @@ export default function EarningsSection() {
             is calculated on the plan`s{" "}
             <span className="text-white">full price</span> — not the discounted
             amount your referred vendor pays. So everyone wins: the vendor saves
-            15%, and you earn 15%.
+            20%, and you earn 15%.
           </p>
         </div>
 

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import { Frown, Lock } from "lucide-react";
 import { useAds } from "@/src/hooks/useAds";
 import { useAppSelector } from "@/src/app/redux";
 import { AdFormData } from "@/src/types/adForm.types";
@@ -66,7 +67,13 @@ export default function EditAdPage() {
   }, [id]);
 
   const isOwner = Boolean(
-    user && ad && String(ad.postedBy?._id ?? ad.postedBy) === String(user._id),
+    user &&
+    ad &&
+    String(
+      typeof ad.postedBy === "object"
+        ? (ad.postedBy as any)?._id
+        : (ad.postedBy ?? ""),
+    ) === String(user._id),
   );
 
   if (currentLoading) {
@@ -84,7 +91,7 @@ export default function EditAdPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-4xl mb-3">😕</p>
+          <Frown size={48} className="text-gray-200 mx-auto mb-3" />
           <p className="text-gray-700 font-semibold">Ad not found</p>
           <Link
             href="/ads/my"
@@ -102,7 +109,7 @@ export default function EditAdPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-4xl mb-3">🔒</p>
+          <Lock size={48} className="text-gray-200 mx-auto mb-3" />
           <p className="text-gray-700 font-semibold">
             Not authorised to edit this ad
           </p>

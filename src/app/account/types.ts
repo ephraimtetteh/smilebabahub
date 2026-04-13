@@ -1,6 +1,11 @@
 // account/types.ts — shared types, constants and helpers
 
-export type OrderStatus = "pending" | "confirmed" | "delivered" | "cancelled";
+export type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "dispatched"
+  | "delivered"
+  | "cancelled";
 export type BookingStatus =
   | "pending"
   | "confirmed"
@@ -42,6 +47,7 @@ export type Booking = {
 export const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-700",
   confirmed: "bg-blue-100 text-blue-700",
+  dispatched: "bg-purple-100 text-purple-700",
   delivered: "bg-green-100 text-green-600",
   cancelled: "bg-red-100 text-red-500",
 };
@@ -57,6 +63,7 @@ export const BOOKING_STATUS_STYLE: Record<BookingStatus, string> = {
 export const STATUS_LABEL: Record<string, string> = {
   pending: "Pending",
   confirmed: "Confirmed",
+  dispatched: "On the way 🛵",
   delivered: "Delivered",
   cancelled: "Cancelled",
   checked_in: "Checked in",
@@ -78,6 +85,7 @@ export const ORDER_STATUSES = [
   "all",
   "pending",
   "confirmed",
+  "dispatched",
   "delivered",
   "cancelled",
 ] as const;

@@ -2,6 +2,7 @@
 
 // src/components/ads/ContactCard.tsx
 import { memo, useState } from "react";
+import { Phone, MessageCircle, Shield } from "lucide-react";
 import { Ad } from "@/src/types/ad.types";
 
 interface ContactCardProps {
@@ -31,7 +32,6 @@ const ContactCard = memo(function ContactCard({
     <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
       <h2 className="text-base font-bold text-gray-900 mb-4">Contact seller</h2>
 
-      {/* Poster info */}
       <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
         <div
           className="w-12 h-12 rounded-full bg-yellow-400 text-black font-black
@@ -44,22 +44,24 @@ const ContactCard = memo(function ContactCard({
             {ad.contact?.name}
           </p>
           <p className="text-xs text-gray-400">
-            {ad.postedBy?.username ? `@${ad.postedBy.username} · ` : ""}
+            {typeof ad.postedBy === "object" && (ad.postedBy as any)?.username
+              ? `@${(ad.postedBy as any).username} · `
+              : ""}
             Member on SmileBaba
           </p>
         </div>
       </div>
 
-      {/* Phone reveal */}
       {ad.contact?.showPhone && (
         <div className="mb-3">
           {!revealed ? (
             <button
               onClick={handleReveal}
-              className="w-full py-3 bg-yellow-400 text-black font-bold rounded-2xl
-                hover:bg-yellow-300 transition text-sm active:scale-[0.99]"
+              className="w-full flex items-center justify-center gap-2 py-3
+                bg-yellow-400 text-black font-bold rounded-2xl hover:bg-yellow-300
+                transition text-sm active:scale-[0.99]"
             >
-              📞 Show phone number
+              <Phone size={15} /> Show phone number
             </button>
           ) : (
             <a
@@ -68,13 +70,12 @@ const ContactCard = memo(function ContactCard({
                 bg-green-500 text-white font-bold rounded-2xl hover:bg-green-400
                 transition text-sm"
             >
-              📞 {ad.contact.phone}
+              <Phone size={15} /> {ad.contact.phone}
             </a>
           )}
         </div>
       )}
 
-      {/* WhatsApp */}
       {waNumber && (
         <a
           href={`https://wa.me/${waNumber}?text=${waMsg}`}
@@ -85,14 +86,15 @@ const ContactCard = memo(function ContactCard({
             bg-[#25D366] text-white font-bold rounded-2xl hover:opacity-90
             transition text-sm mb-3"
         >
-          💬 Chat on WhatsApp
+          <MessageCircle size={15} /> Chat on WhatsApp
         </a>
       )}
 
-      <p className="text-[11px] text-gray-400 text-center leading-relaxed">
-        🔒 For your safety, meet in a public place and inspect before payment.
+      <div className="flex items-start gap-2 text-[11px] text-gray-400 leading-relaxed">
+        <Shield size={12} className="flex-shrink-0 mt-0.5 text-gray-300" />
+        For your safety, meet in a public place and inspect before payment.
         Never transfer money in advance.
-      </p>
+      </div>
     </div>
   );
 });

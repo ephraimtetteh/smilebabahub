@@ -16,12 +16,17 @@ import {
   Home,
   Wrench,
   Sparkles,
+  Shirt,
+  Pill,
+  Truck,
   ImageOff,
   AlertTriangle,
   X,
   UtensilsCrossed,
   CheckCircle2,
-  Truck,
+  MapPin,
+  BedDouble,
+  Navigation,
 } from "lucide-react";
 import { AdFormData, EMPTY_AD_FORM } from "@/src/types/adForm.types";
 import {
@@ -34,6 +39,8 @@ import {
 import { useAppSelector } from "@/src/app/redux";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { uploadManyToCloudinary } from "@/src/utils/uploadToCloudinary";
+import DeliveryOnboarding from "./DeliveryOnboarding";
+import PharmacyOnboarding from "./PharmacyOnboarding";
 
 // ── Country config — everything that differs between Ghana and Nigeria ──────
 const COUNTRY_CONFIG = {
@@ -128,10 +135,19 @@ const STEPS = [
   "Location & Contact",
 ];
 
+// Pull from shared constants — single source of truth
+import {
+  CATEGORIES,
+  SUBCATEGORIES,
+  CATEGORY_FIELDS,
+  BEDROOM_OPTIONS,
+  getSubcategories,
+} from "./ad.constants";
+
 const MAIN_CATEGORIES = [
   {
     id: "marketplace",
-    label: "Marketplace",
+    label: "Shop",
     icon: <Sparkles size={18} className="text-yellow-600" />,
   },
   {
@@ -141,38 +157,30 @@ const MAIN_CATEGORIES = [
   },
   {
     id: "apartments",
-    label: "Apartments",
+    label: "Property",
     icon: <Home size={18} className="text-teal-600" />,
   },
+  {
+    id: "fashion",
+    label: "Fashion",
+    icon: <Shirt size={18} className="text-pink-600" />,
+  },
+  {
+    id: "pharmacy",
+    label: "Pharmacy",
+    icon: <Pill size={18} className="text-blue-600" />,
+  },
+  {
+    id: "delivery",
+    label: "Delivery",
+    icon: <Truck size={18} className="text-gray-700" />,
+  },
+  {
+    id: "services",
+    label: "Services",
+    icon: <Wrench size={18} className="text-gray-500" />,
+  },
 ];
-
-const SUBCATEGORIES: Record<string, string[]> = {
-  marketplace: [
-    "Vehicles",
-    "Electronics",
-    "Fashion",
-    "Phones",
-    "Furniture",
-    "Services",
-    "Other",
-  ],
-  food: [
-    "Fast food",
-    "Local dishes",
-    "Drinks",
-    "Groceries",
-    "Pastries",
-    "Other",
-  ],
-  apartments: [
-    "Self-contained",
-    "Chamber & Hall",
-    "Studio",
-    "2-Bedroom",
-    "3-Bedroom+",
-    "Short stay",
-  ],
-};
 
 const CONDITIONS: { id: AdCondition; label: string; icon: React.ReactNode }[] =
   [
@@ -720,119 +728,188 @@ export default function AdForm({
 
       <StepBar current={step} />
 
-      {/* ── Step 1: Basic info ── */}
+      {/* ── Step 1: Basic info — specialty forms for delivery + pharmacy ── */}
       {step === 1 && (
         <Card>
-          <Field
-            label="Ad title"
-            required
-            error={errors.title}
-            hint={`${form.title.length}/120 characters`}
-          >
-            <input
-              value={form.title}
-              maxLength={120}
-              placeholder="e.g. iPhone 15 Pro Max 256GB — Barely used"
-              className={errors.title ? inputError : inputNormal}
-              onChange={(e) => set("title", e.target.value)}
-            />
-          </Field>
+          {/* ── DELIVERY: Bolt/Uber-style onboarding ── */}
+          {form.category === "delivery" ? (
+            <DeliveryOnboarding form={form} set={set} errors={errors} />
+          ) : form.category === "pharmacy" ? (
+            /* ── PHARMACY: safe product listing form ── */
+            <PharmacyOnboarding form={form} set={set} errors={errors} />
+          ) : (
+            /* ── ALL OTHER CATEGORIES: standard fields ── */
+            <>
+              <Field
+                label="Ad title"
+                required
+                error={errors.title}
+                hint={`${form.title.length}/120 characters`}
+              >
+                <input
+                  value={form.title}
+                  maxLength={120}
+                  placeholder="e.g. iPhone 15 Pro Max 256GB — Barely used"
+                  className={errors.title ? inputError : inputNormal}
+                  onChange={(e) => set("title", e.target.value)}
+                />
+              </Field>
 
-          <Field label="Category" required error={errors.category}>
-            <div className="grid grid-cols-3 gap-2">
-              {MAIN_CATEGORIES.map((c) => (
-                <button
-                  type="button"
-                  key={c.id}
-                  onClick={() => {
-                    set("category", c.id);
-                    set("subcategory", "");
-                  }}
-                  className={`py-2.5 rounded-xl text-xs font-semibold border flex flex-col
+              <Field label="Category" required error={errors.category}>
+                <div className="grid grid-cols-3 gap-2">
+                  {MAIN_CATEGORIES.map((c) => (
+                    <button
+                      type="button"
+                      key={c.id}
+                      onClick={() => {
+                        set("category", c.id);
+                        set("subcategory", "");
+                      }}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border flex flex-col
                     items-center gap-1 transition
                     ${
                       form.category === c.id
                         ? "bg-yellow-400 border-yellow-400 text-black"
                         : "bg-white border-gray-200 text-gray-600 hover:border-yellow-300"
                     }`}
-                >
-                  <span className="text-base">{c.icon}</span>
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          </Field>
+                    >
+                      <span className="text-base">{c.icon}</span>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </Field>
 
-          {form.category && SUBCATEGORIES[form.category] && (
-            <Field label="Sub-category">
-              <select
-                value={form.subcategory}
-                className={inputNormal}
-                onChange={(e) => set("subcategory", e.target.value)}
+              {/* Subcategory — driven by constants, emoji icons included */}
+              {form.category &&
+                (() => {
+                  const subs = getSubcategories(form.category);
+                  if (!subs.length) return null;
+                  return (
+                    <Field label="Type / Sub-category">
+                      <select
+                        value={form.subcategory}
+                        className={inputNormal}
+                        onChange={(e) => {
+                          set("subcategory", e.target.value);
+                          set("type", "");
+                        }}
+                      >
+                        <option value="">Select type (optional)</option>
+                        {subs.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.icon} {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  );
+                })()}
+
+              {/* Bedrooms — only for property category */}
+              {CATEGORY_FIELDS[form.category]?.showBedrooms && (
+                <Field label="Bedrooms / Property type">
+                  <select
+                    value={form.type ?? ""}
+                    className={inputNormal}
+                    onChange={(e) => set("type", e.target.value)}
+                  >
+                    <option value="">Select bedrooms / type</option>
+                    {BEDROOM_OPTIONS.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+
+              {/* Condition — only for categories that need it */}
+              {CATEGORY_FIELDS[form.category]?.showCondition !== false && (
+                <Field
+                  label={
+                    CATEGORY_FIELDS[form.category]?.conditionLabel ||
+                    "Condition"
+                  }
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    {CONDITIONS.map((c) => (
+                      <button
+                        type="button"
+                        key={c.id}
+                        onClick={() => set("condition", c.id)}
+                        className={`py-2.5 px-3 rounded-xl text-xs font-semibold border
+                      flex items-center gap-1.5 transition
+                      ${
+                        form.condition === c.id
+                          ? "bg-yellow-400 border-yellow-400 text-black"
+                          : "bg-white border-gray-200 text-gray-600 hover:border-yellow-300"
+                      }`}
+                      >
+                        <span>{c.icon}</span>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+              )}
+
+              {/* Map pin hint — for location-based categories */}
+              {CATEGORY_FIELDS[form.category]?.showMapPin && (
+                <div
+                  className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100
+              rounded-xl text-xs text-blue-700"
+                >
+                  <MapPin
+                    size={14}
+                    className="flex-shrink-0 mt-0.5 text-blue-500"
+                  />
+                  <span>
+                    Buyers will see your location on a map. Set your city and
+                    address accurately below.
+                  </span>
+                </div>
+              )}
+
+              <Field
+                label="Description"
+                required
+                error={errors.description}
+                hint={
+                  CATEGORY_FIELDS[form.category]?.descHint ||
+                  `${form.description.length}/5000`
+                }
               >
-                <option value="">Select sub-category (optional)</option>
-                {SUBCATEGORIES[form.category].map((s) => (
-                  <option key={s} value={s.toLowerCase()}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </Field>
+                <textarea
+                  rows={4}
+                  maxLength={5000}
+                  value={form.description}
+                  placeholder={
+                    CATEGORY_FIELDS[form.category]?.descHint ||
+                    "Describe your listing in detail…"
+                  }
+                  className={`${errors.description ? inputError : inputNormal} resize-none`}
+                  onChange={(e) => set("description", e.target.value)}
+                />
+              </Field>
+
+              <Field
+                label="Tags"
+                hint="Comma-separated — helps buyers find your ad"
+              >
+                <input
+                  value={form.tags}
+                  placeholder={
+                    isNigeria
+                      ? "e.g. iphone, apple, phone, lagos, 256gb"
+                      : "e.g. iphone, apple, phone, accra, 256gb"
+                  }
+                  className={inputNormal}
+                  onChange={(e) => set("tags", e.target.value)}
+                />
+              </Field>
+            </>
           )}
-
-          <Field label="Condition">
-            <div className="grid grid-cols-2 gap-2">
-              {CONDITIONS.map((c) => (
-                <button
-                  type="button"
-                  key={c.id}
-                  onClick={() => set("condition", c.id)}
-                  className={`py-2.5 px-3 rounded-xl text-xs font-semibold border
-                    flex items-center gap-1.5 transition
-                    ${
-                      form.condition === c.id
-                        ? "bg-yellow-400 border-yellow-400 text-black"
-                        : "bg-white border-gray-200 text-gray-600 hover:border-yellow-300"
-                    }`}
-                >
-                  <span>{c.icon}</span>
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field
-            label="Description"
-            required
-            error={errors.description}
-            hint={`${form.description.length}/5000`}
-          >
-            <textarea
-              rows={4}
-              maxLength={5000}
-              value={form.description}
-              placeholder="Describe your item — condition, features, what's included, reason for selling…"
-              className={`${errors.description ? inputError : inputNormal} resize-none`}
-              onChange={(e) => set("description", e.target.value)}
-            />
-          </Field>
-
-          <Field
-            label="Tags"
-            hint="Comma-separated — helps buyers find your ad"
-          >
-            <input
-              value={form.tags}
-              placeholder={
-                isNigeria
-                  ? "e.g. iphone, apple, phone, lagos, 256gb"
-                  : "e.g. iphone, apple, phone, accra, 256gb"
-              }
-              className={inputNormal}
-              onChange={(e) => set("tags", e.target.value)}
-            />
-          </Field>
         </Card>
       )}
 

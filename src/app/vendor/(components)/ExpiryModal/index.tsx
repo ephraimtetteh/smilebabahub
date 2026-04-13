@@ -55,7 +55,7 @@ function AdRow({ ad }: { ad: AdSummary }) {
         </p>
       </div>
       <Link
-        href={`/vendor/ads/${ad._id}/renew`}
+        href="/subscribe"
         onClick={(e) => e.stopPropagation()}
         className="flex items-center gap-1 text-[11px] font-bold text-white
           bg-[#ffc105] hover:bg-yellow-300 px-2.5 py-1.5 rounded-lg
@@ -221,7 +221,7 @@ export default function ExpiryModal() {
           </button>
           <div className="flex items-center gap-2">
             <Link
-              href="/vendor/ads?filter=expired"
+              href="/ads/my?status=expired"
               onClick={dismiss}
               className="flex items-center gap-1.5 text-xs font-bold text-gray-600
                 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition"

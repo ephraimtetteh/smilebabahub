@@ -156,10 +156,14 @@ export default function AdminAdsPage() {
                       </td>
                       <td className="px-5 py-3">
                         <p className="font-medium text-gray-800">
-                          {ad.postedBy?.username ?? "—"}
+                          {(typeof ad.postedBy === "object"
+                            ? (ad.postedBy as any)?.username
+                            : ad.postedBy) ?? "—"}
                         </p>
                         <p className="text-xs text-gray-400">
-                          {ad.postedBy?.email}
+                          {typeof ad.postedBy === "object"
+                            ? (ad.postedBy as any)?.email
+                            : ""}
                         </p>
                       </td>
                       <td className="px-5 py-3 capitalize text-gray-500">

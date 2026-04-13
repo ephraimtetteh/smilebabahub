@@ -12,6 +12,7 @@ import { restoreSession } from "../lib/features/auth/authActions";
 import AuthGate from "../utils/AuthGate";
 import { useAppUpdates } from "@/src/hooks/useAppUpdates";
 import GuestLocationDetector from "./guestLocationDetector";
+import PublicNavbar from "./PublicNavbar";
 
 
 

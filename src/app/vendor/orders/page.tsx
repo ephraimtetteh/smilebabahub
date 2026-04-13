@@ -19,7 +19,12 @@ import {
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type OrderStatus = "pending" | "confirmed" | "delivered" | "cancelled";
+type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "dispatched"
+  | "delivered"
+  | "cancelled";
 type BookingStatus =
   | "pending"
   | "confirmed"
@@ -71,6 +76,10 @@ function fmtDate(iso: string) {
 const ORDER_STATUS: Record<OrderStatus, { label: string; color: string }> = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-700" },
   confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-700" },
+  dispatched: {
+    label: "On the way 🛵",
+    color: "bg-purple-100 text-purple-700",
+  },
   delivered: { label: "Delivered", color: "bg-green-100 text-green-700" },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-600" },
 };
@@ -110,12 +119,18 @@ function OrderCard({
 }) {
   const [open, setOpen] = useState(false);
 
+  // Delivery orders have an extra "dispatched" step: pending→confirmed→dispatched→delivered
+  const isDelivery = order.deliveryAddress?.startsWith("Pickup:");
   const nextStatuses: OrderStatus[] =
     order.status === "pending"
       ? ["confirmed", "cancelled"]
       : order.status === "confirmed"
-        ? ["delivered", "cancelled"]
-        : [];
+        ? isDelivery
+          ? ["dispatched", "cancelled"]
+          : ["delivered", "cancelled"]
+        : order.status === "dispatched"
+          ? ["delivered", "cancelled"]
+          : [];
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">

@@ -3,18 +3,29 @@
 // src/app/ads/my/page.tsx
 import { useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import {
+  LayoutList,
+  TrendingUp,
+  Pause,
+  CheckCircle2,
+  XCircle,
+  Eye,
+  Plus,
+  Package,
+  BarChart2,
+} from "lucide-react";
 import { useAds } from "@/src/hooks/useAds";
-import ProtectedRoute from "@/src/components/ProtectRoute";
 import AdManageCard from "../(components)/AdManageCard";
+import ProtectedRoute from "@/src/components/ProtectRoute";
 
 
 const STATUS_TABS = [
-  { id: "all", label: "All", icon: "📋" },
-  { id: "active", label: "Active", icon: "🟢" },
-  { id: "pending", label: "In review", icon: "⏳" },
-  { id: "paused", label: "Paused", icon: "⏸️" },
-  { id: "sold", label: "Sold", icon: "✅" },
-  { id: "expired", label: "Expired", icon: "🔴" },
+  { id: "all", label: "All", icon: <LayoutList size={13} /> },
+  { id: "active", label: "Active", icon: <TrendingUp size={13} /> },
+  { id: "paused", label: "Paused", icon: <Pause size={13} /> },
+  { id: "sold", label: "Sold", icon: <CheckCircle2 size={13} /> },
+  { id: "expired", label: "Expired", icon: <XCircle size={13} /> },
 ] as const;
 
 type StatusId = (typeof STATUS_TABS)[number]["id"];
@@ -26,11 +37,11 @@ function StatCard({
 }: {
   label: string;
   value?: number;
-  icon: string;
+  icon: React.ReactNode;
 }) {
   return (
     <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 text-center">
-      <p className="text-xl mb-1">{icon}</p>
+      <div className="flex justify-center mb-1 text-gray-400">{icon}</div>
       <p className="text-xl font-black text-gray-900">
         {value?.toLocaleString() ?? 0}
       </p>
@@ -40,6 +51,7 @@ function StatCard({
 }
 
 function MyAdsPage() {
+  const searchParams = useSearchParams();
   const {
     myAds,
     myAdsLoading,
@@ -55,17 +67,23 @@ function MyAdsPage() {
     mutating,
   } = useAds();
 
+  // Honour ?status=expired (or ?filter=expired) from URL — e.g. from ExpiryModal
+  useEffect(() => {
+    const urlStatus = searchParams.get("status") || searchParams.get("filter");
+    const valid = ["all", "active", "paused", "sold", "expired"];
+    if (urlStatus && valid.includes(urlStatus) && urlStatus !== myAdsStatus) {
+      changeMyAdsStatus(urlStatus as any);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     loadMyAds({ status: myAdsStatus });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myAdsStatus]);
 
-  const handleStatusChange = (s: StatusId) => {
-    changeMyAdsStatus(s);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
@@ -75,10 +93,10 @@ function MyAdsPage() {
           </div>
           <Link
             href="/sell"
-            className="px-4 py-2 bg-yellow-400 text-black font-bold rounded-xl
-              text-xs hover:bg-yellow-300 transition active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 text-black
+              font-bold rounded-xl text-xs hover:bg-yellow-300 transition active:scale-95"
           >
-            + Post new ad
+            <Plus size={13} /> Post new ad
           </Link>
         </div>
       </div>
@@ -88,14 +106,22 @@ function MyAdsPage() {
         {myAdsStats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <StatCard
-              icon="🟢"
+              icon={<TrendingUp size={16} />}
               label="Active listings"
               value={myAdsStats.activeCount}
             />
-            <StatCard icon="✅" label="Sold" value={myAdsStats.soldCount} />
-            <StatCard icon="⏸️" label="Paused" value={myAdsStats.pausedCount} />
             <StatCard
-              icon="👁️"
+              icon={<CheckCircle2 size={16} />}
+              label="Sold"
+              value={myAdsStats.soldCount}
+            />
+            <StatCard
+              icon={<Pause size={16} />}
+              label="Paused"
+              value={myAdsStats.pausedCount}
+            />
+            <StatCard
+              icon={<Eye size={16} />}
               label="Total views"
               value={myAdsStats.totalViews}
             />
@@ -110,8 +136,8 @@ function MyAdsPage() {
           {STATUS_TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => handleStatusChange(t.id)}
-              className={`flex-shrink-0 flex items-center gap-1 px-3 py-2 rounded-xl
+              onClick={() => changeMyAdsStatus(t.id as any)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl
                 text-xs font-semibold transition
                 ${
                   myAdsStatus === t.id
@@ -119,8 +145,7 @@ function MyAdsPage() {
                     : "text-gray-500 hover:text-gray-700"
                 }`}
             >
-              <span>{t.icon}</span>
-              {t.label}
+              {t.icon} {t.label}
             </button>
           ))}
         </div>
@@ -161,7 +186,7 @@ function MyAdsPage() {
             className="bg-white rounded-2xl border border-gray-100 shadow-sm
             p-10 sm:p-16 text-center"
           >
-            <p className="text-4xl mb-3">📭</p>
+            <Package size={40} className="text-gray-200 mx-auto mb-3" />
             <p className="text-gray-700 font-semibold text-sm mb-1">
               No {myAdsStatus === "all" ? "" : myAdsStatus} ads yet
             </p>
@@ -173,10 +198,11 @@ function MyAdsPage() {
             {myAdsStatus === "all" && (
               <Link
                 href="/sell"
-                className="inline-block px-5 py-2.5 bg-yellow-400 text-black
-                  font-bold rounded-xl text-sm hover:bg-yellow-300 transition"
+                className="inline-flex items-center gap-2 px-5 py-2.5
+                  bg-yellow-400 text-black font-bold rounded-xl text-sm
+                  hover:bg-yellow-300 transition"
               >
-                Post your first ad →
+                <Plus size={14} /> Post your first ad
               </Link>
             )}
           </div>
@@ -199,7 +225,7 @@ function MyAdsPage() {
           </div>
         )}
 
-        {/* Post CTA at bottom */}
+        {/* Post CTA */}
         {!myAdsLoading && (
           <div
             className="mt-8 bg-gradient-to-r from-yellow-50 to-amber-50
@@ -213,10 +239,10 @@ function MyAdsPage() {
             </p>
             <Link
               href="/sell"
-              className="inline-block px-6 py-2.5 bg-yellow-400 text-black
-                font-bold rounded-xl text-sm hover:bg-yellow-300 transition"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-yellow-400
+                text-black font-bold rounded-xl text-sm hover:bg-yellow-300 transition"
             >
-              + Post a new ad
+              <Plus size={14} /> Post a new ad
             </Link>
           </div>
         )}
@@ -225,7 +251,6 @@ function MyAdsPage() {
   );
 }
 
-// Wrap in ProtectedRoute so non-vendors are redirected
 export default function MyAdsPageWrapper() {
   return (
     <ProtectedRoute requiredRole="vendor">
