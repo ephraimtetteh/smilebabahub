@@ -61,7 +61,7 @@ export default function HeroSection({ search, radio }: HeroProps) {
   const [query, setQuery] = useState("");
 
   const ctaHref = isVendor
-    ? "/ads/create"
+    ? "/sell?reason=sell"
     : isLoggedIn
       ? "/subscribe"
       : "/auth/login?reason=sell";
