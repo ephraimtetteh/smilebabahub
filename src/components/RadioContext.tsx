@@ -16,12 +16,7 @@ import React, {
   useCallback,
 } from "react";
 
-// Stream URL — override via NEXT_PUBLIC_RADIO_STREAM_URL env var
-// Falls back to the streambrothers URL. If stream is offline,
-// the audio element fires onerror and we mark it unavailable.
-const STREAM_URL =
-  process.env.NEXT_PUBLIC_RADIO_STREAM_URL ??
-  "https://media2.streambrothers.com:2000/public/8056";
+const STREAM_URL = "https://video2.getstreamhosting.com:2020/stream/8244";
 
 // ── Deterministic daily seed ─────────────────────────────────────────────────
 // Returns the same base count for every user on the same calendar day.
@@ -111,12 +106,6 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const audio = new Audio();
     audio.src = STREAM_URL;
-
-    // If stream is offline or URL is invalid — mark unavailable silently
-    audio.onerror = () => {
-      console.warn("[Radio] Stream unavailable:", STREAM_URL);
-      setPlaying(false);
-    };
     audio.volume = volume;
     audio.muted = muted;
     audio.preload = "none";
@@ -190,3 +179,5 @@ export function useRadio(): RadioContextValue {
   if (!ctx) throw new Error("useRadio must be used inside <RadioProvider>");
   return ctx;
 }
+
+

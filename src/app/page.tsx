@@ -4,7 +4,7 @@ import React from "react";
 import AppDownload from "@/src/components/App";
 import FeaturedProducts from "../components/FeaturedProducts";
 import Radio from "../components/Radio";
-import NewVideo from "../components/NewVideo";
+
 
 const HomePage = () => {
   return (
@@ -23,8 +23,7 @@ const HomePage = () => {
               <h1 className="lg:text-4xl font-bold py-12 capitalize text-center">
                 Promote your Business & products <br /> Live On smileBaba TV
               </h1>
-              {/* <Video /> */}
-              <NewVideo />
+              <Video />
             </div>
           </div>
 
