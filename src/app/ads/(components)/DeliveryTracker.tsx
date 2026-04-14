@@ -17,12 +17,12 @@ import {
 
 interface DeliveryTrackerProps {
   vendorName: string;
-  vendorPhone?: string;
-  whatsapp?: string;
-  city?: string;
-  region?: string;
-  address?: string;
-  coordinates?: { lat: number; lng: number } | null;
+  vendorPhone?: string | null;
+  whatsapp?: string | null;
+  city?: string | null;
+  region?: string | null;
+  address?: string | null;
+  coordinates?: { lat?: number; lng?: number } | null;
 }
 
 // Build OpenStreetMap embed URL
@@ -30,7 +30,7 @@ function buildMapUrl(
   address: string | null | undefined,
   city: string | null | undefined,
   region: string | null | undefined,
-  coords: { lat: number | null; lng: number | null } | null | undefined,
+  coords: { lat?: number; lng?: number } | null | undefined,
 ): string {
   if (coords?.lat != null && coords?.lng != null) {
     // If vendor has set coordinates, use them
@@ -46,7 +46,7 @@ function buildMapUrl(
 function buildDirectionsUrl(
   city: string | null | undefined,
   region: string | null | undefined,
-  coords: { lat: number | null; lng: number | null } | null | undefined,
+  coords: { lat?: number; lng?: number } | null | undefined,
 ): string {
   if (coords?.lat != null && coords?.lng != null) {
     return `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}&zoom=15`;

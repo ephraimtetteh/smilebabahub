@@ -102,7 +102,7 @@ export type AdLocation = {
   regionSlug?: string;
   city?:       string;
   address?:    string;
-  coordinates?: { lat: number | null | undefined; lng: number | null | undefined } | null;
+  coordinates?: { lat?: number; lng?: number };
 };
 
 export type AdContact = {
