@@ -957,7 +957,7 @@ export default function AdminBusinessAnalytics() {
                             label={v.plan ?? "Unknown"}
                             value={v.count}
                             max={data.growth.vendorsByPlan[0]?.count ?? 1}
-                            color={planColors[v.plan] ?? "#9ca3af"}
+                            // color={planColors[v.plan] ?? "#9ca3af"}
                             sub={`${share}% of active vendors`}
                           />
                         );
@@ -1258,7 +1258,7 @@ export default function AdminBusinessAnalytics() {
                           label={s.label}
                           value={s.value}
                           max={data.payments.total}
-                          color={s.color}
+                          // color={s.color}
                         />
                       ))}
                     </div>
@@ -1268,8 +1268,8 @@ export default function AdminBusinessAnalytics() {
                         {data.payments.successRate >= 90
                           ? "✅ Excellent payment success rate. Flutterwave integration is healthy."
                           : data.payments.successRate >= 75
-                            ? "⚠️ Payment success rate could be improved. Check for card decline patterns."
-                            : "🚨 High payment failure rate. Investigate gateway errors and user drop-off."}
+                            ? "Payment success rate could be improved. Check for card decline patterns."
+                            : "High payment failure rate. Investigate gateway errors and user drop-off."}
                       </p>
                     </div>
                   </div>
