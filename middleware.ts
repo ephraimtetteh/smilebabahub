@@ -48,18 +48,11 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  // ── 5. /subscription → /subscribe ───────────────────────────────────────
-  // Old URL used in some emails and older links.
-  if (pathname === "/subscribe") {
-    const url = req.nextUrl.clone();
-    url.pathname = "/subscription";
-    return NextResponse.redirect(url, 308);
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
+  // Run on these paths only — exclude static assets and API routes
   matcher: [
     "/login",
     "/vendor",
@@ -67,6 +60,5 @@ export const config = {
     "/vendor/history",
     "/vendor/ads",
     "/vendor/ads/:path*",
-    "/subscription",
   ],
 };
