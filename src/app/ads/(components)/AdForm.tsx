@@ -27,6 +27,9 @@ import {
   MapPin,
   BedDouble,
   Navigation,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { AdFormData, EMPTY_AD_FORM } from "@/src/types/adForm.types";
 import {
@@ -38,9 +41,7 @@ import {
 } from "@/src/types/ad.types";
 import { useAppSelector } from "@/src/app/redux";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
-import { uploadManyToCloudinary } from "@/src/utils/uploadToCloudinary";
-import DeliveryOnboarding from "./DeliveryOnboarding";
-import PharmacyOnboarding from "./PharmacyOnboarding";
+
 
 // ── Country config — everything that differs between Ghana and Nigeria ──────
 const COUNTRY_CONFIG = {
@@ -143,6 +144,9 @@ import {
   BEDROOM_OPTIONS,
   getSubcategories,
 } from "./ad.constants";
+import { uploadManyToCloudinary } from "@/src/utils/uploadToCloudinary";
+import DeliveryOnboarding from "./DeliveryOnboarding";
+import PharmacyOnboarding from "./PharmacyOnboarding";
 
 const MAIN_CATEGORIES = [
   {
@@ -248,41 +252,66 @@ const Field = memo(function Field({
   );
 });
 
-// ── Step bar ─────────────────────────────────────────────────────────────────
-function StepBar({ current }: { current: number }) {
+// ── Step bar — clickable circles for completed steps ─────────────────────────
+function StepBar({
+  current,
+  onJump,
+}: {
+  current: number;
+  onJump: (step: number) => void;
+}) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center mb-3">
-        {STEPS.map((s, i) => (
-          <div key={s} className="flex items-center flex-1 last:flex-none">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center
-              text-xs font-bold transition-all duration-300 flex-shrink-0
-              ${
-                i + 1 < current
-                  ? "bg-yellow-400 text-black scale-95"
-                  : i + 1 === current
-                    ? "bg-yellow-400 text-black ring-4 ring-yellow-100"
-                    : "bg-gray-100 text-gray-400"
-              }`}
-            >
-              {i + 1 < current ? "✓" : i + 1}
+    <div className="mb-6 select-none">
+      <div className="flex items-center mb-2.5">
+        {STEPS.map((s, i) => {
+          const num = i + 1;
+          const done = num < current;
+          const active = num === current;
+          const future = num > current;
+          return (
+            <div key={s} className="flex items-center flex-1 last:flex-none">
+              <button
+                type="button"
+                onClick={() => done && onJump(num)}
+                disabled={future || active}
+                title={done ? `Go back to ${s}` : s}
+                className={`w-8 h-8 rounded-full flex items-center justify-center
+                  text-xs font-black flex-shrink-0
+                  transition-all duration-200
+                  ${
+                    done
+                      ? "bg-yellow-400 text-black cursor-pointer hover:bg-yellow-300 hover:scale-110 active:scale-95 shadow-sm"
+                      : active
+                        ? "bg-gray-900 text-white ring-4 ring-gray-900/10 cursor-default"
+                        : "bg-gray-100 text-gray-400 cursor-default"
+                  }`}
+              >
+                {done ? "✓" : num}
+              </button>
+              {i < STEPS.length - 1 && (
+                <div
+                  className={`flex-1 h-0.5 mx-1.5 rounded-full
+                  transition-all duration-300
+                  ${done ? "bg-yellow-400" : "bg-gray-100"}`}
+                />
+              )}
             </div>
-            {i < STEPS.length - 1 && (
-              <div
-                className={`flex-1 h-0.5 mx-1 rounded transition-all duration-300
-                ${i + 1 < current ? "bg-yellow-400" : "bg-gray-100"}`}
-              />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
-      <div className="flex justify-between">
+      <div className="flex">
         {STEPS.map((s, i) => (
           <p
             key={s}
-            className={`text-[10px] font-medium flex-1 text-center
-            ${i + 1 === current ? "text-gray-700" : "text-gray-400"}`}
+            className={`text-[10px] font-semibold flex-1 text-center
+            leading-tight transition-colors
+            ${
+              i + 1 === current
+                ? "text-gray-800"
+                : i + 1 < current
+                  ? "text-yellow-600"
+                  : "text-gray-300"
+            }`}
           >
             {s}
           </p>
@@ -466,6 +495,7 @@ interface AdFormProps {
     images: AdImage[],
     data: AdFormData,
   ) => Promise<{ adId?: string } | void>;
+  onExit?: () => void; // called when user exits from step 1 or clicks × header
   submitLabel?: string;
   loading?: boolean;
   mode?: "create" | "edit";
@@ -476,6 +506,7 @@ export default function AdForm({
   initialValues,
   existingImages = [],
   onSubmit,
+  onExit,
   submitLabel = "Post ad",
   loading = false,
   mode = "create",
@@ -507,6 +538,21 @@ export default function AdForm({
   const [successAdId, setSuccessAdId] = useState<string | null>(null);
   const submitRef = useRef(false);
   const errorsRef = useRef<Record<string, string>>({});
+  const isDirtyRef = useRef(false); // true once user touches any field
+
+  // ── Unsaved-changes guard ───────────────────────────────────────────────
+  // Warn when user tries to close tab or navigate away mid-form.
+  // Uses beforeunload (browser native dialog) — only fires when form is dirty.
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirtyRef.current && !submitRef.current) {
+        e.preventDefault();
+        e.returnValue = ""; // Chrome requires returnValue to be set
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
 
   // Sync currency + country + reset region whenever the country switcher changes.
   // e.g. a Nigerian switches to Ghana — currency becomes GHS, region list changes.
@@ -524,6 +570,7 @@ export default function AdForm({
 
   // ── Single updater ────────────────────────────────────────────────────────
   const set = <K extends keyof AdFormData>(k: K, v: AdFormData[K]) => {
+    isDirtyRef.current = true;
     if (errorsRef.current[k as string]) {
       delete errorsRef.current[k as string];
       setErrors({ ...errorsRef.current });
@@ -621,6 +668,7 @@ export default function AdForm({
   const handleSubmit = useCallback(async () => {
     if (!validate(4) || submitRef.current || submitting) return;
     submitRef.current = true;
+    isDirtyRef.current = false; // no longer dirty — submit in progress
     setSubmitting(true);
 
     try {
@@ -697,6 +745,8 @@ export default function AdForm({
     setErrors({});
     errorsRef.current = {};
     setProgress(0);
+    isDirtyRef.current = false;
+    submitRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg.currency, country]);
 
@@ -705,6 +755,21 @@ export default function AdForm({
     return (
       <SuccessScreen adId={successAdId} onPostAnother={handlePostAnother} />
     );
+
+  // Escape key on step 1 → call onExit (if provided)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && step === 1 && onExit && !isSubmitting) {
+        if (isDirtyRef.current) {
+          if (!window.confirm("You have unsaved changes. Leave anyway?"))
+            return;
+        }
+        onExit();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [step, onExit, isSubmitting]);
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6">
@@ -726,11 +791,73 @@ export default function AdForm({
         </span>
       </div>
 
-      <StepBar current={step} />
+      <StepBar
+        current={step}
+        onJump={(n) => {
+          setStep(n);
+          setErrors({});
+          errorsRef.current = {};
+        }}
+      />
 
       {/* ── Step 1: Basic info — specialty forms for delivery + pharmacy ── */}
       {step === 1 && (
         <Card>
+          {/* ── Category change bar — shown when a specialty category is active ── */}
+          {(form.category === "delivery" || form.category === "pharmacy") && (
+            <div
+              className="flex items-center justify-between gap-3
+              bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 -mb-1"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-lg flex-shrink-0">
+                  {MAIN_CATEGORIES.find((c) => c.id === form.category)?.icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-gray-800 leading-tight">
+                    {MAIN_CATEGORIES.find((c) => c.id === form.category)?.label}
+                  </p>
+                  <p className="text-[11px] text-gray-400 leading-tight">
+                    Selected category
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  // Clear category + all specialty fields so stale data doesn't submit
+                  set("category", "");
+                  set("subcategory", "");
+                  set("type", "");
+                  // Delivery fields
+                  set("deliveryServiceType", "");
+                  set("deliveryCoverageArea", "");
+                  set("deliveryWorkingHours", "");
+                  set("deliveryMinOrder", "");
+                  set("deliveryHasTracking", false);
+                  set("deliveryContactNote", "");
+                  // Pharmacy fields
+                  set("pharmacyProductType", "");
+                  set("pharmacyBrand", "");
+                  set("pharmacyDosage", "");
+                  set("pharmacyPackSize", "");
+                  set("pharmacyExpiryDate", "");
+                  set("pharmacyPrescription", false);
+                  set("pharmacyNafdacNo", "");
+                  set("pharmacyStorageInfo", "");
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5
+                  text-xs font-semibold text-gray-600 bg-white
+                  border border-gray-200 rounded-xl
+                  hover:bg-gray-100 hover:border-gray-300
+                  active:scale-95 transition-all flex-shrink-0"
+              >
+                <ChevronLeft size={13} />
+                Change
+              </button>
+            </div>
+          )}
+
           {/* ── DELIVERY: Bolt/Uber-style onboarding ── */}
           {form.category === "delivery" ? (
             <DeliveryOnboarding form={form} set={set} errors={errors} />
@@ -764,6 +891,16 @@ export default function AdForm({
                       onClick={() => {
                         set("category", c.id);
                         set("subcategory", "");
+                        set("type", "");
+                        // Clear specialty fields from any previous category selection
+                        set("deliveryServiceType", "");
+                        set("deliveryCoverageArea", "");
+                        set("deliveryWorkingHours", "");
+                        set("deliveryHasTracking", false);
+                        set("pharmacyProductType", "");
+                        set("pharmacyBrand", "");
+                        set("pharmacyExpiryDate", "");
+                        set("pharmacyPrescription", false);
                       }}
                       className={`py-2.5 rounded-xl text-xs font-semibold border flex flex-col
                     items-center gap-1 transition
@@ -1208,48 +1345,90 @@ export default function AdForm({
       <UploadProgress progress={progress} label={progressLabel} />
 
       {/* ── Navigation ── */}
-      <div className="flex gap-3 mt-5">
-        {step > 1 && !isSubmitting && (
-          <button
-            type="button"
-            onClick={back}
-            className="flex-1 py-3 bg-white border border-gray-200 text-gray-700
-              font-semibold rounded-2xl text-sm hover:bg-gray-50 transition"
-          >
-            ← Back
-          </button>
-        )}
-        {step < STEPS.length ? (
-          <button
-            type="button"
-            onClick={next}
-            className="flex-1 py-3 bg-yellow-400 text-black font-black rounded-2xl
-              text-sm hover:bg-yellow-300 transition active:scale-[0.99]"
-          >
-            Next →
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="flex-1 py-3 bg-yellow-400 text-black font-black rounded-2xl
-              text-sm hover:bg-yellow-300 transition disabled:opacity-60
-              disabled:cursor-not-allowed active:scale-[0.99]"
-          >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <span
-                  className="w-4 h-4 border-2 border-black/30 border-t-black
-                    rounded-full animate-spin inline-block"
-                />
-                {progressLabel || (mode === "edit" ? "Saving…" : "Posting…")}
-              </span>
-            ) : (
-              submitLabel
-            )}
-          </button>
-        )}
+      <div className="mt-6 space-y-3">
+        {/* Primary row: Back + Next/Submit */}
+        <div className="flex gap-2.5">
+          {/* Step 1: exit button (goes back to previous page) */}
+          {step === 1 && onExit && !isSubmitting && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isDirtyRef.current) {
+                  if (
+                    !window.confirm("You have unsaved changes. Leave anyway?")
+                  )
+                    return;
+                }
+                onExit();
+              }}
+              className="flex items-center justify-center gap-1.5 px-4 py-3
+                bg-white border border-gray-200 text-gray-600 font-semibold
+                rounded-2xl text-sm hover:bg-gray-50 active:scale-95
+                transition-all flex-shrink-0"
+              aria-label="Exit form"
+            >
+              <ArrowLeft size={15} />
+              <span className="hidden sm:inline">Exit</span>
+            </button>
+          )}
+
+          {/* Steps 2+: back to previous step */}
+          {step > 1 && !isSubmitting && (
+            <button
+              type="button"
+              onClick={back}
+              className="flex items-center justify-center gap-1.5 px-4 py-3
+                bg-white border border-gray-200 text-gray-700 font-semibold
+                rounded-2xl text-sm hover:bg-gray-50 active:scale-95
+                transition-all flex-shrink-0"
+              aria-label="Previous step"
+            >
+              <ChevronLeft size={16} />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+          )}
+
+          {/* Next step / Submit */}
+          {step < STEPS.length ? (
+            <button
+              type="button"
+              onClick={next}
+              className="flex-1 flex items-center justify-center gap-2 py-3
+                bg-gray-900 text-white font-black rounded-2xl text-sm
+                hover:bg-gray-800 active:scale-[0.99] transition-all"
+            >
+              Continue
+              <ChevronRight size={16} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex-1 flex items-center justify-center gap-2 py-3
+                bg-yellow-400 text-black font-black rounded-2xl text-sm
+                hover:bg-yellow-300 active:scale-[0.99] transition-all
+                disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <>
+                  <span
+                    className="w-4 h-4 border-2 border-black/30 border-t-black
+                      rounded-full animate-spin"
+                  />
+                  {progressLabel || (mode === "edit" ? "Saving…" : "Posting…")}
+                </>
+              ) : (
+                submitLabel
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Step indicator text — mobile-friendly progress hint */}
+        <p className="text-center text-[11px] text-gray-400 font-medium">
+          Step {step} of {STEPS.length} · {STEPS[step - 1]}
+        </p>
       </div>
     </div>
   );

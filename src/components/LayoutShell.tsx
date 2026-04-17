@@ -13,6 +13,8 @@ import AuthGate from "../utils/AuthGate";
 import { useAppUpdates } from "@/src/hooks/useAppUpdates";
 import GuestLocationDetector from "./guestLocationDetector";
 import PublicNavbar from "./PublicNavbar";
+import BackendWakeUp from "./BackendWakeup";
+
 
 
 
@@ -86,17 +88,19 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <StoreProvider>
+    
+        <BackendWakeUp />
         <GuestLocationDetector />
         <AppInitializer>
-            <LayoutShell>
-          <AuthGate>
+          <LayoutShell>
+            <AuthGate>
               {children}
               <Script
                 src="https://video2.getstreamhosting.com:2020/dist/widgets.js"
                 strategy="afterInteractive"
               />
-          </AuthGate>
-            </LayoutShell>
+            </AuthGate>
+          </LayoutShell>
         </AppInitializer>
       </StoreProvider>
     </>

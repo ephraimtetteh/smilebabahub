@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { Frown, Lock } from "lucide-react";
 import { useAds } from "@/src/hooks/useAds";
 import { useAppSelector } from "@/src/app/redux";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { AdFormData } from "@/src/types/adForm.types";
 import {
   AdImage,
@@ -52,6 +53,7 @@ export default function EditAdPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const user = useAppSelector((s) => s.auth.user);
+   const { country: viewCountry, currency: viewCurrency } = useViewCountry();
 
   const {
     current: ad,
@@ -152,7 +154,7 @@ export default function EditAdPage() {
       negotiable: (data.negotiable || "not_sure") as Negotiable,
       condition: (data.condition || "not_applicable") as AdCondition,
       location: {
-        country: (user?.country ?? "Ghana") as any,
+        country: (user?.country ?? viewCountry ?? "Ghana") as any,
         countryCode: (user?.currency === "NGN" ? "NG" : "GH") as any,
         region: data.region,
         city: data.city || undefined,
@@ -212,6 +214,7 @@ export default function EditAdPage() {
         initialValues={adToFormData(ad)}
         existingImages={existingImages}
         onSubmit={handleUpdate}
+        onExit={() => router.push(`/ads/${id}`)}
         submitLabel="Save changes"
         loading={mutating}
         mode="edit"

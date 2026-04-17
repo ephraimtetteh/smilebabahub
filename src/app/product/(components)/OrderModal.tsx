@@ -11,9 +11,9 @@ import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
 import axiosInstance from "@/src/lib/api/axios";
 import ModalShell from "./ModalShell";
+import { BtnSpinner } from "../../ads/(components)/AdUI";
 import type { ModalProps } from "./ad.types";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
-import { BtnSpinner } from "../../ads/(components)/AdUI";
 
 export default function OrderModal({ ad, sym, onClose }: ModalProps) {
   const user = useAppSelector((s) => s.auth.user);

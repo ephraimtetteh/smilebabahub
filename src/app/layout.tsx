@@ -5,7 +5,7 @@ import { ToastContainer } from "react-toastify";
 import LayoutWrapper from "@/src/components/LayoutShell";
 import { RadioProvider } from "@/src/components/RadioContext";
 
-// ── Font 
+// ── Font ───────────────────────────────────────────────────────────────────
 const outfit = Outfit({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -13,16 +13,15 @@ const outfit = Outfit({
   variable: "--font-outfit",
 });
 
-// ── Viewport (separate from metadata in Next.js 14+)
+// ── Viewport ──────────────────────────────────────────────────────────────
 export const viewport: Viewport = {
   themeColor: "#ffc105",
   width: "device-width",
   initialScale: 1,
 };
 
-// ── Root metadata 
+// ── Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
-  // %s is replaced by page-level titles e.g. "Marketplace | SmileBaba Hub"
   title: {
     default: "SmileBaba Hub — Buy, Sell Everything you need",
     template: "%s | SmileBaba Hub",
@@ -58,7 +57,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-home.jpg", 
+        url: "/og-home.jpg",
         width: 1200,
         height: 630,
         alt: "SmileBaba Hub — Ghana & Nigeria Online Marketplace",
@@ -72,14 +71,11 @@ export const metadata: Metadata = {
     description:
       "Phones, cars, food, fashion and apartments from verified vendors across Ghana and Nigeria.",
     images: ["/og-home.jpg"],
-    site: "@smilebabahub", // 
+    site: "@smilebabahub",
   },
 
-  alternates: {
-    canonical: "https://smilebabahub.com",
-  },
+  alternates: { canonical: "https://smilebabahub.com" },
 
-  // Favicon + icons — replaces the <Head> block
   icons: {
     icon: "/logo1.png",
     shortcut: "/logo1.png",
@@ -89,27 +85,22 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-    },
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
 };
 
 // ── Root layout ────────────────────────────────────────────────────────────
+// StoreProvider, BackendWakeUp, GuestLocationDetector, useAppUpdates
+// are all handled inside LayoutWrapper (LayoutShell.tsx) — no need to duplicate here.
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={outfit.variable}>
       <body className={`relative min-h-screen ${outfit.className} antialiased`}>
-       
-            <RadioProvider>
-              <LayoutWrapper>{children}</LayoutWrapper>
-            </RadioProvider>
+        <RadioProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </RadioProvider>
 
         <ToastContainer
           position="top-right"

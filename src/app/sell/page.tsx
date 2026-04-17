@@ -3,8 +3,10 @@
 // src/app/sell/page.tsx
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAds } from "@/src/hooks/useAds";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { useAppSelector } from "@/src/app/redux";
 import { saveReturnState } from "@/src/hooks/useSubscriptionGuard";
 import { AdFormData } from "@/src/types/adForm.types";
@@ -23,6 +25,7 @@ export default function SellPage() {
   );
   const isVendor = isAuthenticated && user?.role === "vendor";
   const { submitCreateAd, mutating, mutateError } = useAds();
+  const { country: viewCountry, currency: viewCurrency } = useViewCountry();
 
   useEffect(() => {
     if (mutateError) toast.error(mutateError);
@@ -73,8 +76,10 @@ export default function SellPage() {
       negotiable: (data.negotiable || "not_sure") as Negotiable,
       condition: (data.condition || "not_applicable") as AdCondition,
       location: {
-        country: (user?.country ?? "Ghana") as any,
-        countryCode: (user?.currency === "NGN" ? "NG" : "GH") as any,
+        country: (user?.country ?? viewCountry ?? "Ghana") as any,
+        countryCode: ((user?.currency ?? viewCurrency) === "NGN"
+          ? "NG"
+          : "GH") as any,
         region: data.region,
         city: data.city || undefined,
         address: data.address || undefined,
@@ -187,18 +192,48 @@ export default function SellPage() {
     return { adId: ad?._id ?? ad?.id ?? "pending" };
   };
 
+  const handleExit = () => {
+    // Go back if history exists, otherwise go to my ads
+    if (typeof window !== "undefined" && window.history.length > 2) {
+      router.back();
+    } else {
+      router.push("/ads/my");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4">
-        <div className="max-w-xl mx-auto">
-          <h1 className="text-lg font-bold text-gray-900">Post a new ad</h1>
-          <p className="text-xs text-gray-400">
-            Your ad will be reviewed before going live
-          </p>
+      {/* ── Header ── */}
+      <div
+        className="bg-white border-b border-gray-100 sticky top-14 z-30
+        shadow-[0_1px_0_0_rgba(0,0,0,0.06)]"
+      >
+        <div
+          className="max-w-xl mx-auto px-4 sm:px-6 py-3.5
+          flex items-center gap-3"
+        >
+          <button
+            onClick={handleExit}
+            className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center
+              text-gray-600 hover:bg-gray-200 active:scale-95 transition-all
+              flex-shrink-0"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div className="min-w-0">
+            <h1 className="text-base font-bold text-gray-900 leading-tight">
+              Post a new ad
+            </h1>
+            <p className="text-[11px] text-gray-400 leading-tight">
+              Fill in the details below — takes about 2 minutes
+            </p>
+          </div>
         </div>
       </div>
       <AdForm
         onSubmit={handleCreate}
+        onExit={handleExit}
         submitLabel="Post ad"
         loading={mutating}
         mode="create"

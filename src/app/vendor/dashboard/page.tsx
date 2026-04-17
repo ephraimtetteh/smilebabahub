@@ -14,6 +14,8 @@ import VendorMessages from "../(components)/VendorMessages";
 import ProtectedRoute from "@/src/components/ProtectRoute";
 
 
+
+
 function DashboardInner() {
   const { loadMyAds } = useAds();
   const user = useAppSelector((s) => s.auth.user);
@@ -44,16 +46,42 @@ function DashboardInner() {
           </p>
         </div>
 
-        {user?.subscription?.plan && (
-          <div
-            className="hidden sm:flex items-center gap-1.5 bg-yellow-50
-            border border-yellow-200 text-yellow-700 text-xs font-semibold
-            px-3 py-1.5 rounded-full"
-          >
-            <Sparkles size={12} />
-            {user.subscription.plan} plan
-          </div>
-        )}
+        {user?.subscription?.plan &&
+          (() => {
+            const expiry = user.subscription.expiresAt
+              ? new Date(user.subscription.expiresAt)
+              : null;
+            const daysLeft = expiry
+              ? Math.max(
+                  0,
+                  Math.ceil((expiry.getTime() - Date.now()) / 86400000),
+                )
+              : null;
+            const isExpiring =
+              daysLeft !== null && daysLeft <= 7 && daysLeft > 0;
+            const isExpired = expiry ? expiry < new Date() : false;
+
+            return (
+              <div
+                className={`hidden sm:flex items-center gap-1.5 text-xs font-semibold
+              px-3 py-1.5 rounded-full border
+              ${
+                isExpired
+                  ? "bg-red-50 border-red-200 text-red-600"
+                  : isExpiring
+                    ? "bg-orange-50 border-orange-200 text-orange-600"
+                    : "bg-yellow-50 border-yellow-200 text-yellow-700"
+              }`}
+              >
+                <Sparkles size={12} />
+                {user.subscription.plan}
+                {daysLeft !== null && !isExpired && (
+                  <span className="opacity-70">· {daysLeft}d left</span>
+                )}
+                {isExpired && <span>· Expired</span>}
+              </div>
+            );
+          })()}
       </div>
 
       {/* ── Stat cards ── */}

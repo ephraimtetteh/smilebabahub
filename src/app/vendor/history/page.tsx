@@ -24,6 +24,7 @@ import {
 import axiosInstance from "@/src/lib/api/axios";
 import { useResumeAction } from "@/src/hooks/useResumeAction";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
+import ProtectedRoute from "@/src/components/ProtectRoute";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Purchase = {
@@ -273,184 +274,186 @@ export default function PurchaseHistoryPage() {
     purchases.find((p) => p.periodEnd && daysLeft(p.periodEnd) > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 pt-20">
-      <div className="max-w-3xl mx-auto">
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Receipt size={22} className="text-[#ffc105]" />
-              Purchase History
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              All your SmileBaba subscription payments
-            </p>
-          </div>
+    <ProtectedRoute requiredRole="vendor">
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          {/* ── Header ── */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Receipt size={22} className="text-[#ffc105]" />
+                Purchase History
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">
+                All your SmileBaba subscription payments
+              </p>
+            </div>
 
-          <button
-            onClick={fetchHistory}
-            disabled={loading}
-            className="w-9 h-9 flex items-center justify-center bg-white
+            <button
+              onClick={fetchHistory}
+              disabled={loading}
+              className="w-9 h-9 flex items-center justify-center bg-white
               border border-gray-200 rounded-xl text-gray-500
               hover:bg-gray-50 transition disabled:opacity-40"
-            title="Refresh"
-          >
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-          </button>
-        </div>
+              title="Refresh"
+            >
+              <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+            </button>
+          </div>
 
-        {/* ── Active plan banner ── */}
-        {resolvedActivePlan && !loading && (
-          <div
-            className="bg-gradient-to-r from-amber-50 to-yellow-50 border
+          {/* ── Active plan banner ── */}
+          {resolvedActivePlan && !loading && (
+            <div
+              className="bg-gradient-to-r from-amber-50 to-yellow-50 border
             border-yellow-200 rounded-2xl p-4 mb-5 flex items-center
             justify-between gap-3"
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl bg-[#ffc105] flex items-center
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl bg-[#ffc105] flex items-center
                 justify-center"
-              >
-                {PLAN_ICONS[
-                  resolvedActivePlan.planId ?? resolvedActivePlan.plan
-                ] ?? <Star size={18} className="text-black" />}
+                >
+                  {PLAN_ICONS[
+                    resolvedActivePlan.planId ?? resolvedActivePlan.plan
+                  ] ?? <Star size={18} className="text-black" />}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-yellow-600" />
+                    {resolvedActivePlan.title ??
+                      `${resolvedActivePlan.plan ?? resolvedActivePlan.planId} Plan`}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Active · expires{" "}
+                    {formatDate(
+                      resolvedActivePlan.periodEnd ??
+                        resolvedActivePlan.expiresAt,
+                    )}{" "}
+                    (
+                    {daysLeft(
+                      resolvedActivePlan.periodEnd ??
+                        resolvedActivePlan.expiresAt,
+                    )}{" "}
+                    days left)
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                  <Sparkles size={13} className="text-yellow-600" />
-                  {resolvedActivePlan.title ??
-                    `${resolvedActivePlan.plan ?? resolvedActivePlan.planId} Plan`}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Active · expires{" "}
-                  {formatDate(
-                    resolvedActivePlan.periodEnd ??
-                      resolvedActivePlan.expiresAt,
-                  )}{" "}
-                  (
-                  {daysLeft(
-                    resolvedActivePlan.periodEnd ??
-                      resolvedActivePlan.expiresAt,
-                  )}{" "}
-                  days left)
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/subscribe?renew=1"
-              className="flex-shrink-0 flex items-center gap-1 text-xs
+              <Link
+                href="/subscribe?renew=1"
+                className="flex-shrink-0 flex items-center gap-1 text-xs
                 font-bold text-yellow-700 hover:underline"
-            >
-              Renew <ExternalLink size={11} />
-            </Link>
-          </div>
-        )}
-
-        {/* ── Summary strip ── */}
-        {!loading && purchases.length > 0 && (
-          <SummaryStrip purchases={purchases} currency={currency} />
-        )}
-
-        {/* ── Loading skeletons ── */}
-        {loading && (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <PurchaseSkeleton key={i} />
-            ))}
-          </div>
-        )}
-
-        {/* ── Error ── */}
-        {error && !loading && (
-          <div
-            className="bg-red-50 border border-red-200 rounded-2xl p-5
-            flex items-start gap-3"
-          >
-            <AlertCircle
-              size={18}
-              className="text-red-500 flex-shrink-0 mt-0.5"
-            />
-            <div>
-              <p className="text-sm font-semibold text-red-700">
-                Something went wrong
-              </p>
-              <p className="text-sm text-red-600 mt-0.5">{error}</p>
-              <button
-                onClick={fetchHistory}
-                className="mt-3 text-xs font-bold text-red-600 underline
-                  hover:no-underline"
               >
-                Try again
-              </button>
+                Renew <ExternalLink size={11} />
+              </Link>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── Empty state ── */}
-        {!loading && !error && purchases.length === 0 && (
-          <div
-            className="bg-white rounded-2xl p-10 text-center shadow-sm
-            border border-gray-100"
-          >
-            <div
-              className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center
-              justify-center mx-auto mb-4"
-            >
-              <Receipt size={28} className="text-gray-300" />
+          {/* ── Summary strip ── */}
+          {!loading && purchases.length > 0 && (
+            <SummaryStrip purchases={purchases} currency={currency} />
+          )}
+
+          {/* ── Loading skeletons ── */}
+          {loading && (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <PurchaseSkeleton key={i} />
+              ))}
             </div>
-            <p className="text-gray-800 font-bold text-base">
-              No purchases yet
-            </p>
-            <p className="text-sm text-gray-400 mt-1 mb-5">
-              Subscribe to a plan to start selling on SmileBaba
-            </p>
-            <Link
-              href="/subscribe"
-              className="inline-flex items-center gap-2 px-6 py-2.5
+          )}
+
+          {/* ── Error ── */}
+          {error && !loading && (
+            <div
+              className="bg-red-50 border border-red-200 rounded-2xl p-5
+            flex items-start gap-3"
+            >
+              <AlertCircle
+                size={18}
+                className="text-red-500 flex-shrink-0 mt-0.5"
+              />
+              <div>
+                <p className="text-sm font-semibold text-red-700">
+                  Something went wrong
+                </p>
+                <p className="text-sm text-red-600 mt-0.5">{error}</p>
+                <button
+                  onClick={fetchHistory}
+                  className="mt-3 text-xs font-bold text-red-600 underline
+                  hover:no-underline"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Empty state ── */}
+          {!loading && !error && purchases.length === 0 && (
+            <div
+              className="bg-white rounded-2xl p-10 text-center shadow-sm
+            border border-gray-100"
+            >
+              <div
+                className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center
+              justify-center mx-auto mb-4"
+              >
+                <Receipt size={28} className="text-gray-300" />
+              </div>
+              <p className="text-gray-800 font-bold text-base">
+                No purchases yet
+              </p>
+              <p className="text-sm text-gray-400 mt-1 mb-5">
+                Subscribe to a plan to start selling on SmileBaba
+              </p>
+              <Link
+                href="/subscribe"
+                className="inline-flex items-center gap-2 px-6 py-2.5
                 bg-[#ffc105] text-black font-bold rounded-xl
                 hover:bg-amber-400 transition text-sm"
-            >
-              <Sparkles size={14} />
-              View plans
-            </Link>
-          </div>
-        )}
+              >
+                <Sparkles size={14} />
+                View plans
+              </Link>
+            </div>
+          )}
 
-        {/* ── Purchase list ── */}
-        {!loading && purchases.length > 0 && (
-          <div className="space-y-3">
-            {purchases.map((p) => (
-              <PurchaseCard key={p._id} p={p} />
-            ))}
-          </div>
-        )}
+          {/* ── Purchase list ── */}
+          {!loading && purchases.length > 0 && (
+            <div className="space-y-3">
+              {purchases.map((p) => (
+                <PurchaseCard key={p._id} p={p} />
+              ))}
+            </div>
+          )}
 
-        {/* ── Bottom CTA ── */}
-        {!loading && purchases.length > 0 && (
-          <div
-            className="mt-6 flex flex-col sm:flex-row items-center
+          {/* ── Bottom CTA ── */}
+          {!loading && purchases.length > 0 && (
+            <div
+              className="mt-6 flex flex-col sm:flex-row items-center
             justify-center gap-3"
-          >
-            <Link
-              href="/subscribe"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffc105]
+            >
+              <Link
+                href="/subscribe"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffc105]
                 text-black font-bold rounded-xl hover:bg-amber-400
                 transition text-sm"
-            >
-              <Sparkles size={14} />
-              Upgrade or renew plan
-            </Link>
-            <Link
-              href="/ads/my"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white
+              >
+                <Sparkles size={14} />
+                Upgrade or renew plan
+              </Link>
+              <Link
+                href="/ads/my"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white
                 border border-gray-200 text-gray-700 font-medium rounded-xl
                 hover:bg-gray-50 transition text-sm"
-            >
-              My ads <ChevronRight size={14} />
-            </Link>
-          </div>
-        )}
+              >
+                My ads <ChevronRight size={14} />
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

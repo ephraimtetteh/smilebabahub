@@ -17,7 +17,6 @@ import {
   ArrowLeft,
   Frown,
 } from "lucide-react";
-import { MdAdsClick } from "react-icons/md";
 
 const LINKS = [
   {
@@ -49,14 +48,7 @@ const LINKS = [
     color: "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100",
   },
   {
-    href: "/ads",
-    icon: <MdAdsClick size={16} />,
-    label: "Ads",
-    desc: "See All posted ads by vendors",
-    color: "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100",
-  },
-  {
-    href: "/subscription",
+    href: "/subscribe",
     icon: <Store size={16} />,
     label: "Subscription plans",
     desc: "Become a vendor on SmileBaba",

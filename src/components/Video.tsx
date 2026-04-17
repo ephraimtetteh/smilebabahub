@@ -60,10 +60,10 @@ const Video = () => {
       shadow-xl border border-gray-100"
       >
         {/* 🎥 VIDEO (comes first always) */}
-        <div className="relative bg-black group">
+        <div className="relative group">
           <video
             className="w-full object-cover aspect-video lg:aspect-auto
-            lg:min-h-[360px] rounded"
+            lg:min-h-full rounded"
             controls
             loop
             muted

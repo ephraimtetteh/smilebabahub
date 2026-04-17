@@ -262,7 +262,7 @@ export default function PaymentSuccessPage() {
                   Go to vendor dashboard
                 </Link>
                 <Link
-                  href="/vendor/history"
+                  href="/vendor/purchase-history"
                   className="text-xs text-gray-400 hover:text-gray-600 transition mt-1"
                 >
                   View purchase receipt

@@ -11,7 +11,6 @@ import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
 import axiosInstance from "@/src/lib/api/axios";
 import ModalShell from "./ModalShell";
-
 import type { ModalProps } from "./ad.types";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
 import { BtnSpinner } from "../../ads/(components)/AdUI";
