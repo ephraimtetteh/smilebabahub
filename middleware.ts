@@ -50,9 +50,9 @@ export function middleware(req: NextRequest) {
 
   // ── 5. /subscription → /subscribe ───────────────────────────────────────
   // Old URL used in some emails and older links.
-  if (pathname === "/subscription") {
+  if (pathname === "/subscribe") {
     const url = req.nextUrl.clone();
-    url.pathname = "/subscribe";
+    url.pathname = "/subscription";
     return NextResponse.redirect(url, 308);
   }
 

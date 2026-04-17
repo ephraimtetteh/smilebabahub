@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppSelector } from "@/src/app/redux";
 import {
+  BarChart2,
   LayoutDashboard,
   Users,
   CreditCard,
@@ -16,11 +17,8 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
-  ChartArea,
-  ChartNoAxesColumn,
-  MonitorCog,
+  TrendingUp,
 } from "lucide-react";
-import { IoAnalytics } from "react-icons/io5";
 
 const NAV = [
   { href: "/admin", icon: <LayoutDashboard size={16} />, label: "Overview" },
@@ -38,15 +36,14 @@ const NAV = [
   { href: "/admin/ads", icon: <ShoppingBag size={16} />, label: "Ads" },
   {
     href: "/admin/analytics",
+    icon: <BarChart2 size={16} />,
     label: "Analytics",
-    icon: <ChartArea size={16} />,
   },
   {
-    href: "/admin/marketers/stats",
-    label: "Marketer Stats",
-    icon: <ChartNoAxesColumn size={16} />,
+    href: "/admin/analytics/business",
+    icon: <TrendingUp size={16} />,
+    label: "Business Report",
   },
-  { href: "/admin/system", label: "System", icon: <MonitorCog size={16} /> },
 ];
 
 export default function AdminLayout({
