@@ -40,7 +40,7 @@ export default function SellPage() {
     } else if (!isVendor) {
       saveReturnState({ type: "post_product" });
       toast.info("You need a vendor subscription to post ads.");
-      router.push("/subscribe");
+      router.push("/subscription");
     }
   }, [hasCheckedAuth, isAuthenticated, isVendor, router]);
 

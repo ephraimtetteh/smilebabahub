@@ -82,7 +82,7 @@ export function useSubscriptionGuard() {
   const redirectToSubscribe = useCallback(
     (action?: PendingAction) => {
       saveReturnState(action);
-      router.push("/subscribe");
+      router.push("/subscription");
     },
     [router],
   );
