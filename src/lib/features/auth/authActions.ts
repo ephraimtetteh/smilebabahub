@@ -45,6 +45,10 @@ export const register = createAsyncThunk<
   },
 );
 
+
+
+
+
 // ── VERIFY OTP ─────────────────────────────────────────────────────────────
 export const verifyOTP = createAsyncThunk(
   "/auth/verifyOtp",
@@ -57,6 +61,10 @@ export const verifyOTP = createAsyncThunk(
     }
   },
 );
+
+
+
+
 
 // ── RESEND OTP ─────────────────────────────────────────────────────────────
 export const resendOTP = createAsyncThunk(
@@ -71,17 +79,21 @@ export const resendOTP = createAsyncThunk(
   },
 );
 
+
+
+
+
 // ── LOGIN ──────────────────────────────────────────────────────────────────
 export const login = createAsyncThunk<
-  LoginResponseProp,
-  { email: string; password: string }
+  LoginResponseProp & { redirectTo?: string },
+  { email: string; password: string; returnUrl?: string }
 >("/smilebaba/auth/login", async (userData, { dispatch }) => {
   try {
     dispatch(setIsAuthenticating(true));
 
     const response = await axiosInstance.post<LoginResponseProp>(
       "/auth/login",
-      userData,
+      { email: userData.email, password: userData.password },
     );
 
     // ✅ Save token so request interceptor picks it up immediately
@@ -93,7 +105,27 @@ export const login = createAsyncThunk<
     dispatch(setUser(response.data.user));
     dispatch(setIsAuthenticated(true));
 
-    return response.data;
+    // ── Role-based redirect ───────────────────────────────────────────────
+    // Priority: explicit returnUrl → role-based default → "/"
+    const role = response.data.user?.role;
+    const returnUrl =
+      userData.returnUrl ||
+      (typeof window !== "undefined"
+        ? (new URLSearchParams(window.location.search).get("returnUrl") ?? "")
+        : "");
+
+    let redirectTo: string;
+    if (returnUrl && returnUrl.startsWith("/")) {
+      redirectTo = returnUrl; // honour explicit returnUrl
+    } else if (role === "vendor") {
+      redirectTo = "/vendor/dashboard"; // vendors → their dashboard
+    } else if (role === "admin") {
+      redirectTo = "/admin"; // admins → admin panel
+    } else {
+      redirectTo = "/"; // guests → homepage
+    }
+
+    return { ...response.data, redirectTo };
   } catch (error) {
     dispatch(setIsAuthenticated(false));
     dispatch(setAccessToken(null));
@@ -115,10 +147,16 @@ export const restoreSession = createAsyncThunk<
 >("auth/refresh", async (_, { dispatch, rejectWithValue }) => {
   try {
     // 1. Get a fresh access token using the httpOnly refreshToken cookie
+    // 15s timeout: Render free tier cold-starts can take 10-30s.
+    // If it exceeds 15s we treat the session as expired and show login.
+    // Better UX than an infinite spinner.
     const refreshRes = await axios.post(
       REFRESH_URL,
       {},
-      { withCredentials: true },
+      {
+        withCredentials: true,
+        timeout: 15000,
+      },
     );
     const newToken = refreshRes.data.accessToken;
 
