@@ -330,6 +330,9 @@ export type UserProp = {
   instagram?: string;
   facebook?: string;
   whatsapp?: string;
+  tiktok?: string;
+  twitter?: string;
+  youtube?: string;
 
   returnPolicy?: string;
   deliveryPolicy?: string;

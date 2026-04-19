@@ -15,6 +15,7 @@ interface AuthState {
   accessToken: null | string;
   user: UserProp | null;
   message: Message;
+  pendingRedirect: string | null; // set after login, consumed by AuthRedirect
 
   // ── Guest geo ────────────────────────────────────────────────────────────
   guestCountry: string; // IP-detected country for unauthenticated visitors
@@ -38,6 +39,7 @@ const initialState: AuthState = {
   accessToken: null,
   user: null,
   message: { type: "", message: "" },
+  pendingRedirect: null,
 
   guestCountry: "Ghana",
   guestCurrency: "GHS",
@@ -79,6 +81,11 @@ export const authSlice = createSlice({
     },
     setGuestDetecting: (state, action: PayloadAction<boolean>) => {
       state.guestDetecting = action.payload;
+    },
+
+    // Consume the pending redirect (called by AuthRedirect after navigating)
+    clearPendingRedirect: (state) => {
+      state.pendingRedirect = null;
     },
 
     // Universal country switcher — works for everyone, instant, no API call
@@ -137,11 +144,9 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.isAdmin = action.payload.user?.isAdmin ?? false;
         state.hasCheckedAuth = true;
-        // ── CRITICAL: clear guest selectedCountry on login ──────────────────
-        // Otherwise a guest who manually picked "Nigeria" would stay on Nigeria
-        // even if their account country is "Ghana", confusing them.
-        // They can always re-select via CountrySwitcher after login.
         state.selectedCountry = "";
+        // Store redirect destination — AuthRedirect component consumes this
+        state.pendingRedirect = (action.payload as any).redirectTo ?? null;
       })
       .addCase(login.rejected, (state) => {
         state.isAuthenticating = false;
@@ -179,6 +184,7 @@ export const {
   setGuestDetecting,
   setSelectedCountry,
   setAdminViewCountry,
+  clearPendingRedirect,
 } = authSlice.actions;
 
 const authReducer = authSlice.reducer;

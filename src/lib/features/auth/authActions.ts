@@ -45,10 +45,6 @@ export const register = createAsyncThunk<
   },
 );
 
-
-
-
-
 // ── VERIFY OTP ─────────────────────────────────────────────────────────────
 export const verifyOTP = createAsyncThunk(
   "/auth/verifyOtp",
@@ -62,10 +58,6 @@ export const verifyOTP = createAsyncThunk(
   },
 );
 
-
-
-
-
 // ── RESEND OTP ─────────────────────────────────────────────────────────────
 export const resendOTP = createAsyncThunk(
   "/auth/resendOtp",
@@ -78,10 +70,6 @@ export const resendOTP = createAsyncThunk(
     }
   },
 );
-
-
-
-
 
 // ── LOGIN ──────────────────────────────────────────────────────────────────
 export const login = createAsyncThunk<

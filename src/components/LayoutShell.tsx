@@ -14,6 +14,7 @@ import { useAppUpdates } from "@/src/hooks/useAppUpdates";
 import GuestLocationDetector from "./guestLocationDetector";
 import PublicNavbar from "./PublicNavbar";
 import BackendWakeUp from "./BackendWakeup";
+import AuthRedirect from "@/src/components/AuthRedirect";
 
 
 
@@ -88,7 +89,7 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <StoreProvider>
-    
+        <AuthRedirect />
         <BackendWakeUp />
         <GuestLocationDetector />
         <AppInitializer>

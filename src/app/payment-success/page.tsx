@@ -6,15 +6,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  CheckCircle2,
-  Package,
-  Zap,
-  BarChart2,
-  Megaphone,
-  Globe,
-  XCircle,
+  CheckCircle2, Package, Zap, BarChart2, Megaphone, Globe, XCircle,
 } from "lucide-react";
-import { useResumeAction } from "@/src/hooks/useResumeAction";
+import { useResumeAction }           from "@/src/hooks/useResumeAction";
+import PostSubscriptionModal from "@/src/components/PostSubscriptionModal";
 import { useAppSelector } from "@/src/app/redux";
 import { restoreSession } from "@/src/lib/features/auth/authActions";
 import { useAppDispatch } from "@/src/app/redux";
@@ -22,28 +17,18 @@ import { useAppDispatch } from "@/src/app/redux";
 // ── Confetti burst — pure CSS ─────────────────────────────────────────────
 function Confetti() {
   const pieces = Array.from({ length: 20 });
-  const colors = [
-    "#ffc105",
-    "#22c55e",
-    "#3b82f6",
-    "#f97316",
-    "#a855f7",
-    "#ec4899",
-  ];
+  const colors = ["#ffc105", "#22c55e", "#3b82f6", "#f97316", "#a855f7", "#ec4899"];
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-10">
       {pieces.map((_, i) => (
-        <span
-          key={i}
-          className="absolute w-2 h-2 rounded-sm opacity-0"
+        <span key={i} className="absolute w-2 h-2 rounded-sm opacity-0"
           style={{
-            left: `${5 + i * 4.8}%`,
-            top: "-10px",
+            left:      `${5 + (i * 4.8)}%`,
+            top:       "-10px",
             background: colors[i % colors.length],
             animation: `confettiFall ${1.2 + (i % 4) * 0.3}s ease-in ${i * 0.08}s forwards`,
             transform: `rotate(${i * 17}deg)`,
-          }}
-        />
+          }} />
       ))}
       <style>{`
         @keyframes confettiFall {
@@ -56,22 +41,23 @@ function Confetti() {
 }
 
 export default function PaymentSuccessPage() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const dispatch = useAppDispatch();
-  const user = useAppSelector((state) => state.auth.user);
+  const router      = useRouter();
+  const params      = useSearchParams();
+  const dispatch    = useAppDispatch();
+  const user        = useAppSelector((state) => state.auth.user);
 
   // ── Guard: only show success if Flutterwave actually redirected here ──────
   // Flutterwave appends ?subscribed=1 (or ?boosted=1) after verify succeeds.
   // If neither is present the user navigated here manually — redirect away.
   const isSubscribedCallback = params.get("subscribed") === "1";
-  const isBoostedCallback = params.get("boosted") === "1";
-  const isLegitimate = isSubscribedCallback || isBoostedCallback;
+  const isBoostedCallback    = params.get("boosted")    === "1";
+  const isLegitimate         = isSubscribedCallback || isBoostedCallback;
 
   const [showConfetti, setShowConfetti] = useState(isLegitimate);
-  const [resuming, setResuming] = useState(false);
-  const [resumeLabel, setResumeLabel] = useState<string | null>(null);
-  const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  const [resuming,     setResuming]     = useState(false);
+  const [resumeLabel,  setResumeLabel]  = useState<string | null>(null);
+  const [redirectTo,   setRedirectTo]   = useState<string | null>(null);
+  const [showModal,    setShowModal]    = useState(false);
 
   // Redirect to home if not a legitimate callback
   useEffect(() => {
@@ -87,12 +73,18 @@ export default function PaymentSuccessPage() {
     }
   }, [isLegitimate, dispatch]);
 
-  // Stop confetti after 3.5s
+  // Stop confetti after 3.5s, then show the action modal for subscriptions
   useEffect(() => {
     if (!isLegitimate) return;
-    const t = setTimeout(() => setShowConfetti(false), 3500);
+    const t = setTimeout(() => {
+      setShowConfetti(false);
+      // Show action modal 500ms after confetti ends (only for subscription payments)
+      if (isSubscribedCallback) {
+        setTimeout(() => setShowModal(true), 500);
+      }
+    }, 3500);
     return () => clearTimeout(t);
-  }, [isLegitimate]);
+  }, [isLegitimate, isSubscribedCallback]);
 
   // Redirect state → useEffect to satisfy React immutability rules
   useEffect(() => {
@@ -104,16 +96,13 @@ export default function PaymentSuccessPage() {
     onResume: (action) => {
       setResuming(true);
       const labels: Record<string, string> = {
-        post_product: "Taking you back to post your listing…",
-        boost_product: "Applying your boost…",
+        post_product:   "Taking you back to post your listing…",
+        boost_product:  "Applying your boost…",
         create_listing: "Resuming your listing…",
       };
       setResumeLabel(labels[action.type] ?? "Resuming your action…");
       setTimeout(() => {
-        if (
-          action.type === "post_product" ||
-          action.type === "create_listing"
-        ) {
+        if (action.type === "post_product" || action.type === "create_listing") {
           setRedirectTo("/sell");
         } else if (action.type === "boost_product") {
           setRedirectTo("/vendor/dashboard");
@@ -272,6 +261,10 @@ export default function PaymentSuccessPage() {
           </>
         )}
       </div>
+      {/* Post-subscription action modal */}
+      {showModal && (
+        <PostSubscriptionModal onClose={() => setShowModal(false)} />
+      )}
     </div>
   );
 }

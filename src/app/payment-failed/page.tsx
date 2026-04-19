@@ -14,8 +14,11 @@ import {
   MessageCircle,
   Shield,
   RefreshCw,
+  ArrowRight,
+  Star,
 } from "lucide-react";
 import { consumeReturnState } from "@/src/hooks/useSubscriptionGuard";
+import { toast } from "react-toastify";
 
 type ReasonConfig = {
   title: string;
@@ -80,6 +83,7 @@ export default function PaymentFailedPage() {
   const router = useRouter();
   const params = useSearchParams();
   const reason = params.get("reason") ?? "default";
+  const planId = params.get("plan") ?? null; // plan they were trying to buy
   const content = REASONS[reason] ?? REASONS.default;
 
   const [returnUrl, setReturnUrl] = useState<string | null>(null);
@@ -88,6 +92,14 @@ export default function PaymentFailedPage() {
     if (typeof window !== "undefined") {
       setReturnUrl(sessionStorage.getItem("smilebaba_return_url"));
     }
+    // Show failure toast immediately on mount
+    toast.error(
+      reason === "cancelled"
+        ? "Payment cancelled. No charge was made."
+        : "Payment was not completed. Please try again.",
+      { toastId: "payment-failed", autoClose: 6000 },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -139,27 +151,53 @@ export default function PaymentFailedPage() {
           </div>
         )}
 
+        {/* Plan context */}
+        {planId && (
+          <div
+            className="bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3 mb-5
+            flex items-center gap-3"
+          >
+            <Star size={16} className="text-yellow-500 flex-shrink-0" />
+            <p className="text-xs text-yellow-800 leading-relaxed">
+              You were trying to get the <strong>{planId}</strong> plan. Your
+              spot is saved — try again below.
+            </p>
+          </div>
+        )}
+
         {/* CTAs */}
         <div className="flex flex-col gap-3">
           <button
-            onClick={() => router.push("/subscribe")}
-            className="w-full py-3 bg-[#ffc105] text-black font-black rounded-2xl
+            onClick={() =>
+              router.push(planId ? `/subscribe?plan=${planId}` : "/subscribe")
+            }
+            className="w-full flex items-center justify-center gap-2 py-3
+              bg-[#ffc105] text-black font-black rounded-2xl
               hover:bg-amber-400 transition active:scale-[0.99] text-sm"
           >
-            Try again
+            <RefreshCw size={14} />
+            Try again{planId ? ` — ${planId}` : ""}
           </button>
+          <Link
+            href="/subscribe"
+            className="w-full flex items-center justify-center gap-2 py-3
+              bg-white border border-gray-200 text-gray-700 font-semibold
+              rounded-2xl hover:bg-gray-50 transition text-sm"
+          >
+            View all plans <ArrowRight size={13} />
+          </Link>
           {returnUrl && (
             <Link
               href={returnUrl}
-              className="w-full py-3 bg-white border border-gray-200 text-gray-700
-                font-semibold rounded-2xl hover:bg-gray-50 transition text-sm"
+              className="w-full py-3 bg-white border border-gray-200 text-gray-600
+                font-semibold rounded-2xl hover:bg-gray-50 transition text-sm text-center"
             >
               Go back to what I was doing
             </Link>
           )}
           <Link
             href="/"
-            className="text-xs text-gray-400 hover:text-gray-600 transition mt-1"
+            className="text-xs text-gray-400 hover:text-gray-600 transition mt-1 text-center block"
           >
             Return to SmileBaba home
           </Link>
