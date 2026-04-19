@@ -158,22 +158,29 @@ export default function NotificationBell() {
 
     fetchNotifications();
 
-    const socket = io(SOCKET_URL, {
-      withCredentials: true,
-      transports: ["websocket", "polling"],
-    });
-    socketRef.current = socket;
-
-    socket.on("connect", () => socket.emit("register_user", userId));
-
-    // Server emits this when a new notification is created for this user
-    socket.on("new_notification", fetchNotifications);
+    // Delay connecting so BackendWakeUp has time to warm Render before we attempt
+    const connectDelay = setTimeout(() => {
+      if (!userId) return; // user logged out before delay fired
+      const sock = io(SOCKET_URL, {
+        withCredentials: true,
+        transports: ["polling", "websocket"],
+        reconnection: true,
+        reconnectionAttempts: 6,
+        reconnectionDelay: 3000,
+        reconnectionDelayMax: 30000,
+        timeout: 20000,
+      });
+      socketRef.current = sock;
+      sock.on("connect", () => sock.emit("register_user", userId));
+      sock.on("new_notification", fetchNotifications);
+    }, 3000);
 
     // Fallback poll — catches cron notifications (expiry warnings etc.)
     const interval = setInterval(fetchNotifications, 5 * 60_000);
 
     return () => {
-      socket.disconnect();
+      clearTimeout(connectDelay);
+      socketRef.current?.disconnect();
       socketRef.current = null;
       clearInterval(interval);
     };

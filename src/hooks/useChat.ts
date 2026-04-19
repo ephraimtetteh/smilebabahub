@@ -50,7 +50,12 @@ export function useChat(myUserId: string | undefined) {
 
     const socket = io(SOCKET_URL, {
       withCredentials: true,
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"], // polling first — survives Render cold starts
+      reconnection: true,
+      reconnectionAttempts: 8,
+      reconnectionDelay: 2000, // start at 2s
+      reconnectionDelayMax: 30000, // cap at 30s (Render wake-up window)
+      timeout: 20000, // 20s connect timeout
     });
     socketRef.current = socket;
 
@@ -153,9 +158,18 @@ export function useChat(myUserId: string | undefined) {
   );
 
   // ── Load older messages ────────────────────────────────────────────────────
+  // Use a ref for messages so loadMore doesn't recreate on every new message.
+  // Without this, every incoming socket message caused a new loadMore function,
+  // which triggered re-renders in any component that used it as a dep.
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   const loadMore = useCallback(async () => {
-    if (!room || !messages.length || !hasMore) return;
-    const oldest = messages[0].createdAt;
+    const msgs = messagesRef.current;
+    if (!room || !msgs.length || !hasMore) return;
+    const oldest = msgs[0].createdAt;
     try {
       const res = await axiosInstance.get(
         `/chat/messages/${room}?before=${oldest}&limit=30`,
@@ -164,7 +178,7 @@ export function useChat(myUserId: string | undefined) {
       setMessages((prev) => [...older, ...prev]);
       setHasMore(more);
     } catch {}
-  }, [room, messages, hasMore]);
+  }, [room, hasMore]); // messages removed — read via messagesRef to avoid loop
 
   // ── Load conversations list ────────────────────────────────────────────────
   const loadConversations = useCallback(async () => {
