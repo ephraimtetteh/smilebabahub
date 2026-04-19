@@ -164,6 +164,7 @@ export default function NotificationBell() {
       const sock = io(SOCKET_URL, {
         withCredentials: true,
         transports: ["polling", "websocket"],
+        upgrade: true,
         reconnection: true,
         reconnectionAttempts: 6,
         reconnectionDelay: 3000,

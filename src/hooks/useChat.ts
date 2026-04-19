@@ -50,12 +50,13 @@ export function useChat(myUserId: string | undefined) {
 
     const socket = io(SOCKET_URL, {
       withCredentials: true,
-      transports: ["polling", "websocket"], // polling first — survives Render cold starts
+      transports: ["polling", "websocket"],
+      upgrade: true,
       reconnection: true,
       reconnectionAttempts: 8,
-      reconnectionDelay: 2000, // start at 2s
-      reconnectionDelayMax: 30000, // cap at 30s (Render wake-up window)
-      timeout: 20000, // 20s connect timeout
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 30000,
+      timeout: 20000,
     });
     socketRef.current = socket;
 
