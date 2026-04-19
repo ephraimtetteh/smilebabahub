@@ -1,16 +1,9 @@
 "use client";
 // src/components/AuthRedirect.tsx
-// Mount this ONCE inside StoreProvider (e.g. in LayoutShell / AppInitializer).
-// After login, authSlice.pendingRedirect is set to the role-based destination.
-// This component reads it, navigates, then clears it.
-//
-// This pattern avoids importing router into the Redux thunk (which can't use
-// Next.js hooks) while still giving clean role-based redirects.
-//
-// Usage in your LayoutShell / AppInitializer:
-//   <AuthRedirect />
+// Handles role-based redirect after login.
+// Mount ONCE in AppInitializer (inside StoreProvider).
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { clearPendingRedirect } from "@/src/lib/features/auth/authSlice";
@@ -21,14 +14,23 @@ export default function AuthRedirect() {
   const pending = useAppSelector(
     (s) => (s.auth as any).pendingRedirect as string | null,
   );
+  const firedRef = useRef(false);
 
   useEffect(() => {
-    if (!pending) return;
-    // Navigate to the role-based destination
-    router.push(pending);
-    // Clear so it doesn't fire again on re-render
+    if (!pending || firedRef.current) return;
+    firedRef.current = true;
+
+    // Clear first so subsequent renders don't re-fire
     dispatch(clearPendingRedirect());
+
+    // replace() so the user can't press Back to the login page
+    router.replace(pending);
   }, [pending, router, dispatch]);
+
+  // Reset guard when pending clears (next login cycle)
+  useEffect(() => {
+    if (!pending) firedRef.current = false;
+  }, [pending]);
 
   return null;
 }

@@ -21,15 +21,22 @@ import AuthRedirect from "@/src/components/AuthRedirect";
 
 export const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
-
-  //useAutoRefresh(); 
-
+ 
   useEffect(() => {
     dispatch(restoreSession());
   }, [dispatch]);
-
-  return <>{children}</>;
+ 
+  return (
+    <>
+      {/* ── Redirect after login — reads pendingRedirect from Redux ── */}
+      <AuthRedirect />          {/* ← ADD THIS LINE */}
+      {children}
+    </>
+  );
 };
+
+
+
 
 const LayoutShell = ({ children }: { children: React.ReactNode }) => {
   const pathName = usePathname();
@@ -89,7 +96,6 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <StoreProvider>
-        <AuthRedirect />
         <BackendWakeUp />
         <GuestLocationDetector />
         <AppInitializer>
