@@ -298,7 +298,7 @@ export default function Navbar() {
             )}
 
             {/* Marketer link */}
-            <Link
+            {/* <Link
               href={MARKETER_LINK.href}
               className="flex items-center gap-1.5 text-yellow-400 hover:text-yellow-300
                 transition font-medium border border-yellow-400/30 px-3 py-1 rounded-full
@@ -306,7 +306,7 @@ export default function Navbar() {
             >
               {MARKETER_LINK.icon}
               {MARKETER_LINK.label}
-            </Link>
+            </Link> */}
           </div>
 
           {/* ── Right actions ── */}
