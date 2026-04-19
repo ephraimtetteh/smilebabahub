@@ -103,100 +103,115 @@ const Loginpage = () => {
   }, [isAuthenticated, isAuthenticating, router]);
 
   return (
-    <div className="relative lg:h-200 h-[80vh] max-sm:w-[90vw] md:w-150 lg:w-350 mx-auto mt-15 flex flex-col flex-1">
-      <h1>Register</h1>
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-black">
+      {/* Background Image */}
       <Image
         src={assets.bgImage}
         alt="Background"
         fill
         priority
-        className="object-cover rounded-2xl"
+        className="object-cover"
       />
-      <div className="absolute inset-0 items-center grid lg:grid-cols-2 lg:px-20 px-4 py-2 lg:py-6">
-        <div>
+
+      {/* Dark overlay for premium feel */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      {/* Content */}
+      <div className="relative z-10 grid lg:grid-cols-2 w-[95%] max-w-7xl rounded-3xl overflow-hidden shadow-2xl">
+        {/* LEFT SIDE */}
+        <div className="hidden lg:flex flex-col justify-between p-12 text-white bg-gradient-to-br from-black/60 to-black/20 backdrop-blur-md">
           <Link href={"/"}>
             <Image
               src={assets.logo}
-              alt="Background"
-              width={80}
-              height={80}
-              className="rounded-2xl py-4 max-sm:px-3 max-sm:mx-3"
+              alt="logo"
+              width={90}
+              height={90}
+              className="rounded-xl"
             />
           </Link>
-          <h1 className="lg:text-6xl max-sm:hidden max-sm:py-2 text-white font-bold lg:leading-22">
-            SmileBaba is a trusted online marketplace to buy and sell products
-            easily
-          </h1>
-          <p className=" max-sm:hidden text-white text-[20px]">
-            Discover great deals, connect with sellers, and shop smarter every
-            day
+
+          <div>
+            <h1 className="text-5xl font-bold leading-tight mb-6">
+              Buy. Sell. Smile.
+            </h1>
+            <p className="text-lg text-gray-300 max-w-md">
+              Ghana & Naija’s trusted marketplace to discover deals, connect
+              with sellers, and grow your business effortlessly.
+            </p>
+          </div>
+
+          <p className="text-sm text-gray-400">
+            © {new Date().getFullYear()} SmileBabaHub
           </p>
         </div>
-        <div className=" grid lg:flex lg:flex-col items-center justify-center text-black bg-white m-auto lg:w-[80%] rounded-2xl">
-          {error && (
-            <p className="text-red-500 text-sm text-center py-2">{error}</p>
-          )}
-          <form
-            onSubmit={handleLogin}
-            className=" grid lg:flex-1 lg:w-[80%] md:w-full lg:py-20 py-6 px-2 md:px-4"
-          >
-            <h1 className="lg:text-2xl md:text-xl md:px-2 max-sm:px-4 py-4 font-semibold">
-              Login With Credentials
-            </h1>
-            <input
-              type="email"
-              value={user.email}
-              onChange={handleUserChange}
-              placeholder="Email Address"
-              name="email"
-              className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
-            />
-            <div className="flex items-center justify-between border border-gray-300 rounded w-full">
+
+        {/* RIGHT SIDE (FORM) */}
+        <div className="flex items-center justify-center bg-white/90 backdrop-blur-xl p-6 lg:p-12">
+          <div className="w-full max-w-md">
+            {error && (
+              <p className="text-red-500 text-sm text-center mb-4">{error}</p>
+            )}
+
+            <h2 className="text-2xl font-semibold mb-6 text-gray-800">
+              Welcome Back 👋
+            </h2>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email */}
               <input
-                type={showPassword ? "text" : "password"}
-                required
-                value={user.password}
+                type="email"
+                value={user.email}
                 onChange={handleUserChange}
-                placeholder="Password"
-                name="password"
-                className="flex-1 p-4 outline-none text-[14px]"
+                placeholder="Email Address"
+                name="email"
+                className="w-full p-4 rounded-xl border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition"
               />
 
-              <span
-                onClick={() => setShowPassword(!showPassword)}
-                className="pr-4 cursor-pointer"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
-            </div>
+              {/* Password */}
+              <div className="flex items-center border border-gray-200 rounded-xl focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-100 transition">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={user.password}
+                  onChange={handleUserChange}
+                  placeholder="Password"
+                  name="password"
+                  className="flex-1 p-4 rounded-xl outline-none"
+                />
+                <span
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="pr-4 cursor-pointer text-gray-500 hover:text-black"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </span>
+              </div>
 
-            <button
-              type="submit"
-              className="flex-1 w-full bg-amber-500 font-bold text-white rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
-            >
-              {/* {isLoading ? "Logging in..." : "Submit"} */}
-              Submit
-            </button>
-
-            <p className="text-center py-4 text-[#5a5858] text-[14px] gap-3">
-              Do not have an account
-              <Link
-                href={"/auth/register"}
-                className="text-rose-800 underline cursor-pointer"
+              {/* Button */}
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-white font-semibold py-4 rounded-xl shadow-lg hover:scale-[1.02] transition disabled:opacity-50"
               >
-                Create Account
-              </Link>
-            </p>
+                Submit
+              </button>
 
-            <p className="text-right text-sm mt-2">
-              <Link
-                href="/auth/forgot-password"
-                className="text-yellow-500 hover:underline"
-              >
-                Forgot Password?
-              </Link>
-            </p>
-          </form>
+              {/* Links */}
+              <div className="flex justify-between text-sm mt-2">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-gray-500 hover:text-amber-500"
+                >
+                  Forgot Password?
+                </Link>
+
+                <Link
+                  href={"/auth/register"}
+                  className="text-amber-600 font-medium hover:underline"
+                >
+                  Create Account
+                </Link>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>

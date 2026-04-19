@@ -116,124 +116,159 @@ const AuthRegister
   };
 
   return (
-    <div className="relative lg:h-200 h-[80vh] max-sm:w-[90vw] md:w-150 lg:w-350 mx-auto mt-15 flex flex-col flex-1">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-black">
+      {/* Background */}
       <Image
         src={assets.bgImage}
         alt="Background"
         fill
         priority
-        className="object-cover rounded-2xl"
+        className="object-cover"
       />
-      <div className="absolute inset-0 items-center grid lg:grid-cols-2 lg:px-20 px-4 py-2 lg:py-6">
-        <div>
+
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      {/* Container */}
+      <div className="relative z-10 grid lg:grid-cols-2 w-[95%] max-w-7xl rounded-3xl overflow-hidden shadow-2xl">
+        {/* LEFT SIDE */}
+        <div className="hidden lg:flex flex-col justify-between p-12 text-white bg-gradient-to-br from-black/60 to-black/20 backdrop-blur-md">
           <Link href={"/"}>
             <Image
               src={assets.logo}
-              alt="Background"
-              width={80}
-              height={80}
-              className="rounded-2xl py-4 max-sm:px-3 max-sm:mx-3"
+              alt="logo"
+              width={90}
+              height={90}
+              className="rounded-xl"
             />
           </Link>
-          <h1>Register</h1>
-          <h1 className="lg:text-6xl max-sm:hidden max-sm:py-2 text-white font-bold lg:leading-22">
-            SmileBaba is a trusted online marketplace to buy and sell products
-            easily
-          </h1>
-          <p className=" max-sm:hidden text-white text-[20px]">
-            Discover great deals, connect with sellers, and shop smarter every
-            day
+
+          <div>
+            <h1 className="text-5xl font-bold leading-tight mb-6">
+              Start Selling. Start Smiling.
+            </h1>
+            <p className="text-lg text-gray-300 max-w-md">
+              Join thousands of vendors across Ghana & Nigeria growing their
+              businesses on SmileBabaHub.
+            </p>
+          </div>
+
+          <p className="text-sm text-gray-400">
+            © {new Date().getFullYear()} SmileBabaHub
           </p>
         </div>
-        <div className=" grid lg:flex lg:flex-col items-center justify-center text-black bg-white m-auto lg:w-[80%] rounded-2xl">
-          <form
-            onSubmit={handleRegister}
-            className=" grid lg:flex-1 lg:w-[80%] md:w-full lg:py-20 py-6 px-2 md:px-4"
-          >
-            <h1 className="lg:text-2xl md:text-xl md:px-2 max-sm:px-4 py-4 font-semibold">
-              Discover Great Deals connect with customer
-            </h1>
+
+        {/* RIGHT SIDE */}
+        <div className="flex items-center justify-center bg-white/90 backdrop-blur-xl p-6 lg:p-12">
+          <div className="w-full max-w-md">
+            <h2 className="text-2xl font-semibold mb-6 text-gray-800">
+              Create your account 🚀
+            </h2>
+
             {error && (
-              <p className="text-red-500 text-sm text-center py-2">{error}</p>
+              <p className="text-red-500 text-sm text-center mb-4">{error}</p>
             )}
-            <input
-              type="email"
-              required
-              placeholder="Email Address"
-              name="email"
-              value={user.email}
-              onChange={handleUserChange}
-              className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
-            />
 
-            <input
-              type="text"
-              required
-              placeholder="Name"
-              name="username"
-              value={user.username}
-              onChange={handleUserChange}
-              className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
-            />
-
-            <input
-              type="tel"
-              required
-              placeholder="Phone"
-              name="phone"
-              title="Enter a valid phone number"
-              value={user.phone}
-              onChange={handleUserChange}
-              className="flex-1 lg:w-full border border-gray-300 p-4 rounded my-2 outline-[#ffc10522] text-[14px]"
-            />
-
-            <div className="flex items-center justify-between border border-gray-300 rounded w-full">
+            <form onSubmit={handleRegister} className="space-y-4">
+              {/* Email */}
               <input
-                type={showPassword ? "text" : "password"}
+                type="email"
                 required
-                placeholder="Password"
-                name="password"
-                value={user.password}
+                placeholder="Email Address"
+                name="email"
+                value={user.email}
                 onChange={handleUserChange}
-                className="flex-1 p-4 outline-none text-[14px]"
+                className="w-full p-4 rounded-xl border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition"
               />
 
-              <span
-                onClick={() => setShowPassword(!showPassword)}
-                className="pr-4 cursor-pointer"
+              {/* Name */}
+              <input
+                type="text"
+                required
+                placeholder="Full Name"
+                name="username"
+                value={user.username}
+                onChange={handleUserChange}
+                className="w-full p-4 rounded-xl border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition"
+              />
+
+              {/* Phone */}
+              <input
+                type="tel"
+                required
+                placeholder="Phone Number"
+                name="phone"
+                value={user.phone}
+                onChange={handleUserChange}
+                className="w-full p-4 rounded-xl border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition"
+              />
+
+              {/* Password */}
+              <div className="flex items-center border border-gray-200 rounded-xl focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-100 transition">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="Password"
+                  name="password"
+                  value={user.password}
+                  onChange={handleUserChange}
+                  className="flex-1 p-4 rounded-xl outline-none"
+                />
+                <span
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="pr-4 cursor-pointer text-gray-500 hover:text-black"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </span>
+              </div>
+
+              {/* Password Strength Bar */}
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    user.password.length < 4
+                      ? "w-1/4 bg-red-400"
+                      : user.password.length < 6
+                        ? "w-2/4 bg-yellow-400"
+                        : user.password.length < 8
+                          ? "w-3/4 bg-blue-400"
+                          : "w-full bg-green-500"
+                  }`}
+                />
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Password strength: {getPasswordStrength(user.password)}
+              </p>
+
+              {/* Button */}
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-white font-semibold py-4 rounded-xl shadow-lg hover:scale-[1.02] transition disabled:opacity-50"
               >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
-            </div>
+                Create Account
+              </button>
 
-            <p className="text-xs text-gray-500 px-2 mt-1">
-              Strength: {getPasswordStrength(user.password)}
-            </p>
+              {/* Terms */}
+              <p className="text-xs text-gray-500 text-center">
+                By continuing, you agree to our{" "}
+                <span className="underline cursor-pointer text-gray-700">
+                  Privacy Policy
+                </span>
+              </p>
 
-            <button
-              type="submit"
-              className="flex-1 w-full bg-amber-500 font-bold text-black rounded-full py-5 mt-3 cursor-pointer disabled:opacity-50"
-            >
-              {/* {isLoading ? "Creating account..." : "Submit"} */}
-              submit
-            </button>
-
-            <p className="text-center py-4 text-[#5a5858] text-[14px]">
-              By creating an account, I accept the{" "}
-              <span className="text-black underline cursor-pointer">
-                Policy Privacy
-              </span>
-            </p>
-            <p className="text-center py-4 text-[#5a5858] text-[14px] gap-2">
-              Already have an account
-              <Link
-                href={"/auth/login"}
-                className="text-rose-800 underline cursor-pointer"
-              >
-                Login
-              </Link>
-            </p>
-          </form>
+              {/* Login */}
+              <p className="text-center text-sm text-gray-600">
+                Already have an account?{" "}
+                <Link
+                  href={"/auth/login"}
+                  className="text-amber-600 font-medium hover:underline"
+                >
+                  Login
+                </Link>
+              </p>
+            </form>
+          </div>
         </div>
       </div>
     </div>
