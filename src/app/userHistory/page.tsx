@@ -1,61 +1,54 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import axiosInstance from "@/src/lib/api/axios";
 import Link from "next/link";
+import axiosInstance from "@/src/lib/api/axios";
 import {
+  LayoutList,
+  Star,
   ShoppingBag,
   Home,
-  BedDouble,
-  Building2,
-  CalendarDays,
-  Sparkles,
   MapPin,
-  Package,
+  ChevronDown,
+  Receipt,
 } from "lucide-react";
+import { useResumeAction } from "@/src/hooks/useResumeAction";
+import { useViewCountry } from "@/src/hooks/useViewCountry";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type OrderStatus = "pending" | "confirmed" | "delivered" | "cancelled";
-type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "checked_in"
-  | "checked_out"
-  | "cancelled";
+type PurchaseType = "subscription" | "order" | "booking";
 
-type OrderItem = {
-  name: string;
-  qty: number;
-  price: number;
-};
-
-type Order = {
+type Purchase = {
   _id: string;
-  items: OrderItem[];
-  total: number;
-  currency: string;
-  status: OrderStatus;
-  vendor: string;
-  createdAt: string;
+  type: PurchaseType;
+  // Subscription fields
+  title?: string;
+  planId?: string;
+  billingCycle?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  // Order fields
+  items?: { name: string; qty: number; price: number }[];
+  vendor?: string;
   deliveryAddress?: string;
+  // Booking fields
+  propertyName?: string;
+  propertyType?: string;
+  checkIn?: string;
+  checkOut?: string;
+  guests?: number;
+  // Shared
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+  txRef?: string;
 };
 
-type Booking = {
-  _id: string;
-  propertyName: string;
-  propertyType: string; // "apartment" | "beach-house" | "villa" etc
-  checkIn: string;
-  checkOut: string;
-  guests: number;
-  totalPrice: number;
-  currency: string;
-  status: BookingStatus;
-  vendor: string;
-  createdAt: string;
-};
+type TabType = "all" | "subscriptions" | "orders" | "bookings";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GH", {
     day: "numeric",
@@ -64,57 +57,72 @@ function formatDate(iso: string) {
   });
 }
 
-function nights(checkIn: string, checkOut: string) {
-  const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime();
-  return Math.round(diff / (1000 * 60 * 60 * 24));
+function daysLeft(iso: string) {
+  return Math.max(
+    0,
+    Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000),
+  );
 }
 
-const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
-  pending: "bg-yellow-100 text-yellow-700",
-  confirmed: "bg-blue-100 text-blue-700",
+function nights(a: string, b: string) {
+  return Math.max(
+    1,
+    Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000),
+  );
+}
+
+const STATUS_STYLE: Record<string, string> = {
+  active: "bg-green-100 text-green-600",
+  expiring: "bg-orange-100 text-orange-600",
+  expired: "bg-gray-100 text-gray-500",
   delivered: "bg-green-100 text-green-600",
-  cancelled: "bg-red-100 text-red-500",
-};
-
-const BOOKING_STATUS_STYLE: Record<BookingStatus, string> = {
-  pending: "bg-yellow-100 text-yellow-700",
   confirmed: "bg-blue-100 text-blue-700",
-  checked_in: "bg-green-100 text-green-600",
-  checked_out: "bg-gray-100 text-gray-500",
+  pending: "bg-yellow-100 text-yellow-700",
   cancelled: "bg-red-100 text-red-500",
+  checked_out: "bg-gray-100 text-gray-500",
+  checked_in: "bg-green-100 text-green-600",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-  checked_in: "Checked in",
-  checked_out: "Checked out",
-};
-
-const PROPERTY_ICON: Record<string, React.ReactNode> = {
-  apartment: <Building2 size={18} className="text-blue-500" />,
-  "beach-house": <Home size={18} className="text-teal-500" />,
-  villa: <Home size={18} className="text-green-600" />,
-  studio: <BedDouble size={18} className="text-indigo-500" />,
-  duplex: <Building2 size={18} className="text-gray-500" />,
-  townhouse: <Home size={18} className="text-amber-500" />,
-  "luxury-apartment": <Sparkles size={18} className="text-yellow-500" />,
-  default: <Home size={18} className="text-gray-400" />,
+const TYPE_CONFIG: Record<
+  PurchaseType,
+  { icon: React.ReactNode; bg: string; label: string }
+> = {
+  subscription: {
+    icon: <Star size={16} className="text-amber-500 fill-amber-400" />,
+    bg: "bg-amber-50 border-amber-100",
+    label: "Subscription",
+  },
+  order: {
+    icon: <ShoppingBag size={16} className="text-orange-500" />,
+    bg: "bg-orange-50 border-orange-100",
+    label: "Order",
+  },
+  booking: {
+    icon: <Home size={16} className="text-blue-500" />,
+    bg: "bg-blue-50 border-blue-100",
+    label: "Booking",
+  },
 };
 
 // ── Skeleton ──────────────────────────────────────────────────────────────
 function Skeleton() {
   return (
     <div className="space-y-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="bg-white rounded-2xl p-4 sm:p-5 animate-pulse">
-          <div className="flex gap-3">
-            <div className="w-12 h-12 bg-gray-100 rounded-xl flex-shrink-0" />
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="bg-white rounded-2xl p-4 sm:p-5 animate-pulse
+          border border-gray-100 shadow-sm"
+        >
+          <div className="flex gap-3 items-center">
+            <div className="w-10 h-10 bg-gray-100 rounded-xl flex-shrink-0" />
             <div className="flex-1 space-y-2">
               <div className="h-4 bg-gray-100 rounded w-1/2" />
               <div className="h-3 bg-gray-100 rounded w-1/3" />
+            </div>
+            <div className="space-y-1.5 text-right">
+              <div className="h-4 bg-gray-100 rounded w-16" />
+              <div className="h-3 bg-gray-100 rounded w-12" />
             </div>
           </div>
         </div>
@@ -123,105 +131,139 @@ function Skeleton() {
   );
 }
 
-// ── Empty state ────────────────────────────────────────────────────────────
-function Empty({ tab }: { tab: string }) {
-  return (
-    <div className="bg-white rounded-2xl p-10 sm:p-16 text-center border border-gray-100 shadow-sm">
-      {tab === "orders" ? (
-        <ShoppingBag size={44} className="text-gray-200 mx-auto mb-3" />
-      ) : (
-        <Home size={44} className="text-gray-200 mx-auto mb-3" />
-      )}
-      <p className="text-gray-600 font-medium text-sm">
-        No {tab === "orders" ? "orders" : "bookings"} yet
-      </p>
-      <p className="text-xs text-gray-400 mt-1 mb-6">
-        {tab === "orders"
-          ? "Browse food and marketplace listings to place your first order."
-          : "Browse apartments and short stays to make a booking."}
-      </p>
-      <Link
-        href={tab === "orders" ? "/marketPlace" : "/restate"}
-        className="inline-block px-5 py-2.5 bg-yellow-400 text-black text-sm
-          font-semibold rounded-xl hover:bg-yellow-300 transition"
-      >
-        {tab === "orders" ? "Browse marketplace →" : "Browse apartments →"}
-      </Link>
-    </div>
-  );
-}
-
-// ── Order card ─────────────────────────────────────────────────────────────
-function OrderCard({ order }: { order: Order }) {
+// ── Purchase card ──────────────────────────────────────────────────────────
+function PurchaseCard({ p, sym }: { p: Purchase; sym: string }) {
   const [expanded, setExpanded] = useState(false);
-  const sym = order.currency === "NGN" ? "₦" : "₵";
+  const cfg = TYPE_CONFIG[p.type];
+
+  // Derive display values per type
+  const title = (() => {
+    if (p.type === "subscription") return p.title ?? "Subscription";
+    if (p.type === "order")
+      return `${p.items?.length ?? 0} item${p.items?.length !== 1 ? "s" : ""} · ${p.vendor ?? ""}`;
+    if (p.type === "booking") return p.propertyName ?? "Booking";
+    return "Purchase";
+  })();
+
+  const subtitle = (() => {
+    if (p.type === "subscription" && p.billingCycle)
+      return `${p.billingCycle} billing`;
+    if (p.type === "order" && p.vendor) return p.vendor;
+    if (p.type === "booking" && p.checkIn && p.checkOut)
+      return `${formatDate(p.checkIn)} → ${formatDate(p.checkOut)} · ${nights(p.checkIn, p.checkOut)} nights`;
+    return "";
+  })();
+
+  const statusLabel = (() => {
+    if (p.type === "subscription" && p.periodEnd) {
+      const rem = daysLeft(p.periodEnd);
+      if (rem === 0) return { label: "Expired", key: "expired" };
+      if (rem <= 3) return { label: `${rem}d left`, key: "expiring" };
+      if (rem === 1) return { label: "Expires tomorrow", key: "expiring" };
+      return { label: `${rem} days left`, key: "active" };
+    }
+    return { label: p.status?.replace(/_/g, " ") ?? "—", key: p.status ?? "" };
+  })();
+
+  const hasExpand = p.type === "order" && (p.items?.length ?? 0) > 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden
+      hover:shadow-md transition-shadow"
+    >
+      {/* Main row */}
       <div
-        className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 cursor-pointer
-          hover:bg-gray-50 transition"
-        onClick={() => setExpanded(!expanded)}
+        className={`flex items-start gap-3 sm:gap-4 p-4 sm:p-5
+          ${hasExpand ? "cursor-pointer hover:bg-gray-50/60 transition" : ""}`}
+        onClick={() => hasExpand && setExpanded(!expanded)}
       >
-        {/* Icon */}
+        {/* Type icon */}
         <div
-          className="w-11 h-11 rounded-xl bg-orange-50 border border-orange-100
-          flex items-center justify-center flex-shrink-0"
+          className={`w-10 h-10 rounded-xl border flex items-center justify-center
+          flex-shrink-0 ${cfg.bg}`}
         >
-          <ShoppingBag size={18} className="text-orange-500" />
+          {cfg.icon}
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">
-            {order.items.length} item{order.items.length !== 1 ? "s" : ""}
-            {" · "}
-            <span className="text-gray-500 font-normal">{order.vendor}</span>
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">
-            {formatDate(order.createdAt)}
+          <div className="flex items-start gap-2">
+            <p className="text-sm font-semibold text-gray-800 truncate">
+              {title}
+            </p>
+            <span
+              className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5
+              rounded-full font-medium flex-shrink-0 mt-0.5"
+            >
+              {cfg.label}
+            </span>
+          </div>
+          {subtitle && (
+            <p className="text-xs text-gray-400 mt-0.5 capitalize truncate">
+              {subtitle}
+            </p>
+          )}
+          <p className="text-xs text-gray-300 mt-0.5">
+            {formatDate(p.createdAt)}
           </p>
         </div>
 
-        {/* Right */}
+        {/* Amount + status */}
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <p className="text-sm font-bold text-gray-800">
+          <p className="text-sm font-bold text-gray-900">
             {sym}
-            {order.total.toLocaleString()}
+            {Number(p.amount).toLocaleString()}
           </p>
           <span
-            className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full
-            ${ORDER_STATUS_STYLE[order.status]}`}
+            className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize
+            ${STATUS_STYLE[statusLabel.key] ?? "bg-gray-100 text-gray-500"}`}
           >
-            {STATUS_LABEL[order.status]}
+            {statusLabel.label}
           </span>
+          {hasExpand && (
+            <ChevronDown
+              size={14}
+              className={`text-gray-300 transition-transform duration-200
+              ${expanded ? "rotate-180" : ""}`}
+            />
+          )}
         </div>
       </div>
 
-      {/* Expanded items */}
-      {expanded && (
-        <div className="border-t border-gray-100 px-4 sm:px-5 py-3 bg-gray-50">
-          <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+      {/* Expanded: order items */}
+      {expanded && p.type === "order" && p.items && (
+        <div className="border-t border-gray-100 px-4 sm:px-5 py-4 bg-gray-50/50">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
             Items
           </p>
-          <div className="space-y-1.5">
-            {order.items.map((item, i) => (
+          <div className="space-y-2">
+            {p.items.map((item, i) => (
               <div
                 key={i}
                 className="flex justify-between text-xs text-gray-600"
               >
-                <span>
-                  {item.qty}× {item.name}
-                </span>
-                <span className="font-medium">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-5 h-5 rounded-md bg-gray-200 text-gray-500 text-[10px]
+                    font-bold flex items-center justify-center flex-shrink-0"
+                  >
+                    {item.qty}
+                  </span>
+                  {item.name}
+                </div>
+                <span className="font-semibold">
                   {sym}
                   {(item.price * item.qty).toLocaleString()}
                 </span>
               </div>
             ))}
           </div>
-          {order.deliveryAddress && (
-            <p className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-200"></p>
+          {p.deliveryAddress && (
+            <p className="flex items-center gap-1 text-xs text-gray-400 mt-3 pt-3 border-t border-gray-200">
+              <MapPin size={11} />
+              {p.deliveryAddress}
+            </p>
           )}
         </div>
       )}
@@ -229,92 +271,78 @@ function OrderCard({ order }: { order: Order }) {
   );
 }
 
-// ── Booking card ───────────────────────────────────────────────────────────
-function BookingCard({ booking }: { booking: Booking }) {
-  const sym = booking.currency === "NGN" ? "₦" : "₵";
-  const n = nights(booking.checkIn, booking.checkOut);
-  const icon = PROPERTY_ICON[booking.propertyType] ?? PROPERTY_ICON.default;
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
-      <div className="flex items-start gap-3 sm:gap-4">
-        {/* Icon */}
-        <div
-          className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100
-          flex items-center justify-center flex-shrink-0 mt-0.5"
-        >
-          {icon}
-        </div>
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">
-            {booking.propertyName}
-          </p>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">
-            {booking.vendor}
-          </p>
-          <div className="flex flex-wrap gap-3 mt-2">
-            <div className="text-xs text-gray-500">
-              <span className="font-medium text-gray-700">Check-in</span>{" "}
-              {formatDate(booking.checkIn)}
-            </div>
-            <div className="text-xs text-gray-500">
-              <span className="font-medium text-gray-700">Check-out</span>{" "}
-              {formatDate(booking.checkOut)}
-            </div>
-            <div className="text-xs text-gray-500">
-              {n} night{n !== 1 ? "s" : ""} · {booking.guests} guest
-              {booking.guests !== 1 ? "s" : ""}
-            </div>
-          </div>
-        </div>
-
-        {/* Right */}
-        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <p className="text-sm font-bold text-gray-800">
-            {sym}
-            {booking.totalPrice.toLocaleString()}
-          </p>
-          <span
-            className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full
-            ${BOOKING_STATUS_STYLE[booking.status]}`}
-          >
-            {STATUS_LABEL[booking.status]}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Page ───────────────────────────────────────────────────────────────────
-export default function GuestHistoryPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
+  { id: "all", label: "All", icon: <LayoutList size={13} /> },
+  {
+    id: "subscriptions",
+    label: "Subscriptions",
+    icon: <Star size={13} className="fill-amber-400 text-amber-400" />,
+  },
+  { id: "orders", label: "Orders", icon: <ShoppingBag size={13} /> },
+  { id: "bookings", label: "Bookings", icon: <Home size={13} /> },
+];
 
-  const defaultTab =
-    (searchParams.get("tab") as "orders" | "bookings") ?? "orders";
-  const [tab, setTab] = useState<"orders" | "bookings">(defaultTab);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+export default function PurchaseHistoryPage() {
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabType>("all");
 
-  // Filter state
-  const [statusFilter, setStatusFilter] = useState("all");
+  const { currency: userCurrency, sym } = useViewCountry();
+
+  useResumeAction();
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchAll = async () => {
       setLoading(true);
       setError(null);
       try {
-        const [ordersRes, bookingsRes] = await Promise.all([
+        // Fetch all three purchase types in parallel
+        const [subRes, orderRes, bookingRes] = await Promise.allSettled([
+          axiosInstance.get("/payments/history"),
           axiosInstance.get("/orders/my"),
           axiosInstance.get("/bookings/my"),
         ]);
-        setOrders(ordersRes.data.orders ?? []);
-        setBookings(bookingsRes.data.bookings ?? []);
+
+        const all: Purchase[] = [];
+
+        if (subRes.status === "fulfilled") {
+          const subs: Purchase[] = (subRes.value.data.purchases ?? []).map(
+            (p: Purchase) => ({ ...p, type: "subscription" as const }),
+          );
+          all.push(...subs);
+        }
+
+        if (orderRes.status === "fulfilled") {
+          const orders: Purchase[] = (orderRes.value.data.orders ?? []).map(
+            (o: Purchase) => ({
+              ...o,
+              type: "order" as const,
+              amount: o.amount,
+            }),
+          );
+          all.push(...orders);
+        }
+
+        if (bookingRes.status === "fulfilled") {
+          const bookings: Purchase[] = (
+            bookingRes.value.data.bookings ?? []
+          ).map((b: Purchase) => ({
+            ...b,
+            type: "booking" as const,
+            amount: b.amount,
+          }));
+          all.push(...bookings);
+        }
+
+        // Sort by most recent first
+        all.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+
+        setPurchases(all);
       } catch {
         setError("Failed to load history. Please try again.");
       } finally {
@@ -322,112 +350,101 @@ export default function GuestHistoryPage() {
       }
     };
 
-    fetchHistory();
+    fetchAll();
   }, []);
 
-  const handleTabChange = (t: "orders" | "bookings") => {
-    setTab(t);
-    setStatusFilter("all");
-    router.replace(`?tab=${t}`, { scroll: false });
+  const filtered =
+    tab === "all"
+      ? purchases
+      : purchases.filter((p) => {
+          if (tab === "subscriptions") return p.type === "subscription";
+          if (tab === "orders") return p.type === "order";
+          if (tab === "bookings") return p.type === "booking";
+          return true;
+        });
+
+  // Count per type for tab badges
+  const counts = {
+    all: purchases.length,
+    subscriptions: purchases.filter((p) => p.type === "subscription").length,
+    orders: purchases.filter((p) => p.type === "order").length,
+    bookings: purchases.filter((p) => p.type === "booking").length,
   };
 
-  const filteredOrders =
-    statusFilter === "all"
-      ? orders
-      : orders.filter((o) => o.status === statusFilter);
-
-  const filteredBookings =
-    statusFilter === "all"
-      ? bookings
-      : bookings.filter((b) => b.status === statusFilter);
-
-  const orderStatuses = [
-    "all",
-    "pending",
-    "confirmed",
-    "delivered",
-    "cancelled",
-  ];
-  const bookingStatuses = [
-    "all",
-    "pending",
-    "confirmed",
-    "checked_in",
-    "checked_out",
-    "cancelled",
-  ];
+  // Total spent
+  const totalSpent = purchases.reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-            My activity
+            Purchase History
           </h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            Your orders and apartment bookings
+            All your orders, bookings and subscriptions in one place
           </p>
         </div>
 
-        {/* Tab bar */}
-        <div className="flex bg-white border border-gray-100 shadow-sm rounded-2xl p-1 mb-5">
-          {(["orders", "bookings"] as const).map((t) => (
+        {/* Summary strip */}
+        {!loading && purchases.length > 0 && (
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            {[
+              { label: "Total purchases", value: purchases.length },
+              { label: "Orders", value: counts.orders },
+              {
+                label: "Total spent",
+                value: `${sym}${totalSpent.toLocaleString()}`,
+              },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="bg-white border border-gray-100 shadow-sm rounded-2xl p-3 text-center"
+              >
+                <p className="text-lg font-bold text-gray-900">{s.value}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div
+          className="flex bg-white border border-gray-100 shadow-sm rounded-2xl p-1 mb-5
+          overflow-x-auto scrollbar-none gap-1"
+        >
+          {TABS.map((t) => (
             <button
-              key={t}
-              onClick={() => handleTabChange(t)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl
-                text-sm font-semibold transition
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl
+                text-xs font-semibold transition whitespace-nowrap
                 ${
-                  tab === t
-                    ? "bg-yellow-400 text-black shadow-sm"
+                  tab === t.id
+                    ? "bg-[#ffc105] text-black shadow-sm"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
             >
-              {t === "orders" ? (
-                <ShoppingBag size={14} className="flex-shrink-0" />
-              ) : (
-                <Home size={14} className="flex-shrink-0" />
-              )}
-              <span className="capitalize">{t}</span>
-              {/* Count badge */}
-              {!loading && (
+              {t.icon}
+              {t.label}
+              {!loading && counts[t.id] > 0 && (
                 <span
-                  className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold
-                  ${tab === t ? "bg-black/10 text-black" : "bg-gray-100 text-gray-500"}`}
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold
+                  ${tab === t.id ? "bg-black/10 text-black" : "bg-gray-100 text-gray-500"}`}
                 >
-                  {t === "orders" ? orders.length : bookings.length}
+                  {counts[t.id]}
                 </span>
               )}
             </button>
           ))}
         </div>
 
-        {/* Status filter pills */}
-        {!loading && (tab === "orders" ? orders : bookings).length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
-            {(tab === "orders" ? orderStatuses : bookingStatuses).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold
-                  transition capitalize
-                  ${
-                    statusFilter === s
-                      ? "bg-gray-900 text-white"
-                      : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"
-                  }`}
-              >
-                {s === "all" ? "All" : (STATUS_LABEL[s] ?? s)}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Content */}
+        {/* Loading */}
         {loading && <Skeleton />}
 
-        {error && !loading && (
+        {/* Error */}
+        {!loading && error && (
           <div
             className="bg-red-50 border border-red-200 rounded-2xl p-5
             text-red-600 text-sm text-center"
@@ -436,51 +453,79 @@ export default function GuestHistoryPage() {
           </div>
         )}
 
-        {!loading &&
-          !error &&
-          tab === "orders" &&
-          (filteredOrders.length === 0 ? (
-            <Empty tab="orders" />
-          ) : (
-            <div className="space-y-3">
-              {filteredOrders.map((o) => (
-                <OrderCard key={o._id} order={o} />
-              ))}
-            </div>
-          ))}
-
-        {!loading &&
-          !error &&
-          tab === "bookings" &&
-          (filteredBookings.length === 0 ? (
-            <Empty tab="bookings" />
-          ) : (
-            <div className="space-y-3">
-              {filteredBookings.map((b) => (
-                <BookingCard key={b._id} booking={b} />
-              ))}
-            </div>
-          ))}
-
-        {/* Upgrade CTA for guests */}
-        {!loading && (
+        {/* Empty */}
+        {!loading && !error && filtered.length === 0 && (
           <div
-            className="mt-8 bg-gradient-to-r from-yellow-400/10 to-yellow-400/5
-            border border-yellow-400/20 rounded-2xl p-5 text-center"
+            className="bg-white rounded-2xl p-10 sm:p-16 text-center
+            border border-gray-100 shadow-sm"
           >
-            <p className="text-sm font-semibold text-gray-700 mb-1">
-              Want to sell on SmileBaba?
+            <div className="mb-3 mx-auto w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center">
+              {tab === "subscriptions" ? (
+                <Star size={26} className="text-amber-400 fill-amber-300" />
+              ) : tab === "orders" ? (
+                <ShoppingBag size={26} className="text-gray-300" />
+              ) : tab === "bookings" ? (
+                <Home size={26} className="text-gray-300" />
+              ) : (
+                <Receipt size={26} className="text-gray-300" />
+              )}
+            </div>
+            <p className="text-gray-600 font-medium text-sm mb-1">
+              No {tab === "all" ? "purchases" : tab} yet
             </p>
-            <p className="text-xs text-gray-500 mb-4">
-              Subscribe to a vendor plan and start listing your products, food,
-              or properties.
+            <p className="text-xs text-gray-400 mb-6 max-w-xs mx-auto leading-relaxed">
+              {tab === "subscriptions" || tab === "all"
+                ? "Subscribe to a plan to start selling on SmileBaba."
+                : tab === "orders"
+                  ? "Browse the marketplace to place your first order."
+                  : "Browse apartments to make your first booking."}
             </p>
             <Link
-              href="/subscribe"
-              className="inline-block px-5 py-2.5 bg-yellow-400 text-black text-xs
-                font-bold rounded-xl hover:bg-yellow-300 transition"
+              href={
+                tab === "bookings"
+                  ? "/restate"
+                  : tab === "orders"
+                    ? "/marketPlace"
+                    : "/subscription"
+              }
+              className="inline-block px-6 py-2.5 bg-[#ffc105] text-black font-bold
+                rounded-xl hover:bg-amber-400 transition text-sm"
             >
-              Become a vendor →
+              {tab === "bookings"
+                ? "Browse apartments"
+                : tab === "orders"
+                  ? "Browse marketplace"
+                  : "View plans"}{" "}
+              →
+            </Link>
+          </div>
+        )}
+
+        {/* List */}
+        {!loading && !error && filtered.length > 0 && (
+          <div className="space-y-3">
+            {filtered.map((p) => (
+              <PurchaseCard key={p._id} p={p} sym={sym} />
+            ))}
+          </div>
+        )}
+
+        {/* Footer CTA */}
+        {!loading && purchases.length > 0 && (
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/subscription"
+              className="px-6 py-2.5 bg-[#ffc105] text-black font-bold rounded-xl
+                hover:bg-amber-400 transition text-sm text-center"
+            >
+              Upgrade or renew plan →
+            </Link>
+            <Link
+              href="/marketPlace"
+              className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700
+                font-medium rounded-xl hover:bg-gray-50 transition text-sm text-center"
+            >
+              Continue shopping
             </Link>
           </div>
         )}

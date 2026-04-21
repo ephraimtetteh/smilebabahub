@@ -19,15 +19,55 @@ import {
 } from "lucide-react";
 import { useViewCountry, ViewCountry } from "@/src/hooks/useViewCountry";
 
+// SVG flag components — emoji flags render poorly on Android/Windows
+const GhanaFlag = () => (
+  <svg
+    width="20"
+    height="14"
+    viewBox="0 0 20 14"
+    className="rounded-sm flex-shrink-0"
+  >
+    <rect width="20" height="4.67" y="0" fill="#006B3F" />
+    <rect width="20" height="4.67" y="4.67" fill="#FCD116" />
+    <rect width="20" height="4.67" y="9.33" fill="#CE1126" />
+    <polygon points="10,5.2 10.9,7.9 8.1,6.1 11.9,6.1 9.1,7.9" fill="#000" />
+  </svg>
+);
+
+const NigeriaFlag = () => (
+  <svg
+    width="20"
+    height="14"
+    viewBox="0 0 20 14"
+    className="rounded-sm flex-shrink-0"
+  >
+    <rect width="20" height="14" fill="#fff" />
+    <rect width="6.67" height="14" x="0" fill="#008751" />
+    <rect width="6.67" height="14" x="13.33" fill="#008751" />
+  </svg>
+);
+
 const COUNTRIES: {
   value: ViewCountry;
-  flag: string;
+  Flag: () => React.JSX.Element;
   label: string;
   currency: string;
   sym: string;
 }[] = [
-  { value: "Ghana", flag: "🇬🇭", label: "Ghana", currency: "GHS", sym: "₵" },
-  { value: "Nigeria", flag: "🇳🇬", label: "Nigeria", currency: "NGN", sym: "₦" },
+  {
+    value: "Ghana",
+    Flag: GhanaFlag,
+    label: "Ghana",
+    currency: "GHS",
+    sym: "₵",
+  },
+  {
+    value: "Nigeria",
+    Flag: NigeriaFlag,
+    label: "Nigeria",
+    currency: "NGN",
+    sym: "₦",
+  },
 ];
 
 interface Props {
@@ -93,7 +133,7 @@ export default function CountrySwitcher({ compact = false }: Props) {
             rounded-full animate-spin"
           />
         ) : (
-          <span className="text-sm leading-none">{current.flag}</span>
+          <current.Flag />
         )}
 
         {!compact && !guestDetecting && (
@@ -159,7 +199,7 @@ export default function CountrySwitcher({ compact = false }: Props) {
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
                 >
-                  <span className="text-xl leading-none">{c.flag}</span>
+                  <c.Flag />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -215,7 +255,7 @@ export default function CountrySwitcher({ compact = false }: Props) {
             <p className="text-[11px] text-gray-400">
               {isManuallySelected ? "Manually set to" : "Auto-detected:"}
               <span className="font-bold text-gray-700 ml-1">
-                {current.flag} {current.label} · {current.currency}
+                {current.label} · {current.currency}
               </span>
             </p>
           </div>

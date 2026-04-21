@@ -339,7 +339,7 @@ export default function PurchaseHistoryPage() {
                 </div>
               </div>
               <Link
-                href="/subscribe?renew=1"
+                href="/subscription?renew=1"
                 className="flex-shrink-0 flex items-center gap-1 text-xs
                 font-bold text-yellow-700 hover:underline"
               >
@@ -407,7 +407,7 @@ export default function PurchaseHistoryPage() {
                 Subscribe to a plan to start selling on SmileBaba
               </p>
               <Link
-                href="/subscribe"
+                href="/subscription"
                 className="inline-flex items-center gap-2 px-6 py-2.5
                 bg-[#ffc105] text-black font-bold rounded-xl
                 hover:bg-amber-400 transition text-sm"
@@ -434,7 +434,7 @@ export default function PurchaseHistoryPage() {
             justify-center gap-3"
             >
               <Link
-                href="/subscribe"
+                href="/subscription"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffc105]
                 text-black font-bold rounded-xl hover:bg-amber-400
                 transition text-sm"

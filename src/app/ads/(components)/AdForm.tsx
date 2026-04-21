@@ -42,13 +42,12 @@ import {
 import { useAppSelector } from "@/src/app/redux";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
 
-
 // ── Country config — everything that differs between Ghana and Nigeria ──────
 const COUNTRY_CONFIG = {
   Ghana: {
     currency: "GHS" as AdCurrency,
     sym: "₵",
-    flag: "🇬🇭",
+    flag: "GH 🇬🇭", // fallback text if emoji fails
     regionLabel: "Region",
     regionPlaceholder: "Select region",
     regions: [
@@ -78,7 +77,7 @@ const COUNTRY_CONFIG = {
   Nigeria: {
     currency: "NGN" as AdCurrency,
     sym: "₦",
-    flag: "🇳🇬",
+    flag: "NG 🇳🇬", // fallback text if emoji fails
     regionLabel: "State",
     regionPlaceholder: "Select state",
     regions: [
@@ -778,7 +777,9 @@ export default function AdForm({
         className="mb-4 flex items-center gap-2 px-4 py-2.5 bg-gray-50 border
         border-gray-100 rounded-xl text-xs text-gray-500"
       >
-        <span className="text-base">{cfg.flag}</span>
+        <span className="text-xs font-bold text-gray-600 bg-gray-200 px-1.5 py-0.5 rounded">
+          {country === "Nigeria" ? "🇳🇬 NG" : "🇬🇭 GH"}
+        </span>
         <span>
           Posting in <strong className="text-gray-800">{country}</strong>
           {" · "}Prices in{" "}

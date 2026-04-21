@@ -169,7 +169,9 @@ export default function PaymentFailedPage() {
         <div className="flex flex-col gap-3">
           <button
             onClick={() =>
-              router.push(planId ? `/subscribe?plan=${planId}` : "/subscribe")
+              router.push(
+                planId ? `/subscription?plan=${planId}` : "/subscription",
+              )
             }
             className="w-full flex items-center justify-center gap-2 py-3
               bg-[#ffc105] text-black font-black rounded-2xl
@@ -179,7 +181,7 @@ export default function PaymentFailedPage() {
             Try again{planId ? ` — ${planId}` : ""}
           </button>
           <Link
-            href="/subscribe"
+            href="/subscription"
             className="w-full flex items-center justify-center gap-2 py-3
               bg-white border border-gray-200 text-gray-700 font-semibold
               rounded-2xl hover:bg-gray-50 transition text-sm"

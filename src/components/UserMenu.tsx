@@ -184,13 +184,13 @@ export default function UserMenu() {
                 {isVendor && (
                   <>
                     <MenuItem
-                      href="/vendor"
+                      href="/vendor/dashboard"
                       icon={<LayoutDashboard size={15} />}
                       label="Vendor dashboard"
                       onClick={close}
                     />
                     <MenuItem
-                      href="/vendor/history"
+                      href="/account/orders"
                       icon={<History size={15} />}
                       label="Purchase history"
                       onClick={close}

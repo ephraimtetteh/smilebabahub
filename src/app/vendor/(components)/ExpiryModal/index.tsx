@@ -55,7 +55,7 @@ function AdRow({ ad }: { ad: AdSummary }) {
         </p>
       </div>
       <Link
-        href="/subscribe"
+        href="/subscription"
         onClick={(e) => e.stopPropagation()}
         className="flex items-center gap-1 text-[11px] font-bold text-white
           bg-[#ffc105] hover:bg-yellow-300 px-2.5 py-1.5 rounded-lg
@@ -229,7 +229,7 @@ export default function ExpiryModal() {
               View all <ChevronRight size={13} />
             </Link>
             <Link
-              href="/subscribe"
+              href="/subscription"
               onClick={dismiss}
               className="flex items-center gap-1.5 text-xs font-bold text-black
                 bg-[#ffc105] hover:bg-yellow-300 px-4 py-2 rounded-xl transition"

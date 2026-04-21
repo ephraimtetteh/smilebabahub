@@ -48,11 +48,42 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
+  // ── 5. /subscribe → /subscription ───────────────────────────────────────
+  // /subscription is the real page. /subscribe is a convenience alias.
+  if (pathname === "/subscribe" || pathname === "/subscribe/") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/subscription";
+    // Forward any query params (plan=, returnUrl=, etc.)
+    return NextResponse.redirect(url, 307);
+  }
+
+  // ── 6. /vendor/boost → /subscription ─────────────────────────────────────
+  if (pathname === "/vendor/boost" || pathname === "/vendor/boost/") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/subscription";
+    return NextResponse.redirect(url, 308);
+  }
+
+  // ── 7. /vendor/products → /ads/my ────────────────────────────────────────
+  // Old sidebar link — product management is now at /ads/my.
+  if (pathname.startsWith("/vendor/products")) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/ads/my";
+    url.search = "";
+    return NextResponse.redirect(url, 308);
+  }
+
+  // ── 8. /vendor/message → /vendor/messages (normalise singular) ───────────
+  if (pathname === "/vendor/message") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/message";
+    return NextResponse.redirect(url, 308);
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  // Run on these paths only — exclude static assets and API routes
   matcher: [
     "/login",
     "/vendor",
@@ -60,5 +91,12 @@ export const config = {
     "/vendor/history",
     "/vendor/ads",
     "/vendor/ads/:path*",
+    "/vendor/boost",
+    "/vendor/boost/",
+    "/vendor/products",
+    "/vendor/products/:path*",
+    "/vendor/message",
+    "/subscribe",
+    "/subscribe/",
   ],
 };

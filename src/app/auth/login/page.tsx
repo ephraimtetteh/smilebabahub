@@ -61,12 +61,18 @@ const Loginpage = () => {
     }
   };
 
+  const authUser = useAppSelector((s) => s.auth.user);
+
   // ── Prevent authenticated users from seeing the login page ───────────────
+  // Send them to their role-based home, not always "/"
   useEffect(() => {
     if (!isAuthenticating && isAuthenticated) {
-      router.replace("/");
+      const role = authUser?.role;
+      if (role === "vendor") router.replace("/vendor/dashboard");
+      else if (role === "admin") router.replace("/admin");
+      else router.replace("/");
     }
-  }, [isAuthenticated, isAuthenticating, router]);
+  }, [isAuthenticated, isAuthenticating, authUser, router]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-black">
