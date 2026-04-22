@@ -301,52 +301,152 @@ export default function PurchaseHistoryPage() {
             </button>
           </div>
 
-          {/* ── Active plan banner ── */}
-          {resolvedActivePlan && !loading && (
-            <div
-              className="bg-gradient-to-r from-amber-50 to-yellow-50 border
-            border-yellow-200 rounded-2xl p-4 mb-5 flex items-center
-            justify-between gap-3"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl bg-[#ffc105] flex items-center
-                justify-center"
-                >
-                  {PLAN_ICONS[
-                    resolvedActivePlan.planId ?? resolvedActivePlan.plan
-                  ] ?? <Star size={18} className="text-black" />}
+          {/* ── Active plan banner + features ── */}
+          {resolvedActivePlan &&
+            !loading &&
+            (() => {
+              type PlanKey = "Basic" | "standard" | "popular" | "premium";
+              const pid = (resolvedActivePlan.planId ??
+                resolvedActivePlan.plan ??
+                "Basic") as PlanKey;
+              const PLAN_FEATURES: Record<
+                string,
+                { label: string; detail: string }[]
+              > = {
+                Basic: [
+                  { label: "1 listing", detail: "Maximum active listings" },
+                  { label: "3-day duration", detail: "Per listing" },
+                  { label: "Basic dashboard", detail: "" },
+                ],
+                standard: [
+                  { label: "5 listings", detail: "Maximum active listings" },
+                  { label: "30-day duration", detail: "Per listing" },
+                  { label: "Radio & TV ads", detail: "Promotional exposure" },
+                  { label: "Social media ads", detail: "" },
+                ],
+                popular: [
+                  { label: "10 listings", detail: "Maximum active listings" },
+                  { label: "30-day duration", detail: "Per listing" },
+                  {
+                    label: "Full analytics",
+                    detail: "Views, contacts, conversions",
+                  },
+                  { label: "Radio & TV ads", detail: "Promotional exposure" },
+                  { label: "Priority support", detail: "" },
+                ],
+                premium: [
+                  {
+                    label: "Unlimited listings",
+                    detail: "No cap on active ads",
+                  },
+                  { label: "60-day duration", detail: "Per listing" },
+                  {
+                    label: "Full analytics",
+                    detail: "Views, contacts, conversions",
+                  },
+                  {
+                    label: "Featured placement",
+                    detail: "Top of search results",
+                  },
+                  { label: "Priority support", detail: "" },
+                ],
+              };
+              const features = PLAN_FEATURES[pid] ?? PLAN_FEATURES.standard;
+              const expires =
+                resolvedActivePlan.periodEnd ?? resolvedActivePlan.expiresAt;
+              const dl = daysLeft(expires);
+              const isExpiring = dl !== null && dl <= 7 && dl > 0;
+              const isExpired = dl !== null && dl <= 0;
+
+              return (
+                <div className="mb-5 space-y-2">
+                  {/* Banner */}
+                  <div
+                    className={`rounded-2xl p-4 border flex items-center
+                justify-between gap-3
+                ${
+                  isExpired
+                    ? "bg-red-50 border-red-200"
+                    : isExpiring
+                      ? "bg-orange-50 border-orange-200"
+                      : "bg-gradient-to-r from-amber-50 to-yellow-50 border-yellow-200"
+                }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl bg-[#ffc105] flex items-center
+                    justify-center flex-shrink-0"
+                      >
+                        {PLAN_ICONS[pid] ?? (
+                          <Star size={18} className="text-black" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                          <Sparkles size={13} className="text-yellow-600" />
+                          {resolvedActivePlan.title ?? `${pid} Plan`}
+                        </p>
+                        <p
+                          className={`text-xs mt-0.5
+                      ${
+                        isExpired
+                          ? "text-red-600 font-semibold"
+                          : isExpiring
+                            ? "text-orange-600 font-semibold"
+                            : "text-gray-500"
+                      }`}
+                        >
+                          {isExpired
+                            ? "⚠️ Expired — renew to keep posting"
+                            : isExpiring
+                              ? `⚠️ Expires in ${dl} day${dl === 1 ? "" : "s"} — renew soon`
+                              : `Active · expires ${formatDate(expires)} (${dl} days left)`}
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/subscription?renew=1"
+                      className="flex-shrink-0 flex items-center gap-1 text-xs
+                    font-bold text-yellow-700 hover:underline whitespace-nowrap"
+                    >
+                      {isExpired ? "Renew now" : "Upgrade"}{" "}
+                      <ExternalLink size={11} />
+                    </Link>
+                  </div>
+
+                  {/* Plan features */}
+                  <div
+                    className="bg-white border border-gray-100 rounded-2xl p-4
+                grid grid-cols-2 sm:grid-cols-3 gap-2"
+                  >
+                    <p
+                      className="col-span-full text-[10px] font-bold text-gray-400
+                  uppercase tracking-wider mb-1"
+                    >
+                      Your plan includes
+                    </p>
+                    {features.map((f) => (
+                      <div key={f.label} className="flex items-start gap-1.5">
+                        <CheckCircle2
+                          size={13}
+                          className="text-green-500 flex-shrink-0 mt-0.5"
+                        />
+                        <div>
+                          <p className="text-xs font-semibold text-gray-800">
+                            {f.label}
+                          </p>
+                          {f.detail && (
+                            <p className="text-[10px] text-gray-400">
+                              {f.detail}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                    <Sparkles size={13} className="text-yellow-600" />
-                    {resolvedActivePlan.title ??
-                      `${resolvedActivePlan.plan ?? resolvedActivePlan.planId} Plan`}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Active · expires{" "}
-                    {formatDate(
-                      resolvedActivePlan.periodEnd ??
-                        resolvedActivePlan.expiresAt,
-                    )}{" "}
-                    (
-                    {daysLeft(
-                      resolvedActivePlan.periodEnd ??
-                        resolvedActivePlan.expiresAt,
-                    )}{" "}
-                    days left)
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/subscription?renew=1"
-                className="flex-shrink-0 flex items-center gap-1 text-xs
-                font-bold text-yellow-700 hover:underline"
-              >
-                Renew <ExternalLink size={11} />
-              </Link>
-            </div>
-          )}
+              );
+            })()}
 
           {/* ── Summary strip ── */}
           {!loading && purchases.length > 0 && (

@@ -10,6 +10,19 @@ function formatDate(iso: string) {
 }
 
 const PLANS = ["Basic", "standard", "popular", "premium"];
+const PLAN_LABELS: Record<string, string> = {
+  Basic: "Smile (Free)",
+  standard: "BasicSmile",
+  popular: "HappySmile",
+  premium: "SuperSmile",
+};
+
+const PLAN_LIMITS = {
+  Basic: "1 listing · 3d",
+  standard: "5 listings · 30d",
+  popular: "10 listings · 30d",
+  premium: "Unlimited · 60d",
+} as const;
 
 export default function AdminSubscriptionsPage() {
   const { data, loading, error, fetch } = useAdmin<any>("subscriptions");
@@ -126,7 +139,7 @@ export default function AdminSubscriptionsPage() {
           <option value="">All plans</option>
           {PLANS.map((p) => (
             <option key={p} value={p}>
-              {p}
+              {PLAN_LABELS[p] ?? p}
             </option>
           ))}
         </select>
@@ -175,7 +188,18 @@ export default function AdminSubscriptionsPage() {
                         <p className="text-xs text-gray-400">{p.user?.email}</p>
                       </td>
                       <td className="px-5 py-3 capitalize font-medium text-gray-800">
-                        {p.planId}
+                        <div>
+                          <p className="font-semibold text-gray-900 text-xs">
+                            {p.planId ?? "—"}
+                          </p>
+                          {p.planId && (
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                              {PLAN_LIMITS[
+                                p.planId as keyof typeof PLAN_LIMITS
+                              ] ?? ""}
+                            </p>
+                          )}
+                        </div>
                       </td>
                       <td className="px-5 py-3 text-gray-500 capitalize">
                         {p.billingCycle}
