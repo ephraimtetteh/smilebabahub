@@ -11,8 +11,8 @@ const HomePage = () => {
   return (
     <div className="w-full flex flex-col flex-1 items-center justify-center max-relative">
       {/* Hero renders the fixed background + a spacer div */}
-      {/* <Hero /> */}
-      <HeroSection />
+      <Hero />
+      {/* <HeroSection /> */}
 
       {/* Scrollable content — sits on top of the fixed hero via z-10 + white bg */}
       <div className="max-sm:relative w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">

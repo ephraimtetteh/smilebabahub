@@ -145,7 +145,7 @@ const Sidebar = () => {
           items-center pt-7
           ${isSidebarCollapsed ? "px-4" : "px-5"}`}
         >
-          <Link href="/vendor/dashboard">
+          <Link href="/">
             <Image
               src={assets.logo}
               alt="SmileBaba"
