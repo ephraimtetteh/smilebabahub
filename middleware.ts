@@ -33,7 +33,7 @@ export function middleware(req: NextRequest) {
   // Old route — page was moved to /account/orders.
   if (pathname === "/vendor/history") {
     const url = req.nextUrl.clone();
-    url.pathname = "/account/orders";
+    url.pathname = "/vendor/history";
     return NextResponse.redirect(url, 308);
   }
 
@@ -58,25 +58,25 @@ export function middleware(req: NextRequest) {
   }
 
   // ── 6. /vendor/boost → /subscription ─────────────────────────────────────
-  if (pathname === "/vendor/boost" || pathname === "/vendor/boost/") {
-    const url = req.nextUrl.clone();
-    url.pathname = "/subscription";
-    return NextResponse.redirect(url, 308);
-  }
+  // if (pathname === "/vendor/boost" || pathname === "/vendor/boost/") {
+  //   const url = req.nextUrl.clone();
+  //   url.pathname = "/subscription";
+  //   return NextResponse.redirect(url, 308);
+  // }
 
   // ── 7. /vendor/products → /ads/my ────────────────────────────────────────
   // Old sidebar link — product management is now at /ads/my.
-  if (pathname.startsWith("/vendor/products")) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/ads/my";
-    url.search = "";
-    return NextResponse.redirect(url, 308);
-  }
+  // if (pathname.startsWith("/vendor/products")) {
+  //   const url = req.nextUrl.clone();
+  //   url.pathname = "/ads/my";
+  //   url.search = "";
+  //   return NextResponse.redirect(url, 308);
+  // }
 
   // ── 8. /vendor/message → /vendor/messages (normalise singular) ───────────
-  if (pathname === "/vendor/message") {
+  if (pathname === "/message") {
     const url = req.nextUrl.clone();
-    url.pathname = "/message";
+    url.pathname = "/vendor/message";
     return NextResponse.redirect(url, 308);
   }
 

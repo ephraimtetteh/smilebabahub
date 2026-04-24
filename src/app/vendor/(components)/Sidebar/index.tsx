@@ -132,7 +132,7 @@ const Sidebar = () => {
     { href: "/ads/my", icon: ShoppingBag, label: "My Ads" },
     { href: "/vendor/message", icon: Bell, label: "Messages" },
     { href: "/subscription", icon: CircleDollarSign, label: "Subscription" },
-    { href: "/account/orders", icon: HistoryIcon, label: "History" },
+    { href: "/vendor/history", icon: HistoryIcon, label: "History" },
     { href: "/vendor/settings", icon: Settings, label: "Settings" },
   ];
 
