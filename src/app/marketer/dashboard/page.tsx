@@ -80,8 +80,10 @@ function formatDate(iso: string) {
   });
 }
 
-function fmt(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n.toFixed(2);
+function fmt(n: number | undefined | null): string {
+  const v = Number(n ?? 0);
+  if (isNaN(v)) return "0.00";
+  return v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(2);
 }
 
 // Mini bar chart for earnings sparkline
@@ -115,7 +117,7 @@ function EarningsChart({
           <div
             key={d.date}
             className="flex-1 group relative"
-            title={`${d.label}: ${currency === "NGN" ? "₦" : "₵"}${v.toFixed(2)}`}
+            title={`${d.label}: ${currency === "NGN" ? "₦" : "₵"}${Number(v ?? 0).toFixed(2)}`}
           >
             <div
               className={`w-full rounded-sm transition-all duration-300
@@ -304,7 +306,25 @@ export default function MarketerDashboard() {
     );
   }
 
-  const { marketer, recentCommissions, stats } = data;
+  const { marketer, recentCommissions, stats: rawStats } = data;
+
+  // Normalise every numeric field to 0 when the API returns undefined
+  // (new marketers with no earnings get empty aggregation results).
+  // We do NOT spread with duplicate keys — instead we coerce each field individually.
+  const s = rawStats ?? {};
+  const stats = {
+    totalReferrals: Number(s.totalReferrals ?? 0),
+    activeReferrals: Number(s.activeReferrals ?? 0),
+    monthReferrals: Number(s.monthReferrals ?? 0),
+    totalEarningsGHS: Number(s.totalEarningsGHS ?? 0),
+    totalEarningsNGN: Number(s.totalEarningsNGN ?? 0),
+    pendingPayoutGHS: Number(s.pendingPayoutGHS ?? 0),
+    pendingPayoutNGN: Number(s.pendingPayoutNGN ?? 0),
+    monthEarningsGHS: Number(s.monthEarningsGHS ?? 0),
+    monthEarningsNGN: Number(s.monthEarningsNGN ?? 0),
+    thisWeekGHS: Number(s.thisWeekGHS ?? 0),
+    weekChange: Number(s.weekChange ?? 0),
+  };
   const firstName = getFirstName(marketer.name);
 
   return (
@@ -386,8 +406,8 @@ export default function MarketerDashboard() {
               {marketer.referralCode}
             </p>
             <p className="text-xs text-gray-500 mt-1.5">
-              Share this code with vendors. They get 20% off, you earn 20%
-              commission.
+              Share this code with vendors. They get 15% off their first paid
+              plan, you earn 15% commission.
             </p>
           </div>
           <button
@@ -446,6 +466,7 @@ export default function MarketerDashboard() {
                   ₵
                   {stats.totalEarningsGHS.toLocaleString("en-GH", {
                     minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
                   })}
                 </p>
               </div>
@@ -479,7 +500,7 @@ export default function MarketerDashboard() {
                 <p
                   className={`text-2xl font-black ${stats.totalEarningsNGN > 0 ? "text-green-400" : "text-gray-700"}`}
                 >
-                  ₦{stats.totalEarningsNGN.toLocaleString()}
+                  ₦{Number(stats.totalEarningsNGN ?? 0).toLocaleString()}
                 </p>
               </div>
             </div>
@@ -529,7 +550,7 @@ export default function MarketerDashboard() {
                       </span>
                       {p.earningsGHS > 0 && (
                         <span className="text-[10px] text-[#ffc105] w-20 text-right">
-                          ₵{p.earningsGHS.toFixed(2)}
+                          ₵{Number(p.earningsGHS ?? 0).toFixed(2)}
                         </span>
                       )}
                     </div>
@@ -608,17 +629,17 @@ export default function MarketerDashboard() {
                   {
                     name: "BasicSmile",
                     monthly: "GHS 99.99",
-                    commission: "GHS 20.00",
+                    commission: "GHS 15.00",
                   },
                   {
                     name: "HappySmile ⭐",
                     monthly: "GHS 249.99",
-                    commission: "GHS 50.00",
+                    commission: "GHS 37.50",
                   },
                   {
                     name: "SuperSmile",
                     monthly: "GHS 499.99",
-                    commission: "GHS 100.00",
+                    commission: "GHS 75.00",
                   },
                 ].map((p) => (
                   <div
@@ -678,7 +699,7 @@ export default function MarketerDashboard() {
                     <div className="text-right">
                       <p className="text-sm font-bold text-[#ffc105]">
                         {c.currency === "NGN" ? "₦" : "₵"}
-                        {c.commission.toFixed(2)}
+                        {Number(c.commission ?? 0).toFixed(2)}
                       </p>
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full font-semibold

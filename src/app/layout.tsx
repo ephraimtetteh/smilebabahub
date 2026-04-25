@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-home.jpg",
+        url: "/logo1.jpeg",
         width: 1200,
         height: 630,
         alt: "SmileBaba Hub — Ghana & Nigeria Online Marketplace",
@@ -70,16 +70,16 @@ export const metadata: Metadata = {
     title: "SmileBaba Hub — Buy & Sell in Ghana and Nigeria",
     description:
       "Phones, cars, food, fashion and apartments from verified vendors across Ghana and Nigeria.",
-    images: ["/og-home.jpg"],
+    images: ["/logo1.jpeg"],
     site: "@smilebabahub",
   },
 
   alternates: { canonical: "https://smilebabahub.com" },
 
   icons: {
-    icon: "/logo1.png",
-    shortcut: "/logo1.png",
-    apple: "/logo1.png",
+    icon: "/logo1.jpeg",
+    shortcut: "/logo1.jpeg",
+    apple: "/logo1.jpeg",
   },
 
   robots: {
@@ -97,7 +97,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={outfit.variable}>
-      <body className={`relative min-h-screen ${outfit.className} antialiased`}>
+      <body
+        className={`relative min-h-screen ${outfit.className} antialiased`}
+        suppressHydrationWarning
+      >
         <RadioProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
         </RadioProvider>
