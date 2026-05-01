@@ -125,6 +125,83 @@ export const login = createAsyncThunk<
   }
 });
 
+// ── GOOGLE OAuth login ────────────────────────────────────────────────────
+export const googleLogin = createAsyncThunk<
+  LoginResponseProp & { redirectTo?: string; isNewUser?: boolean },
+  string // Google ID token
+>("auth/googleLogin", async (idToken, { dispatch }) => {
+  try {
+    dispatch(setIsAuthenticating(true));
+    const response = await axiosInstance.post<LoginResponseProp>(
+      "/auth/oauth/google",
+      { idToken },
+    );
+    if (response.data.accessToken) {
+      safeStorage.set("accessToken", response.data.accessToken);
+      dispatch(setAccessToken(response.data.accessToken));
+    }
+    dispatch(setUser(response.data.user));
+    dispatch(setIsAuthenticated(true));
+
+    const role = response.data.user?.role;
+    const redirectTo =
+      role === "vendor"
+        ? "/vendor/dashboard"
+        : role === "admin"
+          ? "/admin"
+          : "/";
+
+    return { ...response.data, redirectTo };
+  } catch (error) {
+    dispatch(setIsAuthenticated(false));
+    dispatch(setAccessToken(null));
+    dispatch(setUser(null));
+    dispatch(setMessage({ type: "error", message: getErrorMessage(error) }));
+    throw error;
+  } finally {
+    dispatch(setIsAuthenticating(false));
+  }
+});
+
+
+
+// ── FACEBOOK OAuth login ──────────────────────────────────────────────────
+export const facebookLogin = createAsyncThunk<
+  LoginResponseProp & { redirectTo?: string; isNewUser?: boolean },
+  string // Facebook access token
+>("auth/facebookLogin", async (accessToken, { dispatch }) => {
+  try {
+    dispatch(setIsAuthenticating(true));
+    const response = await axiosInstance.post<LoginResponseProp>(
+      "/auth/oauth/facebook",
+      { accessToken },
+    );
+    if (response.data.accessToken) {
+      safeStorage.set("accessToken", response.data.accessToken);
+      dispatch(setAccessToken(response.data.accessToken));
+    }
+    dispatch(setUser(response.data.user));
+    dispatch(setIsAuthenticated(true));
+
+    const role = response.data.user?.role;
+    const redirectTo =
+      role === "vendor"
+        ? "/vendor/dashboard"
+        : role === "admin"
+          ? "/admin"
+          : "/";
+
+    return { ...response.data, redirectTo };
+  } catch (error) {
+    dispatch(setIsAuthenticated(false));
+    dispatch(setAccessToken(null));
+    dispatch(setUser(null));
+    dispatch(setMessage({ type: "error", message: getErrorMessage(error) }));
+    throw error;
+  } finally {
+    dispatch(setIsAuthenticating(false));
+  }
+});
 // ── RESTORE SESSION (browser refresh) ─────────────────────────────────────
 // Called on app mount — refreshes the access token then fetches the user.
 // This is what keeps the user logged in after a browser refresh.

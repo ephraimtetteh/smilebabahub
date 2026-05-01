@@ -20,28 +20,29 @@ const SOCIALS = [
     icon: <FaFacebook size={15} />,
     color: "hover:text-blue-600",
     getUrl: (page: string) =>
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(page)}`,
+      `https://www.facebook.com/smilebabahub?u=${encodeURIComponent(page)}`,
   },
   {
     name: "Instagram",
     icon: <FaInstagram size={15} />,
     color: "hover:text-pink-500",
     // Instagram has no web share URL — open the profile instead
-    getUrl: (_page: string) => `https://www.instagram.com/smilebabahub`,
+    getUrl: (_page: string) =>
+      `https://www.instagram.com/smilebabahub?igsh=MTloMHdkbTllOGptcA%3D%3D&utm_source=qr`,
   },
   {
-    name: "LinkedIn", // ← was "Linkdin" (typo fixed)
+    name: "Tiktok", // ← was "Linkdin" (typo fixed)
     icon: <FaLinkedin size={15} />,
     color: "hover:text-blue-700",
     getUrl: (page: string) =>
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(page)}`,
+      `https://www.tiktok.com/@smilebabahub?_r=1&_t=ZS-95z2MU3J9ZS?url=${encodeURIComponent(page)}`,
   },
   {
     name: "X / Twitter",
     icon: <FaTwitter size={15} />,
     color: "hover:text-sky-500",
     getUrl: (page: string) =>
-      `https://twitter.com/intent/tweet?url=${encodeURIComponent(page)}&text=${encodeURIComponent("Check this out on SmileBaba Hub!")}`,
+      `https://x.com/smilebabahub?s=11?url=${encodeURIComponent(page)}&text=${encodeURIComponent("Check this out on SmileBaba Hub!")}`,
   },
 ];
 
