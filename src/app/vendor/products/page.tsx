@@ -99,7 +99,7 @@ function ProductpageInner() {
     return { adId: ad?._id ?? "pending" };
   };
   const handlePause    = useCallback(async (id: string) => { await submitTogglePause(id); toast.success("Ad updated");          }, [submitTogglePause]);
-  const handleMarkSold = useCallback(async (id: string) => { await submitMarkSold(id);   toast.success("Marked as sold ✅");   }, [submitMarkSold]);
+  const handleMarkSold = useCallback(async (id: string) => { await submitMarkSold(id);   toast.success("Marked as sold ");   }, [submitMarkSold]);
   const handleBoost    = useCallback((id: string, tier: BoostTier) => { submitBoostAd(id, tier); }, [submitBoostAd]);
 
   return (

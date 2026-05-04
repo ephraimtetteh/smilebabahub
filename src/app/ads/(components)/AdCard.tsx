@@ -19,8 +19,11 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
   const isBoosted = ad.boost?.isBoosted;
   const boostTier = ad.boost?.boostTier;
   const badge = isBoosted && boostTier ? BOOST_BADGE[boostTier] : null;
-  // Note: expired ads are filtered out server-side for the public feed.
-  // daysLeft warning badge is still shown for ads expiring within 3 days
+  const isExpired =
+    (ad as any).isExpired ||
+    (ad.expiresAt ? new Date(ad.expiresAt) < new Date() : false);
+  // Expired ads are NOT filtered out — they show at bottom of feed with reduced opacity
+  // daysLeft warning badge shown for ads expiring within 3 days
   // so vendors can see it if they're browsing their own listings.
   const daysLeft = ad.daysLeft ?? null;
   const expiringSoon = daysLeft !== null && daysLeft <= 3 && daysLeft > 0;
@@ -74,6 +77,19 @@ const AdCard = memo(function AdCard({ ad, compact = false }: AdCardProps) {
               SOLD
             </span>
           </div>
+        )}
+
+        {/* Expired badge — shown at bottom of feed, not hidden */}
+        {isExpired && !ad.isSold && (
+          <>
+            <div className="absolute inset-0 bg-gray-900/30" />
+            <span
+              className="absolute top-2 right-2 bg-gray-800/90 text-gray-300
+              text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-600"
+            >
+              Expired
+            </span>
+          </>
         )}
 
         {/* Expiring soon warning — visible to vendor browsing their own listings */}
