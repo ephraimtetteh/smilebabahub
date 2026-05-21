@@ -1,61 +1,124 @@
-import React from 'react'
-import { sales, information } from '@/src/constants/footer'
-import Image from 'next/image'
-import {assets} from '@/src/assets/assets'
-import { IoLogoFacebook } from "react-icons/io5";
-import { IoLogoInstagram } from "react-icons/io5";
-import { IoLogoLinkedin} from "react-icons/io5";
-import Link from 'next/link';
+import { Facebook, Instagram, Youtube } from "lucide-react";
+import Link from "next/link";
 
-const Footer = () => {
+function Footer() {
   return (
-    <section className=' bg-black  flex flex-col'>
-      <div className='grid lg:grid-cols-4 items-center justify-between gap-12 lg:px-20 px-10 lg:py-20 py-10'>
-        <article className='flex gap-4 flex-col'>
-          <Image 
-            src={assets.logo}
-            alt='smilebaba logo'
-            width={100}
+    <footer className="bg-gray-900 text-gray-300 mt-8">
+      <div className="max-w-[1340px] mx-auto px-5 py-10">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center gap-1 mb-2">
+              <span className="text-xl font-black text-yellow-400">
+                SmileBabaHub
+              </span>
+              <span>😊</span>
+            </div>
+            <p className="text-[10px] text-gray-500 mb-3">
+              Buy. Sell. Eat. Rent. Earn.
+            </p>
+            <p className="text-xs text-gray-400 leading-relaxed mb-4">
+              Your all-in-one African super app.
+            </p>
+            <div className="flex gap-3">
+              {[Facebook, Instagram, Youtube].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  className="w-8 h-8 rounded-full bg-gray-800 flex items-center
+                  justify-center hover:bg-yellow-400 hover:text-black transition"
+                >
+                  <Icon size={14} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <FooterCol
+            title="COMPANY"
+            links={[
+              ["About Us", "/about"],
+              ["Careers", "/careers"],
+              ["Press & Media", "/press"],
+              ["Contact Us", "/contact"],
+            ]}
           />
-        <p className='text-white/60'>SmileBaba is a trusted online marketplace to buy and sell products easily. Discover great deals, connect with sellers, and shop smarter every day.</p>
-        <div className='text-white/60 flex gap-4'>
-          <Link href={'/facebook'}>{<IoLogoFacebook size={32}/>}</Link>
-          <Link href={'/instagram'}>{<IoLogoInstagram size={32}/>}</Link>
-          <Link href={'/linkdin'}>{<IoLogoLinkedin size={32}/>}</Link>
+          <FooterCol
+            title="HELP"
+            links={[
+              ["Help Center", "/help"],
+              ["How to Buy", "/how-to-buy"],
+              ["How to Sell", "/how-to-sell"],
+              ["Returns & Refunds", "/returns"],
+            ]}
+          />
+          <FooterCol
+            title="POLICIES"
+            links={[
+              ["Terms & Conditions", "/terms"],
+              ["Privacy Policy", "/privacy"],
+              ["Shipping Policy", "/shipping"],
+              ["Cookie Policy", "/cookies"],
+            ]}
+          />
+          <FooterCol
+            title="USEFUL LINKS"
+            links={[
+              ["Track Order", "/orders"],
+              ["Vendor Signup", "/auth/register?role=vendor"],
+              ["Affiliate Program", "/marketer"],
+              ["Sitemap", "/sitemap"],
+            ]}
+          />
         </div>
-        </article>
 
-        <article className='flex gap-4 flex-col text-white/60'>
-          <h2 className='text-2xl font-bold border-white'>How To Sell Fast</h2>
-          {sales.map((item, index) => (
-            <div key={index}>
-              {item.name}
-            </div>
-          ))}
-        </article>
-
-        <article className='flex gap-4 flex-col text-white/60'>
-        <h2 className='text-2xl font-bold border-white'>Information</h2>
-          {information.map((item, index) => (
-            <div key={index}>
-              {item.name}
-            </div>
-          ))}
-        </article>
-        <article className='flex gap-4 flex-col text-white/60'>
-        <h2 className='text-2xl font-bold border-white'>Newsletter</h2>
-        <p>“Subscribe to our newsletter for new products and special offers.” </p>
-          <form className='flex gap-2'>
-            <input type="text" placeholder='example@gmail.com' className='bg-gray-900 border border-gray-700 p-3 rounded outline-none'/>
-            <button type='submit' className='bg-transparent border-[#cccccc6d] border p-3 rounded font-bold outline-none'>Subscribe</button>
-          </form>
-        </article>
+        <div className="border-t border-gray-800 mt-8 pt-5 flex flex-wrap items-center justify-between gap-4">
+          <p className="text-[10px] text-gray-500">
+            © 2024 SmileBabaHub.com. All Rights Reserved.
+          </p>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-gray-500 mr-2">WE ACCEPT</span>
+            {["VISA", "MasterCard", "MTN", "Vodafone"].map((p) => (
+              <span
+                key={p}
+                className="bg-white text-gray-900 text-[9px] font-black px-2 py-1 rounded"
+              >
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
-      <div className="bg-gray-900 text-white py-4 text-center">
-        &copy; {new Date().getFullYear()} SmileBaba. All rights reserved.
-      </div>
-    </section>
-  )
+    </footer>
+  );
 }
+
+function FooterCol({
+  title,
+  links,
+}: {
+  title: string;
+  links: [string, string][];
+}) {
+  return (
+    <div>
+      <h4 className="text-xs font-black text-yellow-400 tracking-wider mb-3">
+        {title}
+      </h4>
+      <ul className="space-y-2">
+        {links.map(([label, href]) => (
+          <li key={label}>
+            <Link
+              href={href}
+              className="text-xs text-gray-400 hover:text-yellow-400 transition"
+            >
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 
 export default Footer

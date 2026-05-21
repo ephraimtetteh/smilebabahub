@@ -1,42 +1,113 @@
-import Hero from "@/src/components/Hero";
-import Video from "@/src/components/Video";
-import React from "react";
-import AppDownload from "@/src/components/App";
-import FeaturedProducts from "../components/FeaturedProducts";
-import Radio from "../components/Radio";
-import HeroSection from "../components/HeroSection";
+"use client";
 
+// src/app/page.tsx  (or src/components/HomePage.tsx)
+//
+// Marketplace homepage with country-scoped live data.
+// All categories are pre-fetched for the carousels and highlight blocks.
+// No footer — the project already has one in the global layout.
 
-const HomePage = () => {
+import { useEffect } from "react";
+import { useProducts } from "@/src/hooks/useProducts";
+
+import NewsTicker from "@/src/components/home/NewsTicker";
+import CategorySidebar from "@/src/components/home/CategorySidebar";
+import LiveRadioCard from "@/src/components/home/LiveRadioCard";
+import LiveTvCard from "@/src/components/home/LiveTvCard";
+import HighlightsColumn from "@/src/components/home/HighlightsColumn";
+import CtaBanners from "@/src/components/home/CtaBanners";
+import ProductCarousel from "@/src/components/home/ProductCarousel";
+import TrustBar from "@/src/components/home/TrustBar";
+
+// All categories the homepage uses — kept in one place so the prefetch
+// effect stays in sync with what the carousels and highlights display.
+const HOMEPAGE_CATEGORIES = [
+  "food",
+  "apartments",
+  "marketplace",
+  "fashion",
+  "pharmacy",
+  "services",
+] as const;
+
+export default function HomePage() {
+  const { featured, featuredLoading, loadFeatured, userCountry } =
+    useProducts();
+
+  // Prefetch every category in parallel — country-scoped.
+  // The Redux slice deduplicates per-country fetches, so this is safe to call
+  // even when the country changes (e.g. admin switching markets).
+  useEffect(() => {
+    if (!userCountry) return;
+    HOMEPAGE_CATEGORIES.forEach((cat) => loadFeatured(userCountry, cat));
+  }, [userCountry, loadFeatured]);
+
+  const restaurants = featured?.food ?? [];
+  const apartments = featured?.apartments ?? [];
+  const deals = featured?.marketplace ?? [];
+
   return (
-    <div className="w-full flex flex-col flex-1 items-center justify-center max-relative">
-      {/* Hero renders the fixed background + a spacer div */}
-      <Hero />
-      {/* <HeroSection /> */}
+    <main className="bg-gray-50">
+      {/* Slim breaking-news strip — directly under header */}
+      <NewsTicker />
 
-      {/* Scrollable content — sits on top of the fixed hero via z-10 + white bg */}
-      <div className="max-sm:relative w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
-        <div className="w-full flex flex-col px-4 md:px-16 lg:px-14 xl:px-12 mt-2">
-           <Radio />
-          <FeaturedProducts category="apartments" />
-          <FeaturedProducts category="food" />
-          <div className="items-center justify-center w-full gap-8 px-3 lg:px-12 mt-10 mb-5">
-            <div className="w-full">
-              <h1 className="lg:text-4xl font-bold py-12 capitalize text-center">
-                Promote your Business & products <br /> Live On smileBaba TV
-              </h1>
-              <Video />
-            </div>
+      {/* ── 4-column hero row ── */}
+      <section className="max-w-[1340px] mx-auto px-3 sm:px-4 py-4">
+        <div className="grid grid-cols-12 gap-3">
+          {/* Col 1 — Shop By Category (left sidebar) */}
+          <div className="col-span-12 lg:col-span-3">
+            <CategorySidebar title="SHOP BY CATEGORY" viewAllHref="/ads" />
           </div>
 
-          <FeaturedProducts category="marketplace" />
-          <FeaturedProducts category="fashion" />
-          <FeaturedProducts category="pharmacy" />
-        </div>
-        <AppDownload />
-      </div>
-    </div>
-  );
-};
+          {/* Col 2 — Live Radio (dark) */}
+          <div className="col-span-12 md:col-span-6 lg:col-span-3">
+            <LiveRadioCard />
+          </div>
 
-export default HomePage;
+          {/* Col 3 — Live TV (dark) */}
+          <div className="col-span-12 md:col-span-6 lg:col-span-3">
+            <LiveTvCard />
+          </div>
+
+          {/* Col 4 — Food Highlights + News Highlights (rotating) */}
+          <div className="col-span-12 lg:col-span-3">
+            <HighlightsColumn />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4 CTA banner cards ── */}
+      <CtaBanners />
+
+      {/* ── Carousels — country-scoped ── */}
+      <ProductCarousel
+        title="TRENDING RESTAURANTS"
+        items={restaurants}
+        loading={featuredLoading}
+        viewAllHref="/ads?category=food"
+        emptyHint="No restaurants in your area yet — be the first to list one!"
+        showBestSellerBadge
+      />
+
+      <ProductCarousel
+        title="POPULAR APARTMENTS"
+        items={apartments}
+        loading={featuredLoading}
+        viewAllHref="/ads?category=apartments"
+        emptyHint="No properties listed in your area yet."
+        showBestSellerBadge
+      />
+
+      <ProductCarousel
+        title="HOT DEALS NEAR YOU"
+        items={deals}
+        loading={featuredLoading}
+        viewAllHref="/ads"
+        emptyHint="No deals available yet — check back soon."
+        showDiscount
+      />
+
+      {/* ── Trust bar ── */}
+      <TrustBar />
+    </main>
+  );
+}

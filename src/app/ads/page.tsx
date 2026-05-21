@@ -1,10 +1,14 @@
 "use client";
 
-// app/ads/page.tsx — thin orchestrator, all UI is in components/ads/
+// src/app/ads/page.tsx — Marketplace listing page
+// Handles URL → state sync for category, search, sort, etc.
+
 import { useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAds } from "@/src/hooks/useAds";
+import { useAppSelector } from "@/src/app/redux";
 import { AdCondition, AdCurrency } from "@/src/types/ad.types";
+import { CATEGORIES } from "./(components)/ad.constants";
 import AdsHero from "./(components)/AdsHero";
 import CategoryTabs from "./(components)/CategoryTabs";
 import FiltersPanel from "./(components)/FiltersPanel";
@@ -12,11 +16,21 @@ import BestsellersRow from "./(components)/BestSellingAd";
 import AdGrid from "./(components)/AdGrid";
 import AdsPagination from "./(components)/AdsPagination";
 import PostAdCTA from "./(components)/PostAdCTA";
-import { SORT_OPTIONS } from "./(components)/ad.constants";
-import { useAppSelector } from "../redux";
+
+
+// ── Valid category IDs from the constants file ────────────────────────────
+const VALID_CATEGORIES = CATEGORIES.map((c) => c.id) as readonly string[];
+
+function isValidCategory(
+  c: string | null,
+): c is (typeof VALID_CATEGORIES)[number] {
+  return !!c && (VALID_CATEGORIES as readonly string[]).includes(c);
+}
 
 export default function AdsLandingPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const {
     ads,
@@ -31,112 +45,153 @@ export default function AdsLandingPage() {
 
   const hasCheckedAuth = useAppSelector((s) => s.auth.hasCheckedAuth);
 
-  // Local filter state — NOT sourced from Redux to avoid stale filter bleed
-  const [search, setSearch] = useState(searchParams.get("search") ?? "");
-  const [category, setCategory] = useState(
-    searchParams.get("category") ?? "all",
-  );
-  const [condition, setCondition] = useState("all");
-  const [sort, setSort] = useState("newest");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  // ── Source of truth: URL params, not local state ────────────────────────
+  // Read directly from URL so back/forward buttons work and direct links
+  // to /ads?category=apartments load the correct category.
+  const rawCategory = searchParams.get("category");
+  const urlCategory = isValidCategory(rawCategory) ? rawCategory : "all";
+  const urlSearch = searchParams.get("search") ?? "";
+  const urlSort = searchParams.get("sort") ?? "newest";
+  const urlMin = searchParams.get("minPrice") ?? "";
+  const urlMax = searchParams.get("maxPrice") ?? "";
+  const urlCond = searchParams.get("condition") ?? "all";
+  const urlPage = Number(searchParams.get("page") ?? 1) || 1;
+
+  // Local state mirrors URL — controlled by URL changes via effect below
+  const [search, setSearch] = useState(urlSearch);
+  const [condition, setCondition] = useState(urlCond);
+  const [minPrice, setMinPrice] = useState(urlMin);
+  const [maxPrice, setMaxPrice] = useState(urlMax);
   const [showFilters, setShowFilters] = useState(false);
 
   const sym = userCurrency === "NGN" ? "₦" : "₵";
 
-  // Build a clean params object from local state — never spreads stale Redux filters
-  const buildParams = useCallback(
-    (overrides: Record<string, unknown> = {}) => ({
+  // ── URL → fetch ─────────────────────────────────────────────────────────
+  // ONE useEffect that fires whenever URL params or country resolves.
+  // This is the SINGLE source of fetch — no other effect should call loadAds.
+  useEffect(() => {
+    if (!userCountry) return;
+
+    loadAds({
       country: userCountry as any,
       currency: userCurrency as AdCurrency,
-      sort: sort as any,
-      page: 1,
+      sort: urlSort as any,
+      page: urlPage,
       limit: 24,
-      ...(search.trim() && { search: search.trim() }),
-      ...(category !== "all" && { category }),
-      ...(condition !== "all" && { condition: condition as AdCondition }),
-      ...(minPrice && { minPrice: Number(minPrice) }),
-      ...(maxPrice && { maxPrice: Number(maxPrice) }),
-      ...overrides,
-    }),
-    [
-      userCountry,
-      userCurrency,
-      sort,
-      search,
-      category,
-      condition,
-      minPrice,
-      maxPrice,
-    ],
+      ...(urlSearch.trim() && { search: urlSearch.trim() }),
+      ...(urlCategory !== "all" && { category: urlCategory }),
+      ...(urlCond !== "all" && { condition: urlCond as AdCondition }),
+      ...(urlMin && { minPrice: Number(urlMin) }),
+      ...(urlMax && { maxPrice: Number(urlMax) }),
+    });
+
+    // Sync local form state with URL on URL change
+    setSearch(urlSearch);
+    setCondition(urlCond);
+    setMinPrice(urlMin);
+    setMaxPrice(urlMax);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    hasCheckedAuth,
+    userCountry,
+    urlCategory,
+    urlSearch,
+    urlSort,
+    urlMin,
+    urlMax,
+    urlCond,
+    urlPage,
+  ]);
+
+  // ── Helper: update URL params (triggers the effect above to re-fetch) ──
+  const updateUrl = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (
+          value === null ||
+          value === "" ||
+          value === "all" ||
+          value === undefined
+        ) {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [searchParams, router, pathname],
   );
 
-  // Fetch whenever country resolves — fires for guests (Ghana fallback) AND
-  // logged-in users (user.country). No auth gate needed.
-  useEffect(() => {
-    loadAds({
-      country: userCountry as any,
-      currency: userCurrency as AdCurrency,
-      sort: "newest",
-      page: 1,
-      limit: 24,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasCheckedAuth, userCountry]);
-
-  const handleSearch = useCallback(() => {
-    loadAds(buildParams());
-  }, [buildParams, loadAds]);
-
-  // Category change resets all other filters
+  // ── Handlers ────────────────────────────────────────────────────────────
   const handleCategoryChange = (cat: string) => {
-    setCategory(cat);
-    setCondition("all");
-    setMinPrice("");
-    setMaxPrice("");
-    setSearch("");
-    loadAds({
-      country: userCountry as any,
-      currency: userCurrency as AdCurrency,
-      category: cat === "all" ? undefined : cat,
-      sort: sort as any,
-      page: 1,
-      limit: 24,
+    // Changing category clears search and pagination but keeps sort
+    updateUrl({
+      category: cat === "all" ? null : cat,
+      search: null,
+      condition: null,
+      minPrice: null,
+      maxPrice: null,
+      page: null,
     });
   };
 
   const handleSortChange = (s: string) => {
-    setSort(s);
-    loadAds(buildParams({ sort: s, page: 1 }));
+    updateUrl({ sort: s === "newest" ? null : s, page: null });
+  };
+
+  const handleSearch = () => {
+    updateUrl({ search: search.trim() || null, page: null });
+  };
+
+  const handleApplyFilters = () => {
+    updateUrl({
+      condition: condition === "all" ? null : condition,
+      minPrice: minPrice || null,
+      maxPrice: maxPrice || null,
+      page: null,
+    });
+    setShowFilters(false);
   };
 
   const handleClearFilters = () => {
     setCondition("all");
     setMinPrice("");
     setMaxPrice("");
-    setSort("newest");
     setSearch("");
-    loadAds({
-      country: userCountry as any,
-      currency: userCurrency as AdCurrency,
-      sort: "newest",
-      page: 1,
-      limit: 24,
+    updateUrl({
+      search: null,
+      condition: null,
+      minPrice: null,
+      maxPrice: null,
+      sort: null,
+      page: null,
     });
   };
 
   const handlePage = (page: number) => {
     goToPage(page);
-    loadAds(buildParams({ page }));
+    updateUrl({ page: page === 1 ? null : String(page) });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Boosted ads for bestsellers, non-boosted for main grid
+  // Bestsellers = boosted ads, main grid = non-boosted
   const boostedAds = ads.filter((a) => a.boost?.isBoosted);
   const mainAds = ads.filter((a) => !a.boost?.isBoosted);
 
+  const activeCount = [
+    urlCategory !== "all",
+    urlCond !== "all",
+    !!urlMin,
+    !!urlMax,
+    !!urlSearch.trim(),
+  ].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="bg-gray-50 min-h-screen pb-12">
+      {/* ── Hero with search bar ── */}
       <AdsHero
         country={userCountry}
         search={search}
@@ -144,85 +199,133 @@ export default function AdsLandingPage() {
         onSubmit={handleSearch}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {/* Country filter indicator — always shown (defaults to Ghana for guests) */}
-        <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
-          <span className="text-base">
-            {userCountry === "Nigeria" ? "🇳🇬" : "🇬🇭"}
-          </span>
-          <span>
-            Showing ads in{" "}
-            <strong className="text-gray-700">{userCountry || "Ghana"}</strong>
-          </span>
-          <span className="text-gray-300">·</span>
-          <span className="text-gray-400">
-            Prices in {userCurrency === "NGN" ? "₦ NGN" : "₵ GHS"}
-          </span>
-        </div>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+        {/* ── Active filter summary ── */}
+        {activeCount > 0 && (
+          <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+            <span className="font-medium">
+              {meta?.total ?? 0} result{(meta?.total ?? 0) !== 1 ? "s" : ""}
+            </span>
+            <span className="text-gray-300">·</span>
+            <span>
+              {urlCategory !== "all" && (
+                <span
+                  className="inline-block bg-yellow-100 text-yellow-700 px-2 py-0.5
+                  rounded-full text-[10px] font-bold mr-1.5"
+                >
+                  {CATEGORIES.find((c) => c.id === urlCategory)?.label ??
+                    urlCategory}
+                </span>
+              )}
+              {urlSearch && (
+                <span
+                  className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5
+                  rounded-full text-[10px] font-bold mr-1.5"
+                >
+                  "{urlSearch}"
+                </span>
+              )}
+            </span>
+            <button
+              onClick={handleClearFilters}
+              className="ml-auto text-xs text-yellow-600 hover:underline font-semibold"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
+        {/* ── Category tabs ── */}
         <CategoryTabs
-          active={category}
+          active={urlCategory}
           onChange={handleCategoryChange}
-          showFilterBtn
+          showFilterBtn={true}
           filtersOpen={showFilters}
           onFilterToggle={() => setShowFilters((v) => !v)}
         />
 
-        {showFilters && (
-          <FiltersPanel
-            sym={sym}
-            condition={condition}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            sort={sort}
-            onCondition={setCondition}
-            onMinPrice={setMinPrice}
-            onMaxPrice={setMaxPrice}
-            onSort={handleSortChange}
-            onApply={handleSearch}
-            onClear={handleClearFilters}
-          />
+        {/* ── Filters + sort row ── */}
+        <FiltersPanel
+          sym={sym}
+          condition={condition}
+          onCondition={setCondition}
+          minPrice={minPrice}
+          onMinPrice={setMinPrice}
+          maxPrice={maxPrice}
+          onMaxPrice={setMaxPrice}
+          sort={urlSort}
+          onSort={handleSortChange}
+          onApply={handleApplyFilters}
+          onClear={handleClearFilters}
+        />
+
+        {/* ── Boosted row ── */}
+        {boostedAds.length > 0 && !urlSearch && (
+          <BestsellersRow ads={boostedAds.slice(0, 6)} />
         )}
 
-        {/* Boosted ads from the current page — shown separately at the top */}
-        {!feedLoading && boostedAds.length > 0 && (
-          <BestsellersRow ads={boostedAds} />
-        )}
-
-        {/* Results header */}
+        {/* ── Main grid header ── */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-gray-500">
-            {feedLoading
-              ? "Loading…"
-              : `${meta?.total?.toLocaleString() ?? 0} ads found`}
-          </p>
-          <select
-            value={sort}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="text-xs border border-gray-200 rounded-xl px-3 py-1.5
-              text-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white"
-          >
-            {SORT_OPTIONS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+          <h2 className="text-sm font-black text-gray-800">
+            {urlCategory === "all"
+              ? urlSearch
+                ? `Results for "${urlSearch}"`
+                : "All listings"
+              : (CATEGORIES.find((c) => c.id === urlCategory)?.label ??
+                urlCategory)}
+            {meta?.total !== undefined && (
+              <span className="text-gray-400 font-normal ml-2 text-xs">
+                ({meta.total.toLocaleString()})
+              </span>
+            )}
+          </h2>
         </div>
 
+        {/* ── Error state ── */}
         {feedError && !feedLoading && (
-          <div
-            className="bg-red-50 border border-red-200 rounded-2xl p-5
-            text-red-600 text-sm text-center mb-6"
-          >
-            {feedError}
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-5 text-center mb-4">
+            <p className="text-red-600 text-sm font-semibold">{feedError}</p>
+            <button
+              onClick={() =>
+                loadAds({
+                  country: userCountry as any,
+                  currency: userCurrency as AdCurrency,
+                  sort: urlSort as any,
+                  page: urlPage,
+                  limit: 24,
+                  ...(urlCategory !== "all" && { category: urlCategory }),
+                })
+              }
+              className="mt-2 text-xs text-red-600 underline"
+            >
+              Retry
+            </button>
           </div>
         )}
 
-        <AdGrid ads={mainAds} loading={feedLoading} count={12} />
+        {/* ── Main grid ── */}
+        <AdGrid
+          ads={mainAds}
+          loading={feedLoading}
+          count={12}
+          emptyMessage={
+            urlCategory !== "all"
+              ? `No ${(CATEGORIES.find((c) => c.id === urlCategory)?.label ?? urlCategory).toLowerCase()} listings yet`
+              : urlSearch
+                ? `No results for "${urlSearch}"`
+                : undefined
+          }
+        />
 
-        {meta && <AdsPagination meta={meta} onPage={handlePage} />}
+        {/* ── Pagination ── */}
+        {meta && meta.totalPages > 1 && (
+          <div className="mt-6">
+            <AdsPagination meta={meta} onPage={handlePage} />
+          </div>
+        )}
 
-        <PostAdCTA country={userCountry} />
+        {/* ── Post ad CTA ── */}
+        <PostAdCTA />
       </div>
     </div>
   );
