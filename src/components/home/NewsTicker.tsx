@@ -2,10 +2,8 @@
 
 // src/components/home/NewsTicker.tsx
 // Slim breaking-news strip directly under the site header.
-// One-line scrolling marquee with tiny thumbnail circles.
 
 import Link from "next/link";
-import Image from "next/image";
 import { LATEST_NEWS } from "./home.constants";
 
 export default function NewsTicker() {
@@ -15,7 +13,6 @@ export default function NewsTicker() {
         className="max-w-[1340px] mx-auto px-3 sm:px-4 py-1.5
         flex items-center gap-3 min-h-[34px]"
       >
-        {/* Yellow badge */}
         <span
           className="bg-yellow-400 text-black text-[9px] font-black
           px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
@@ -23,7 +20,6 @@ export default function NewsTicker() {
           Latest
         </span>
 
-        {/* Marquee */}
         <div className="flex-1 overflow-hidden">
           <div className="flex items-center gap-5 whitespace-nowrap animate-newsmarquee">
             {[...LATEST_NEWS, ...LATEST_NEWS].map((item, i) => (
@@ -32,18 +28,12 @@ export default function NewsTicker() {
                 href={`/news/${item.slug}`}
                 className="flex items-center gap-1.5 group flex-shrink-0"
               >
-                <div
-                  className="relative w-5 h-5 rounded-full overflow-hidden
-                  bg-gray-200 flex-shrink-0"
+                <span
+                  className={`w-5 h-5 rounded-full ${item.bg}
+                  flex items-center justify-center text-[11px]`}
                 >
-                  <Image
-                    src={item.thumbnail}
-                    alt=""
-                    fill
-                    sizes="20px"
-                    className="object-cover"
-                  />
-                </div>
+                  {item.emoji}
+                </span>
                 <span
                   className="text-[11px] text-gray-700 group-hover:text-yellow-600
                   transition font-medium"

@@ -12,7 +12,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import SafeImage from "@/src/components/SafeImage";
 import { ShoppingBag, ArrowRight, Clock } from "lucide-react";
 import { useProducts } from "@/src/hooks/useProducts";
@@ -177,14 +176,11 @@ function NewsHighlights() {
               flex items-center gap-2.5 hover:shadow-md hover:border-yellow-200
               transition group animate-fadeslide"
           >
-            <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
-              <Image
-                src={n.thumbnail}
-                alt={n.title}
-                fill
-                sizes="56px"
-                className="object-cover group-hover:scale-105 transition"
-              />
+            <div
+              className={`w-14 h-14 ${n.bg} rounded-lg flex items-center
+              justify-center flex-shrink-0 text-2xl group-hover:scale-105 transition`}
+            >
+              {n.emoji}
             </div>
             <div className="flex-1 min-w-0">
               <span

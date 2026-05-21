@@ -1,13 +1,9 @@
 "use client";
 
-// src/app/news/page.tsx — news index
-//
-// Lists all news articles with thumbnails. Filterable by category.
-// Each article links to /news/[slug]/page.tsx for the full read.
+// src/app/news/page.tsx — news index page
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Newspaper, Filter, Clock, ChevronLeft } from "lucide-react";
 import { LATEST_NEWS } from "@/src/components/home/home.constants";
 
@@ -31,7 +27,7 @@ export default function NewsPage() {
 
   return (
     <main className="bg-gray-50 min-h-screen">
-      {/* Hero header */}
+      {/* Yellow hero */}
       <div className="bg-gradient-to-r from-yellow-400 to-amber-500">
         <div className="max-w-[1340px] mx-auto px-3 sm:px-4 py-8">
           <Link
@@ -95,36 +91,40 @@ export default function NewsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Featured article — first item, larger */}
+            {/* Featured article — first item, large emoji hero */}
             {filtered[0] && (
               <Link
                 href={`/news/${filtered[0].slug}`}
-                className="sm:col-span-2 lg:col-span-3 relative aspect-[2.5/1]
-                  rounded-2xl overflow-hidden group shadow-sm hover:shadow-xl transition"
+                className={`sm:col-span-2 lg:col-span-3 relative ${filtered[0].bg}
+                  rounded-2xl overflow-hidden group shadow-sm hover:shadow-xl
+                  transition aspect-[2.5/1]`}
               >
-                <Image
-                  src={filtered[0].thumbnail}
-                  alt={filtered[0].title}
-                  fill
-                  sizes="100vw"
-                  className="object-cover group-hover:scale-105 transition duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div
+                  className="absolute right-6 top-1/2 -translate-y-1/2 text-[180px]
+                  opacity-30 group-hover:opacity-50 transition"
+                >
+                  {filtered[0].emoji}
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
                   <span
-                    className="inline-block bg-yellow-400 text-black text-[10px]
+                    className="inline-block bg-black text-yellow-400 text-[10px]
                     font-black px-2 py-1 rounded mb-2"
                   >
                     {filtered[0].category}
                   </span>
                   <h2
-                    className="text-xl sm:text-2xl font-black text-white leading-tight
+                    className="text-xl sm:text-2xl font-black text-gray-900 leading-tight
                     max-w-2xl mb-1"
                   >
                     {filtered[0].title}
                   </h2>
-                  <p className="text-xs text-white/70 flex items-center gap-1">
-                    <Clock size={11} />{" "}
+                  {filtered[0].excerpt && (
+                    <p className="text-sm text-gray-700 max-w-xl line-clamp-2 mb-2">
+                      {filtered[0].excerpt}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-600 flex items-center gap-1">
+                    <Clock size={11} />
                     {new Date(filtered[0].date).toLocaleDateString("en-GH", {
                       dateStyle: "long",
                     })}
@@ -133,7 +133,7 @@ export default function NewsPage() {
               </Link>
             )}
 
-            {/* Remaining articles — grid cards */}
+            {/* Remaining articles */}
             {filtered.slice(1).map((article) => (
               <Link
                 key={article.slug}
@@ -141,16 +141,15 @@ export default function NewsPage() {
                 className="bg-white rounded-2xl border border-gray-100 overflow-hidden
                   hover:shadow-lg hover:-translate-y-0.5 transition group"
               >
-                <div className="relative aspect-[16/9] overflow-hidden bg-gray-100">
-                  <Image
-                    src={article.thumbnail}
-                    alt={article.title}
-                    fill
-                    sizes="(max-width:768px) 100vw, 33vw"
-                    className="object-cover group-hover:scale-105 transition duration-500"
-                  />
+                <div
+                  className={`relative aspect-[16/9] ${article.bg}
+                  flex items-center justify-center overflow-hidden`}
+                >
+                  <span className="text-7xl group-hover:scale-110 transition">
+                    {article.emoji}
+                  </span>
                   <span
-                    className="absolute top-2 left-2 bg-yellow-400 text-black
+                    className="absolute top-2 left-2 bg-black text-yellow-400
                     text-[10px] font-black px-2 py-0.5 rounded"
                   >
                     {article.category}
@@ -163,6 +162,11 @@ export default function NewsPage() {
                   >
                     {article.title}
                   </h3>
+                  {article.excerpt && (
+                    <p className="text-[11px] text-gray-500 line-clamp-2 mb-2">
+                      {article.excerpt}
+                    </p>
+                  )}
                   <p className="text-[11px] text-gray-400 flex items-center gap-1">
                     <Clock size={10} />
                     {new Date(article.date).toLocaleDateString("en-GH", {

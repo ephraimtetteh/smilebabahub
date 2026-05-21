@@ -1,48 +1,42 @@
 "use client";
 
 // src/components/home/CtaBanners.tsx
-// 4-column CTA banner row below the hero.
+// 4-column CTA banner row below the hero. Uses emojis matching the design.
 
 import Link from "next/link";
-import {
-  Megaphone,
-  BadgeDollarSign,
-  Home as HomeIcon,
-  Sparkles,
-} from "lucide-react";
 
 const BANNERS = [
   {
     title: "BOOST YOUR SALES",
-    desc: "Reach more customers across Ghana & Nigeria.",
+    desc: "Reach more customers across Africa.",
     color: "from-emerald-700 to-emerald-900",
-    icon: Megaphone,
+    emoji: "📢",
     href: "/sell?boost=1",
-    cta: "Boost an ad",
+    cta: "Advertise Now",
   },
   {
     title: "PLACE ADS HERE",
     desc: "Promote your business to millions of active users.",
     color: "from-purple-700 to-purple-900",
-    icon: BadgeDollarSign,
+    emoji: "📺",
     href: "/sell",
-    cta: "Post an ad",
+    cta: "Advertise Now",
   },
   {
     title: "LIST YOUR PROPERTY",
-    desc: "Get quality tenants and buyers faster.",
+    desc: "Get quality tenants faster.",
     color: "from-slate-700 to-slate-900",
-    icon: HomeIcon,
+    emoji: "🏠",
     href: "/sell?category=apartments",
-    cta: "List property",
+    cta: "Advertise Now",
   },
   {
     title: "GROW YOUR BRAND",
-    desc: "Get your video promo on Radio, TV & socials — one plan.",
+    desc: "Stand out. Get noticed.",
     color: "from-orange-600 to-red-700",
-    icon: Sparkles,
+    emoji: "🚀",
     href: "/promote",
-    cta: "Promote now",
+    cta: "Advertise Now",
   },
 ];
 
@@ -59,7 +53,7 @@ export default function CtaBanners() {
               hover:-translate-y-0.5 transition-all group min-h-[160px]
               flex flex-col justify-between`}
           >
-            <div>
+            <div className="relative z-10">
               <p className="text-sm font-black mb-1.5 tracking-wide">
                 {b.title}
               </p>
@@ -67,19 +61,23 @@ export default function CtaBanners() {
                 {b.desc}
               </p>
             </div>
-            <div className="flex items-end justify-between">
+            <div className="relative z-10">
               <span
-                className="bg-yellow-400 text-black text-[10px] font-black
-                px-3 py-1.5 rounded group-hover:bg-yellow-300 transition"
+                className="inline-block bg-yellow-400 text-black text-[10px]
+                font-black px-3 py-1.5 rounded group-hover:bg-yellow-300 transition"
               >
                 {b.cta} →
               </span>
             </div>
-            <b.icon
-              size={56}
-              className="absolute right-2 top-1/2 -translate-y-1/2
-              text-yellow-300 opacity-40 group-hover:opacity-70 group-hover:scale-110 transition"
-            />
+
+            {/* Decorative emoji */}
+            <span
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[80px]
+              opacity-40 group-hover:opacity-70 group-hover:scale-110
+              group-hover:rotate-6 transition-all duration-300"
+            >
+              {b.emoji}
+            </span>
           </Link>
         ))}
       </div>

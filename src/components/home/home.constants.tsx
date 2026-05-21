@@ -95,10 +95,13 @@ export const CATEGORIES_SIDEBAR: CategoryDef[] = [
 ];
 
 // ── News ──────────────────────────────────────────────────────────────────
+// Each item has an emoji + colour tile — no image files required.
+// When you have real article images later, swap `emoji` for an `image` URL.
 export interface NewsItem {
   slug: string;
   title: string;
-  thumbnail: string;
+  emoji: string;
+  bg: string; // tailwind background class
   category: string;
   date: string;
   excerpt?: string;
@@ -108,7 +111,8 @@ export const LATEST_NEWS: NewsItem[] = [
   {
     slug: "ghana-cedi-holds-steady",
     title: "Ghana Cedi holds steady against major currencies",
-    thumbnail: "/news/cedi.jpg",
+    emoji: "💵",
+    bg: "bg-green-100",
     category: "Economy",
     date: "2026-05-12",
     excerpt:
@@ -117,7 +121,8 @@ export const LATEST_NEWS: NewsItem[] = [
   {
     slug: "africa-youth-jobs-2026",
     title: "New jobs program launched for youth in Africa",
-    thumbnail: "/news/jobs.jpg",
+    emoji: "💼",
+    bg: "bg-blue-100",
     category: "Jobs",
     date: "2026-05-11",
     excerpt:
@@ -126,7 +131,8 @@ export const LATEST_NEWS: NewsItem[] = [
   {
     slug: "afcfta-trade-boost-2026",
     title: "AfCFTA boosts intra-African trade by 15%",
-    thumbnail: "/news/afcfta.jpg",
+    emoji: "🌍",
+    bg: "bg-purple-100",
     category: "Trade",
     date: "2026-05-10",
     excerpt:
@@ -135,7 +141,8 @@ export const LATEST_NEWS: NewsItem[] = [
   {
     slug: "black-stars-afcon-2025",
     title: "Black Stars qualify for AFCON 2025",
-    thumbnail: "/news/black-stars.jpg",
+    emoji: "⚽",
+    bg: "bg-red-100",
     category: "Sports",
     date: "2026-05-09",
     excerpt:
@@ -144,7 +151,8 @@ export const LATEST_NEWS: NewsItem[] = [
   {
     slug: "naira-rebounds-may",
     title: "Naira rebounds against dollar after CBN intervention",
-    thumbnail: "/news/naira.jpg",
+    emoji: "💸",
+    bg: "bg-emerald-100",
     category: "Economy",
     date: "2026-05-08",
     excerpt:
