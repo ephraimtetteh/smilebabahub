@@ -78,33 +78,37 @@ export default function HomePage() {
       {/* ── 4 CTA banner cards ── */}
       <CtaBanners />
 
-      {/* ── Carousels — country-scoped ── */}
-      <ProductCarousel
-        title="TRENDING RESTAURANTS"
-        items={restaurants}
-        loading={featuredLoading}
-        viewAllHref="/ads?category=food"
-        emptyHint="No restaurants in your area yet — be the first to list one!"
-        showBestSellerBadge
-      />
+      {/* ── 3-column carousel row — all carousels side by side ── */}
+      <section className="max-w-[1340px] mx-auto px-3 sm:px-4 py-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <ProductCarousel
+            title="TRENDING RESTAURANTS"
+            items={restaurants}
+            loading={featuredLoading}
+            viewAllHref="/ads?category=food"
+            emptyHint="No restaurants in your area yet."
+            showBestSellerBadge
+          />
 
-      <ProductCarousel
-        title="POPULAR APARTMENTS"
-        items={apartments}
-        loading={featuredLoading}
-        viewAllHref="/ads?category=apartments"
-        emptyHint="No properties listed in your area yet."
-        showBestSellerBadge
-      />
+          <ProductCarousel
+            title="POPULAR APARTMENTS"
+            items={apartments}
+            loading={featuredLoading}
+            viewAllHref="/ads?category=apartments"
+            emptyHint="No properties listed yet."
+            showBestSellerBadge
+          />
 
-      <ProductCarousel
-        title="HOT DEALS NEAR YOU"
-        items={deals}
-        loading={featuredLoading}
-        viewAllHref="/ads"
-        emptyHint="No deals available yet — check back soon."
-        showDiscount
-      />
+          <ProductCarousel
+            title="HOT DEALS NEAR YOU"
+            items={deals}
+            loading={featuredLoading}
+            viewAllHref="/ads"
+            emptyHint="No deals available yet."
+            showDiscount
+          />
+        </div>
+      </section>
 
       {/* ── Trust bar ── */}
       <TrustBar />
