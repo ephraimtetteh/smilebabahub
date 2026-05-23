@@ -68,11 +68,11 @@ export default function LiveTvCard() {
         {/* Logo strip */}
         <div className="relative z-10 px-4 pt-4 pb-2 text-center">
           <div className="flex items-center justify-center gap-1">
-            <span className="text-xl font-black text-yellow-400">Smile</span>
-            <span className="text-xl">😊</span>
+            <span className="text-xl font-black text-yellow-400">SmileBaba</span>
+            {/* <span className="text-xl">😊</span> */}
           </div>
           <p className="text-base font-bold text-white -mt-0.5 tracking-wide">
-            TIME AFRICA TV
+             TV
           </p>
         </div>
 

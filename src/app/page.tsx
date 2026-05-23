@@ -2,13 +2,29 @@
 
 // src/app/page.tsx  (or src/components/HomePage.tsx)
 //
-// Marketplace homepage with country-scoped live data.
-// All categories are pre-fetched for the carousels and highlight blocks.
-// No footer — the project already has one in the global layout.
+// Marketplace homepage — responsive.
+//   • Mobile (< lg): vertical hierarchy matching the design mockup
+//     1. News cards (horizontal scroll, photos)
+//     2. Shortcuts (5x2 emoji grid)
+//     3. Live & Featured (Radio + TV stacked or side-by-side)
+//     4. 4-column CTA banners
+//     5. Trending Restaurants carousel
+//     6. Popular Apartments carousel
+//     7. Trust bar
+//
+//   • Desktop (lg+): 4-column hero row (categories | radio | tv | highlights)
+//     unchanged from the current desktop design.
+//
+// All sections are country-scoped via useProducts → loadFeatured(country, cat).
 
 import { useEffect } from "react";
 import { useProducts } from "@/src/hooks/useProducts";
 
+// Mobile-only sections
+import NewsCards from "@/src/components/home/NewsCards";
+import MobileShortcuts from "@/src/components/home/MobileShortcuts";
+
+// Shared (different layouts inside via Tailwind responsive utils)
 import NewsTicker from "@/src/components/home/NewsTicker";
 import CategorySidebar from "@/src/components/home/CategorySidebar";
 import LiveRadioCard from "@/src/components/home/LiveRadioCard";
@@ -17,9 +33,8 @@ import HighlightsColumn from "@/src/components/home/HighlightsColumn";
 import CtaBanners from "@/src/components/home/CtaBanners";
 import ProductCarousel from "@/src/components/home/ProductCarousel";
 import TrustBar from "@/src/components/home/TrustBar";
+import MobileBottomNav from "@/src/components/home/MobileBottomNav";
 
-// All categories the homepage uses — kept in one place so the prefetch
-// effect stays in sync with what the carousels and highlights display.
 const HOMEPAGE_CATEGORIES = [
   "food",
   "apartments",
@@ -33,9 +48,7 @@ export default function HomePage() {
   const { featured, featuredLoading, loadFeatured, userCountry } =
     useProducts();
 
-  // Prefetch every category in parallel — country-scoped.
-  // The Redux slice deduplicates per-country fetches, so this is safe to call
-  // even when the country changes (e.g. admin switching markets).
+  // Prefetch every category in parallel — country-scoped
   useEffect(() => {
     if (!userCountry) return;
     HOMEPAGE_CATEGORIES.forEach((cat) => loadFeatured(userCountry, cat));
@@ -46,39 +59,54 @@ export default function HomePage() {
   const deals = featured?.marketplace ?? [];
 
   return (
-    <main className="bg-gray-50">
-      {/* Slim breaking-news strip — directly under header */}
-      <NewsTicker />
+    <main className="bg-gray-50 pb-20 lg:pb-0">
+      {/* ─── DESKTOP ONLY: slim news ticker under header ─── */}
+      <div className="hidden lg:block">
+        <NewsTicker />
+      </div>
 
-      {/* ── 4-column hero row ── */}
-      <section className="max-w-[1340px] mx-auto px-3 sm:px-4 py-4">
-        <div className="grid grid-cols-12 gap-3">
-          {/* Col 1 — Shop By Category (left sidebar) */}
-          <div className="col-span-12 lg:col-span-3">
+      {/* ─── MOBILE ONLY: horizontal news cards ─── */}
+      <NewsCards />
+
+      {/* ─── MOBILE ONLY: shortcuts emoji grid ─── */}
+      <MobileShortcuts />
+
+      {/* ─── MOBILE: Live & Featured section header ─── */}
+      <div className="lg:hidden px-3 pt-1 pb-2">
+        <h2 className="text-xs font-black text-gray-900 tracking-wider">
+          LIVE & FEATURED
+        </h2>
+      </div>
+
+      {/* ─── HERO ROW: Desktop = 4-col grid, Mobile = vertical stack ─── */}
+      <section className="max-w-[1340px] mx-auto px-3 sm:px-4 lg:py-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+          {/* Desktop sidebar (hidden on mobile, MobileShortcuts above replaces it) */}
+          <div className="hidden lg:block lg:col-span-3">
             <CategorySidebar title="SHOP BY CATEGORY" viewAllHref="/ads" />
           </div>
 
-          {/* Col 2 — Live Radio (dark) */}
-          <div className="col-span-12 md:col-span-6 lg:col-span-3">
+          {/* Live Radio — full width on mobile, half on sm, 1/4 on lg */}
+          <div className="col-span-1 sm:col-span-1 lg:col-span-3">
             <LiveRadioCard />
           </div>
 
-          {/* Col 3 — Live TV (dark) */}
-          <div className="col-span-12 md:col-span-6 lg:col-span-3">
+          {/* Live TV — full width on mobile, half on sm, 1/4 on lg */}
+          <div className="col-span-1 sm:col-span-1 lg:col-span-3">
             <LiveTvCard />
           </div>
 
-          {/* Col 4 — Food Highlights + News Highlights (rotating) */}
-          <div className="col-span-12 lg:col-span-3">
+          {/* Highlights — hidden on mobile (replaced by carousels below), shown on lg+ */}
+          <div className="hidden lg:block lg:col-span-3">
             <HighlightsColumn />
           </div>
         </div>
       </section>
 
-      {/* ── 4 CTA banner cards ── */}
+      {/* ─── 4 CTA banner cards ─── */}
       <CtaBanners />
 
-      {/* ── 3-column carousel row — all carousels side by side ── */}
+      {/* ─── 3 carousels — side by side on desktop, stacked on mobile ─── */}
       <section className="max-w-[1340px] mx-auto px-3 sm:px-4 py-3">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           <ProductCarousel
@@ -110,8 +138,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Trust bar ── */}
+      {/* ─── Trust bar ─── */}
       <TrustBar />
+
+      {/* ─── Mobile bottom tab bar (mobile only) ─── */}
+      <MobileBottomNav />
     </main>
   );
 }

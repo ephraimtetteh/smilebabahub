@@ -41,7 +41,7 @@ export default function LiveRadioCard() {
 
       <div
         className="bg-[#0a0a0a] rounded-2xl overflow-hidden border border-gray-900
-        flex flex-col min-h-[560px] relative"
+        flex flex-col lg:min-h-[560px] relative"
       >
         {/* Subtle radial gradient accent */}
         <div className="absolute inset-0 bg-gradient-radial from-yellow-500/10 via-transparent to-transparent pointer-events-none" />
@@ -50,11 +50,11 @@ export default function LiveRadioCard() {
           <div className="text-center w-full">
             {/* Logo */}
             <div className="flex items-center justify-center gap-1 mb-1">
-              <span className="text-2xl font-black text-yellow-400">Smile</span>
-              <span className="text-2xl">😊</span>
+              <span className="text-2xl font-black text-yellow-400">SmileBaba</span>
+              {/* <span className="text-2xl">Baba</span> */}
             </div>
             <p className="text-lg font-bold text-white -mt-1 tracking-wide">
-              TIME RADIO
+              RADIO
             </p>
             <p className="text-[10px] text-gray-500 italic mt-1">
               …Bringing Africa Together
