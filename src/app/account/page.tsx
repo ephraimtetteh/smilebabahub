@@ -27,6 +27,7 @@ import {
   CreditCard,
   ShieldCheck,
   HelpCircle,
+  BookCheck,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { logout } from "@/src/lib/features/auth/authActions";
@@ -76,7 +77,7 @@ export default function AccountPage() {
   const isMarketer = role === "marketer";
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20 lg:pb-8">
+    <main className="min-h-screen bg-gray-50 pb-20 lg:pb-8 mt-10">
       {/* Profile header */}
       <section className="bg-gradient-to-br from-yellow-400 to-amber-500 text-black">
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
@@ -182,12 +183,12 @@ export default function AccountPage() {
 
         {/* Account menu */}
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-          <MenuLink
+          {/* <MenuLink
             href="/account/profile"
             icon={<UserIcon size={16} />}
             label="Profile"
             sub="Personal info, photo, bio"
-          />
+          /> */}
           <MenuLink
             href="/account/orders"
             icon={<ShoppingBag size={16} />}
@@ -195,23 +196,29 @@ export default function AccountPage() {
             sub="Track and manage purchases"
           />
           <MenuLink
+            href="/account/bookings"
+            icon={<BookCheck size={16} />}
+            label="Orders"
+            sub="Track and manage purchases"
+          />
+          {/* <MenuLink
             href="/account/notifications"
             icon={<Bell size={16} />}
             label="Notifications"
             sub="Email and push preferences"
-          />
-          <MenuLink
+          /> */}
+          {/* <MenuLink
             href="/account/security"
             icon={<ShieldCheck size={16} />}
             label="Security"
             sub="Password, 2FA, sessions"
-          />
-          <MenuLink
+          /> */}
+          {/* <MenuLink
             href="/account/payment-methods"
             icon={<CreditCard size={16} />}
             label="Payment methods"
             sub="MoMo, bank, cards"
-          />
+          /> */}
         </div>
 
         {/* Business section */}
