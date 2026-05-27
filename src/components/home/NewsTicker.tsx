@@ -1,12 +1,20 @@
 "use client";
 
 // src/components/home/NewsTicker.tsx
-// Slim breaking-news strip directly under the site header.
+// Slim breaking-news strip under the header (desktop).
+// Fetches latest 5 articles from GET /smilebaba/news/ticker.
 
 import Link from "next/link";
-import { LATEST_NEWS } from "./home.constants";
+import { useProducts } from "@/src/hooks/useProducts";
+import { useNewsTicker } from "./useNewsTicker";
 
 export default function NewsTicker() {
+  const { userCountry } = useProducts();
+  const { items, loading } = useNewsTicker(userCountry || undefined);
+
+  // Don't render anything if no news yet — saves layout space
+  if (!loading && items.length === 0) return null;
+
   return (
     <div className="bg-white border-b border-gray-100 mt-20">
       <div
@@ -21,29 +29,48 @@ export default function NewsTicker() {
         </span>
 
         <div className="flex-1 overflow-hidden">
-          <div className="flex items-center gap-5 whitespace-nowrap animate-newsmarquee">
-            {[...LATEST_NEWS, ...LATEST_NEWS].map((item, i) => (
-              <Link
-                key={`${item.slug}-${i}`}
-                href={`/news/${item.slug}`}
-                className="flex items-center gap-1.5 group flex-shrink-0"
-              >
-                <span
-                  className={`w-5 h-5 rounded-full ${item.bg}
-                  flex items-center justify-center text-[11px]`}
+          {loading ? (
+            <div className="flex gap-2">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-3 w-32 bg-gray-100 rounded animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-5 whitespace-nowrap animate-newsmarquee">
+              {[...items, ...items].map((item, i) => (
+                <Link
+                  key={`${item.slug}-${i}`}
+                  href={`/news/${item.slug}`}
+                  className="flex items-center gap-1.5 group flex-shrink-0"
                 >
-                  {item.emoji}
-                </span>
-                <span
-                  className="text-[11px] text-gray-700 group-hover:text-yellow-600
-                  transition font-medium"
-                >
-                  {item.title}
-                </span>
-                <span className="text-yellow-400 text-[10px]">•</span>
-              </Link>
-            ))}
-          </div>
+                  <span
+                    className={`w-5 h-5 rounded-full ${item.coverBg ?? "bg-gray-100"}
+                    flex items-center justify-center text-[11px] overflow-hidden`}
+                  >
+                    {item.coverImage ? (
+                      <img
+                        src={item.coverImage}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      (item.coverEmoji ?? "📰")
+                    )}
+                  </span>
+                  <span
+                    className="text-[11px] text-gray-700 group-hover:text-yellow-600
+                    transition font-medium"
+                  >
+                    {item.title}
+                  </span>
+                  <span className="text-yellow-400 text-[10px]">•</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         <Link
@@ -54,22 +81,6 @@ export default function NewsTicker() {
           View all →
         </Link>
       </div>
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @keyframes newsmarquee {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-newsmarquee {
-          animation: newsmarquee 60s linear infinite;
-          width: max-content;
-        }
-        .animate-newsmarquee:hover { animation-play-state: paused; }
-      `,
-        }}
-      />
     </div>
   );
 }

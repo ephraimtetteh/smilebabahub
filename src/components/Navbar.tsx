@@ -25,6 +25,7 @@ import {
 } from "@/src/config/navCategories";
 import ChatNavBadge from "./Chat/ChatNavBadge";
 import NotificationBell from "../app/vendor/(components)/Notification";
+import InstallAppButton from "@/src/components/InstallAppButton";
 
 // ── Desktop dropdown for one nav category ─────────────────────────────────
 function NavDropdown({ cat }: { cat: NavCategory }) {
@@ -346,6 +347,7 @@ export default function Navbar() {
             <div className="z-50">
               <UserMenu />
             </div>
+            <InstallAppButton />
 
             {/* Hamburger */}
             <button

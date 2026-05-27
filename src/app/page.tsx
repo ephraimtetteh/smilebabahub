@@ -59,7 +59,7 @@ export default function HomePage() {
   const deals = featured?.marketplace ?? [];
 
   return (
-    <main className="bg-gray-50 pb-20 lg:pb-0">
+    <main className="bg-gray-50 pb-20 lg:pb-0 mt-20">
       {/* ─── DESKTOP ONLY: slim news ticker under header ─── */}
       <div className="hidden lg:block">
         <NewsTicker />

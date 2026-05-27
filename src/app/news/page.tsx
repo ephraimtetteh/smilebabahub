@@ -1,11 +1,12 @@
 "use client";
 
-// src/app/news/page.tsx — news index page
+// src/app/news/page.tsx — news index, fetches from /smilebaba/news
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Newspaper, Filter, Clock, ChevronLeft } from "lucide-react";
-import { LATEST_NEWS } from "@/src/components/home/home.constants";
+import { Newspaper, Filter, Clock, ChevronLeft, Loader2 } from "lucide-react";
+import axiosInstance from "@/src/lib/api/axios";
+import { useProducts } from "@/src/hooks/useProducts";
 
 const CATEGORIES = [
   "All",
@@ -15,19 +16,44 @@ const CATEGORIES = [
   "Sports",
   "Tech",
   "Politics",
+  "Health",
+  "Entertainment",
 ];
 
-export default function NewsPage() {
-  const [active, setActive] = useState("All");
+interface Article {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  category: string;
+  coverEmoji?: string;
+  coverBg?: string;
+  coverImage?: string | null;
+  publishedAt: string;
+}
 
-  const filtered =
-    active === "All"
-      ? LATEST_NEWS
-      : LATEST_NEWS.filter((n) => n.category === active);
+export default function NewsPage() {
+  const { userCountry } = useProducts();
+  const [active, setActive] = useState("All");
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    const params: any = { limit: 50 };
+    if (active !== "All") params.category = active;
+    if (userCountry) params.country = userCountry;
+
+    axiosInstance
+      .get("/news", { params })
+      .then(({ data }) => setArticles(data.articles ?? []))
+      .catch(() => setArticles([]))
+      .finally(() => setLoading(false));
+  }, [active, userCountry]);
 
   return (
     <main className="bg-gray-50 min-h-screen">
-      {/* Yellow hero */}
+      {/* Hero */}
       <div className="bg-gradient-to-r from-yellow-400 to-amber-500">
         <div className="max-w-[1340px] mx-auto px-3 sm:px-4 py-8">
           <Link
@@ -80,9 +106,13 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* Articles grid */}
+      {/* Articles */}
       <div className="max-w-[1340px] mx-auto px-3 sm:px-4 py-6">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 size={28} className="animate-spin text-yellow-500" />
+          </div>
+        ) : articles.length === 0 ? (
           <div className="text-center py-16">
             <Newspaper size={48} className="text-gray-200 mx-auto mb-3" />
             <p className="text-sm text-gray-400">
@@ -91,63 +121,84 @@ export default function NewsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Featured article — first item, large emoji hero */}
-            {filtered[0] && (
+            {/* Featured article — first item, large hero */}
+            {articles[0] && (
               <Link
-                href={`/news/${filtered[0].slug}`}
-                className={`sm:col-span-2 lg:col-span-3 relative ${filtered[0].bg}
+                href={`/news/${articles[0].slug}`}
+                className={`sm:col-span-2 lg:col-span-3 relative
+                  ${articles[0].coverBg ?? "bg-gray-100"}
                   rounded-2xl overflow-hidden group shadow-sm hover:shadow-xl
                   transition aspect-[2.5/1]`}
               >
-                <div
-                  className="absolute right-6 top-1/2 -translate-y-1/2 text-[180px]
-                  opacity-30 group-hover:opacity-50 transition"
-                >
-                  {filtered[0].emoji}
-                </div>
+                {articles[0].coverImage && (
+                  <img
+                    src={articles[0].coverImage}
+                    alt={articles[0].title}
+                    className="absolute inset-0 w-full h-full object-cover
+                      group-hover:scale-105 transition duration-500"
+                  />
+                )}
+                {!articles[0].coverImage && (
+                  <div
+                    className="absolute right-6 top-1/2 -translate-y-1/2 text-[180px]
+                    opacity-30 group-hover:opacity-50 transition"
+                  >
+                    {articles[0].coverEmoji ?? "📰"}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
                   <span
-                    className="inline-block bg-black text-yellow-400 text-[10px]
+                    className="inline-block bg-yellow-400 text-black text-[10px]
                     font-black px-2 py-1 rounded mb-2"
                   >
-                    {filtered[0].category}
+                    {articles[0].category}
                   </span>
                   <h2
-                    className="text-xl sm:text-2xl font-black text-gray-900 leading-tight
+                    className="text-xl sm:text-2xl font-black text-white leading-tight
                     max-w-2xl mb-1"
                   >
-                    {filtered[0].title}
+                    {articles[0].title}
                   </h2>
-                  {filtered[0].excerpt && (
-                    <p className="text-sm text-gray-700 max-w-xl line-clamp-2 mb-2">
-                      {filtered[0].excerpt}
+                  {articles[0].excerpt && (
+                    <p className="text-sm text-white/80 max-w-xl line-clamp-2 mb-2">
+                      {articles[0].excerpt}
                     </p>
                   )}
-                  <p className="text-xs text-gray-600 flex items-center gap-1">
+                  <p className="text-xs text-white/70 flex items-center gap-1">
                     <Clock size={11} />
-                    {new Date(filtered[0].date).toLocaleDateString("en-GH", {
-                      dateStyle: "long",
-                    })}
+                    {new Date(articles[0].publishedAt).toLocaleDateString(
+                      "en-GH",
+                      { dateStyle: "long" },
+                    )}
                   </p>
                 </div>
               </Link>
             )}
 
-            {/* Remaining articles */}
-            {filtered.slice(1).map((article) => (
+            {/* Remaining */}
+            {articles.slice(1).map((article) => (
               <Link
-                key={article.slug}
+                key={article._id}
                 href={`/news/${article.slug}`}
                 className="bg-white rounded-2xl border border-gray-100 overflow-hidden
                   hover:shadow-lg hover:-translate-y-0.5 transition group"
               >
                 <div
-                  className={`relative aspect-[16/9] ${article.bg}
+                  className={`relative aspect-[16/9] ${article.coverBg ?? "bg-gray-100"}
                   flex items-center justify-center overflow-hidden`}
                 >
-                  <span className="text-7xl group-hover:scale-110 transition">
-                    {article.emoji}
-                  </span>
+                  {article.coverImage ? (
+                    <img
+                      src={article.coverImage}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition"
+                    />
+                  ) : (
+                    <span className="text-7xl group-hover:scale-110 transition">
+                      {article.coverEmoji ?? "📰"}
+                    </span>
+                  )}
                   <span
                     className="absolute top-2 left-2 bg-black text-yellow-400
                     text-[10px] font-black px-2 py-0.5 rounded"
@@ -169,7 +220,7 @@ export default function NewsPage() {
                   )}
                   <p className="text-[11px] text-gray-400 flex items-center gap-1">
                     <Clock size={10} />
-                    {new Date(article.date).toLocaleDateString("en-GH", {
+                    {new Date(article.publishedAt).toLocaleDateString("en-GH", {
                       dateStyle: "medium",
                     })}
                   </p>

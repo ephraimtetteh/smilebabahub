@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>You're offline — SmileBabaHub</title>
+<style>
+  body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; margin: 0; background: #fafafa; padding: 24px; }
+  .card { max-width: 360px; text-align: center; background: white; padding: 32px;
+    border-radius: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+  .emoji { font-size: 56px; margin-bottom: 12px; }
+  h1 { font-size: 20px; margin: 0 0 8px; color: #111; }
+  p { color: #666; font-size: 14px; line-height: 1.5; margin: 0 0 20px; }
+  button { background: #ffc105; color: #111; border: 0; padding: 12px 24px;
+    border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="emoji">📡</div>
+  <h1>You're offline</h1>
+  <p>Check your connection and try again. Your cart and saved items are safe.</p>
+  <button onclick="location.reload()">Try again</button>
+</div>
+</body>
+</html>

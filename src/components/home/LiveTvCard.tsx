@@ -60,19 +60,16 @@ export default function LiveTvCard() {
 
       <div
         className="bg-[#0a0a0a] rounded-2xl overflow-hidden border border-gray-900
-        flex flex-col min-h-[560px] relative"
+        flex flex-col min-h-[480px] sm:min-h-[560px] relative"
       >
-        {/* Subtle blue accent */}
-        <div className="absolute inset-0 bg-gradient-radial from-blue-500/10 via-transparent to-transparent pointer-events-none" />
-
         {/* Logo strip */}
         <div className="relative z-10 px-4 pt-4 pb-2 text-center">
           <div className="flex items-center justify-center gap-1">
-            <span className="text-xl font-black text-yellow-400">SmileBaba</span>
-            {/* <span className="text-xl">😊</span> */}
+            <span className="text-xl font-black text-yellow-400">Smile</span>
+            <span className="text-xl">😊</span>
           </div>
           <p className="text-base font-bold text-white -mt-0.5 tracking-wide">
-             TV
+            TIME AFRICA TV
           </p>
         </div>
 
@@ -147,16 +144,6 @@ export default function LiveTvCard() {
           <Tv2 size={16} /> Watch Live TV
         </Link>
       </div>
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .bg-gradient-radial {
-          background-image: radial-gradient(ellipse at center, var(--tw-gradient-stops));
-        }
-      `,
-        }}
-      />
     </div>
   );
 }

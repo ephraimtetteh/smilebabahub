@@ -4,6 +4,8 @@ import { Outfit } from "next/font/google";
 import { ToastContainer } from "react-toastify";
 import LayoutWrapper from "@/src/components/LayoutShell";
 import { RadioProvider } from "@/src/components/RadioContext";
+import { siteMetadata, siteViewport } from "@/src/lib/seo/metadata";
+import SeoHead from "@/src/components/SeoHead";
 
 // ── Font ───────────────────────────────────────────────────────────────────
 const outfit = Outfit({
@@ -101,6 +103,7 @@ export default function RootLayout({
         className={`relative min-h-screen ${outfit.className} antialiased`}
         suppressHydrationWarning
       >
+        <SeoHead />
         <RadioProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
         </RadioProvider>

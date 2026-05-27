@@ -18,6 +18,8 @@ import {
   ChevronRight,
   ShieldCheck,
   TrendingUp,
+  Newspaper,
+  HeartPlus,
 } from "lucide-react";
 
 const NAV = [
@@ -27,6 +29,11 @@ const NAV = [
     href: "/admin/subscriptions",
     icon: <CreditCard size={16} />,
     label: "Subscriptions",
+  },
+  {
+    href: "/admin/news",
+    icon: <Newspaper size={16} />,
+    label: "News",
   },
   {
     href: "/admin/marketers",
@@ -43,6 +50,11 @@ const NAV = [
     href: "/admin/analytics/business",
     icon: <TrendingUp size={16} />,
     label: "Business Report",
+  },
+  {
+    href: "/admin/system",
+    icon: <HeartPlus size={16} />,
+    label: "System",
   },
 ];
 

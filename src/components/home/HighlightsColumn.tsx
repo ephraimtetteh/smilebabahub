@@ -15,7 +15,7 @@ import Link from "next/link";
 import SafeImage from "@/src/components/SafeImage";
 import { ShoppingBag, ArrowRight, Clock } from "lucide-react";
 import { useProducts } from "@/src/hooks/useProducts";
-import { LATEST_NEWS } from "./home.constants";
+import { useNewsTicker } from "./useNewsTicker";
 
 // ── Auto-rotating highlight: shows N items at a time, rotates window ───────
 function useRotatingWindow<T>(
@@ -149,9 +149,13 @@ function FoodHighlights() {
   );
 }
 
-// ── NEWS HIGHLIGHTS — auto-rotating preview ────────────────────────────────
+// ── NEWS HIGHLIGHTS — auto-rotating preview, fetched from backend ─────────
 function NewsHighlights() {
-  const visible = useRotatingWindow(LATEST_NEWS, 3, 5000);
+  const { userCountry } = useProducts();
+  const { items: news } = useNewsTicker(userCountry || undefined);
+  const visible = useRotatingWindow(news, 3, 5000);
+
+  if (news.length === 0) return null;
 
   return (
     <div>
@@ -177,10 +181,18 @@ function NewsHighlights() {
               transition group animate-fadeslide"
           >
             <div
-              className={`w-14 h-14 ${n.bg} rounded-lg flex items-center
-              justify-center flex-shrink-0 text-2xl group-hover:scale-105 transition`}
+              className={`w-14 h-14 ${n.coverBg ?? "bg-gray-100"} rounded-lg flex items-center
+              justify-center flex-shrink-0 text-2xl group-hover:scale-105 transition overflow-hidden`}
             >
-              {n.emoji}
+              {n.coverImage ? (
+                <img
+                  src={n.coverImage}
+                  alt={n.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                (n.coverEmoji ?? "📰")
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <span
@@ -194,7 +206,7 @@ function NewsHighlights() {
               </p>
               <p className="text-[10px] text-gray-400 flex items-center gap-1 mt-0.5">
                 <Clock size={9} />
-                {new Date(n.date).toLocaleDateString("en-GH", {
+                {new Date(n.publishedAt).toLocaleDateString("en-GH", {
                   month: "short",
                   day: "numeric",
                 })}
@@ -226,20 +238,6 @@ export default function HighlightsColumn() {
     <div className="space-y-5">
       <FoodHighlights />
       <NewsHighlights />
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @keyframes fadeslide {
-          0%   { opacity: 0; transform: translateY(8px); }
-          100% { opacity: 1; transform: translateY(0);  }
-        }
-        .animate-fadeslide {
-          animation: fadeslide 500ms ease-out;
-        }
-      `,
-        }}
-      />
     </div>
   );
 }

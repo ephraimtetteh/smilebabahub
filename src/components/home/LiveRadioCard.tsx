@@ -31,30 +31,27 @@ export default function LiveRadioCard() {
             ON AIR
           </span>
         </div>
-        <Link
+        {/* <Link
           href="/radio"
           className="text-[11px] text-gray-500 hover:text-yellow-600 font-bold"
         >
           View all →
-        </Link>
+        </Link> */}
       </div>
 
       <div
         className="bg-[#0a0a0a] rounded-2xl overflow-hidden border border-gray-900
-        flex flex-col lg:min-h-[560px] relative"
+        flex flex-col min-h-[480px] sm:min-h-[560px] relative"
       >
-        {/* Subtle radial gradient accent */}
-        <div className="absolute inset-0 bg-gradient-radial from-yellow-500/10 via-transparent to-transparent pointer-events-none" />
-
         <div className="flex-1 flex items-center justify-center p-6 relative z-10">
           <div className="text-center w-full">
             {/* Logo */}
             <div className="flex items-center justify-center gap-1 mb-1">
-              <span className="text-2xl font-black text-yellow-400">SmileBaba</span>
-              {/* <span className="text-2xl">Baba</span> */}
+              <span className="text-2xl font-black text-yellow-400">Smile</span>
+              <span className="text-2xl">😊</span>
             </div>
             <p className="text-lg font-bold text-white -mt-1 tracking-wide">
-              RADIO
+              TIME RADIO
             </p>
             <p className="text-[10px] text-gray-500 italic mt-1">
               …Bringing Africa Together
@@ -148,24 +145,6 @@ export default function LiveRadioCard() {
           {loading ? "Connecting…" : playing ? "Pause Stream" : "Listen Live"}
         </button>
       </div>
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @keyframes wave {
-          0%, 100% { transform: scaleY(0.4); }
-          50%      { transform: scaleY(1);   }
-        }
-        .animate-wave {
-          animation: wave 1.2s ease-in-out infinite;
-          transform-origin: bottom;
-        }
-        .bg-gradient-radial {
-          background-image: radial-gradient(ellipse at center, var(--tw-gradient-stops));
-        }
-      `,
-        }}
-      />
     </div>
   );
 }
