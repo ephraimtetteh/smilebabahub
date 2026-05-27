@@ -47,14 +47,13 @@ export default function LiveRadioCard() {
           <div className="text-center w-full">
             {/* Logo */}
             <div className="flex items-center justify-center gap-1 mb-1">
-              <span className="text-2xl font-black text-yellow-400">Smile</span>
-              <span className="text-2xl">😊</span>
+              <span className="text-2xl font-black text-yellow-400">SmileBaba</span>
             </div>
             <p className="text-lg font-bold text-white -mt-1 tracking-wide">
-              TIME RADIO
+             RADIO
             </p>
             <p className="text-[10px] text-gray-500 italic mt-1">
-              …Bringing Africa Together
+              Your smile, our pride
             </p>
 
             {/* Animated waveform */}
