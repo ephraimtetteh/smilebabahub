@@ -8,7 +8,7 @@ if (
   throw new Error(
     "Missing env var: NEXT_PUBLIC_API_BASE_URL\n" +
       "Add it in Render → your frontend service → Environment:\n" +
-      "NEXT_PUBLIC_API_BASE_URL = https://smilebababackend.onrender.com/smilebaba",
+      "NEXT_PUBLIC_API_BASE_URL = https://smilebababackend-vvok.onrender.com/smilebaba",
   );
 }
 
