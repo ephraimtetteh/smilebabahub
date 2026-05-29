@@ -34,6 +34,7 @@ import CtaBanners from "@/src/components/home/CtaBanners";
 import ProductCarousel from "@/src/components/home/ProductCarousel";
 import TrustBar from "@/src/components/home/TrustBar";
 import MobileBottomNav from "@/src/components/home/MobileBottomNav";
+import Video from "../components/Video";
 
 const HOMEPAGE_CATEGORIES = [
   "food",

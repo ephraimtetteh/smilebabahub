@@ -15,6 +15,7 @@ import GuestLocationDetector from "./guestLocationDetector";
 import PublicNavbar from "./PublicNavbar";
 import BackendWakeUp from "./BackendWakeup";
 import AuthRedirect from "@/src/components/AuthRedirect";
+import FloatingInstallButton from "@/src/components/FloatingInstallButton";
 
 
 

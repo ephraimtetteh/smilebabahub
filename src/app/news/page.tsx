@@ -4,7 +4,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Newspaper, Filter, Clock, ChevronLeft, Loader2 } from "lucide-react";
+import {
+  Newspaper,
+  Filter,
+  Clock,
+  ChevronLeft,
+  Loader2,
+  ChevronDown,
+} from "lucide-react";
 import axiosInstance from "@/src/lib/api/axios";
 import { useProducts } from "@/src/hooks/useProducts";
 
@@ -35,6 +42,7 @@ interface Article {
 export default function NewsPage() {
   const { userCountry } = useProducts();
   const [active, setActive] = useState("All");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,29 +87,56 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* Filter tabs */}
+      {/* Filter tabs — collapsible on mobile, always visible on desktop */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-[1340px] mx-auto px-3 sm:px-4 py-3">
-          <div
-            className="flex items-center gap-2 overflow-x-auto"
-            style={{ scrollbarWidth: "none" }}
+          {/* Mobile toggle — only visible below sm */}
+          <button
+            onClick={() => setFiltersOpen((o) => !o)}
+            className="sm:hidden w-full flex items-center justify-between
+              px-3 py-2 bg-gray-50 rounded-xl text-sm font-bold"
           >
-            <Filter size={14} className="text-gray-400 flex-shrink-0" />
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActive(cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold
-                  whitespace-nowrap transition
-                  ${
-                    active === cat
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
+            <span className="flex items-center gap-2">
+              <Filter size={14} className="text-gray-400" />
+              Filter: <span className="text-yellow-600">{active}</span>
+            </span>
+            <ChevronDown
+              size={14}
+              className={`transition ${filtersOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {/* Filter chips — always shown on desktop, conditional on mobile */}
+          <div
+            className={`${filtersOpen ? "block" : "hidden"} sm:block mt-2 sm:mt-0`}
+          >
+            <div
+              className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:overflow-x-auto"
+              style={{ scrollbarWidth: "none" }}
+            >
+              <Filter
+                size={14}
+                className="hidden sm:inline-block text-gray-400 flex-shrink-0"
+              />
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setActive(cat);
+                    setFiltersOpen(false);
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold
+                    whitespace-nowrap transition
+                    ${
+                      active === cat
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

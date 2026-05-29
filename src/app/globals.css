@@ -107,3 +107,56 @@
 /* Hide horizontal scroll bars on carousel rows */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+
+
+/* ────────────────────────────────────────────────────────────────────
+ * Add these to your existing src/app/globals.css.
+ * They power animations on the homepage components (radio waveform,
+ * news ticker marquee, rotating highlights).
+ * ───────────────────────────────────────────────────────────────────*/
+
+/* Radio waveform — vertical bars pulse while playing */
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50%      { transform: scaleY(1);   }
+}
+.animate-wave {
+  animation: wave 1.2s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+/* News ticker — horizontal infinite scroll */
+@keyframes newsmarquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-newsmarquee {
+  animation: newsmarquee 60s linear infinite;
+  width: max-content;
+}
+.animate-newsmarquee:hover {
+  animation-play-state: paused;
+}
+
+/* Highlights column — fade-slide on rotation */
+@keyframes fadeslide {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0);  }
+}
+.animate-fadeslide {
+  animation: fadeslide 500ms ease-out;
+}
+
+/* Hide horizontal scroll bars on carousel rows */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Floating install button — slide in from bottom */
+@keyframes floatin {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-floatin {
+  animation: floatin 400ms ease-out;
+}

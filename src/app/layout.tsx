@@ -6,6 +6,7 @@ import LayoutWrapper from "@/src/components/LayoutShell";
 import { RadioProvider } from "@/src/components/RadioContext";
 import { siteMetadata, siteViewport } from "@/src/lib/seo/metadata";
 import SeoHead from "@/src/components/SeoHead";
+import FloatingInstallButton from "../components/FloatingInstallButton";
 
 // ── Font ───────────────────────────────────────────────────────────────────
 const outfit = Outfit({
@@ -104,6 +105,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <SeoHead />
+        <FloatingInstallButton />
         <RadioProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
         </RadioProvider>

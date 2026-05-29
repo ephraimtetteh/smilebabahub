@@ -56,7 +56,7 @@ const Video = () => {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-2">
       <div
-        className="grid lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden
+        className="grid gap-0 rounded-3xl overflow-hidden
       shadow-xl border border-gray-100"
       >
         {/* 🎥 VIDEO (comes first always) */}
@@ -74,11 +74,11 @@ const Video = () => {
 
         {/* 📢 CTA CARD */}
         {/* ── Right: CTA ── */}
-        <div
+        {/* <div
           className="bg-white px-7 py-8 flex flex-col justify-between
           lg:min-h-[360px]"
         >
-          {/* Header */}
+       
           <div>
             <div
               className="inline-flex items-center gap-1.5 bg-yellow-50
@@ -102,7 +102,7 @@ const Video = () => {
               platform, radio, TV, and social media — all in one plan.
             </p>
 
-            {/* Perks */}
+         
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2.5 gap-x-4 mb-6">
               {PERKS.map((p, i) => (
                 <li
@@ -121,7 +121,6 @@ const Video = () => {
             </ul>
           </div>
 
-          {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               href="/subscription"
@@ -144,7 +143,6 @@ const Video = () => {
             </Link>
           </div>
 
-          {/* Social proof */}
           <div
             className="mt-4 pt-4 border-t border-gray-100 flex items-center
             gap-3 text-xs text-gray-400"
@@ -167,7 +165,7 @@ const Video = () => {
               already promoting
             </span>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
