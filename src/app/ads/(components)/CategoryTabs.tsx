@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { CATEGORIES } from "./ad.constants";
 
-
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   all: <LayoutGrid size={13} />,
   marketplace: <ShoppingBag size={13} />,
@@ -65,7 +64,7 @@ const CategoryTabs = memo(function CategoryTabs({
       {showFilterBtn && (
         <button
           onClick={onFilterToggle}
-          className={`ml-auto flex-shrink-0 flex items-center gap-1.5 px-4 py-2
+          className={`sm:hidden ml-auto flex-shrink-0 flex items-center gap-1.5 px-4 py-2
             rounded-full text-sm font-semibold border transition
             ${
               filtersOpen
@@ -73,7 +72,8 @@ const CategoryTabs = memo(function CategoryTabs({
                 : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
             }`}
         >
-          <SlidersHorizontal size={13} /> Filters
+          <SlidersHorizontal size={13} />
+          {filtersOpen ? "Hide filters" : "Filters"}
         </button>
       )}
     </div>

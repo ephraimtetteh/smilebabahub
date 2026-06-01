@@ -53,9 +53,9 @@ export const CATEGORIES_SIDEBAR: CategoryDef[] = [
     tagBg: "bg-blue-400",
   },
   {
-    id: "events",
+    id: "automobile",
     label: "Cars & Automobile",
-    sub: "Book events easily",
+    sub: "buy or sell cars",
     emoji: "🎟️",
     color: "bg-red-50",
     tagBg: "bg-red-400",

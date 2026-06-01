@@ -20,6 +20,7 @@ export const CATEGORIES = [
   { id: "marketplace", label: "Shop", icon: "🛍️" },
   { id: "food", label: "Food", icon: "🍔" },
   { id: "apartments", label: "Property", icon: "🏢" },
+  { id: "automobile", label: "Automobile", icon: "🚗" },
   { id: "fashion", label: "Fashion", icon: "👗" },
   { id: "pharmacy", label: "Pharmacy", icon: "💊" },
   { id: "delivery", label: "Delivery", icon: "🚚" },
@@ -69,6 +70,18 @@ export const SUBCATEGORIES: Record<
     { id: "land", label: "Land / Plot", icon: "🌿" },
     { id: "short-stay", label: "Short Stay", icon: "🗓️" },
     { id: "buy", label: "For Sale", icon: "🔑" },
+  ],
+  automobile: [
+    { id: "cars", label: "Cars", icon: "🚗" },
+    { id: "suvs", label: "SUVs", icon: "🚙" },
+    { id: "trucks", label: "Trucks & Pickups", icon: "🛻" },
+    { id: "motorcycles", label: "Motorcycles", icon: "🏍️" },
+    { id: "tricycles", label: "Tricycles", icon: "🛺" },
+    { id: "buses", label: "Buses & Vans", icon: "🚐" },
+    { id: "commercial", label: "Commercial", icon: "🚛" },
+    { id: "parts", label: "Parts & Accessories", icon: "🔧" },
+    { id: "rentals", label: "Car Rentals", icon: "🔑" },
+    { id: "other", label: "Other Vehicles", icon: "🚜" },
   ],
   fashion: [
     { id: "mens", label: "Men's Wear", icon: "👔" },
@@ -156,6 +169,16 @@ export const CATEGORY_FIELDS: Record<
     conditionLabel: "",
     pricePlaceholder: "Monthly rent or sale price",
     descHint: "Describe the property — furnishing, amenities, nearby landmarks",
+  },
+  automobile: {
+    showCondition: true,
+    showDelivery: false,
+    showBedrooms: false,
+    showMapPin: true,
+    conditionLabel: "Vehicle condition",
+    pricePlaceholder: "e.g. 35000",
+    descHint:
+      "Year, mileage, transmission, fuel type, history — buyers need details",
   },
   fashion: {
     showCondition: true,

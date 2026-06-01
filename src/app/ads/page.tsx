@@ -8,7 +8,6 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAds } from "@/src/hooks/useAds";
 import { useAppSelector } from "@/src/app/redux";
 import { AdCondition, AdCurrency } from "@/src/types/ad.types";
-import { CATEGORIES } from "./(components)/ad.constants";
 import AdsHero from "./(components)/AdsHero";
 import CategoryTabs from "./(components)/CategoryTabs";
 import FiltersPanel from "./(components)/FiltersPanel";
@@ -16,7 +15,7 @@ import BestsellersRow from "./(components)/BestSellingAd";
 import AdGrid from "./(components)/AdGrid";
 import AdsPagination from "./(components)/AdsPagination";
 import PostAdCTA from "./(components)/PostAdCTA";
-
+import { SORT_OPTIONS, CATEGORIES } from "./(components)/ad.constants";
 
 // ── Valid category IDs from the constants file ────────────────────────────
 const VALID_CATEGORIES = CATEGORIES.map((c) => c.id) as readonly string[];
@@ -244,20 +243,24 @@ export default function AdsLandingPage() {
           onFilterToggle={() => setShowFilters((v) => !v)}
         />
 
-        {/* ── Filters + sort row ── */}
-        <FiltersPanel
-          sym={sym}
-          condition={condition}
-          onCondition={setCondition}
-          minPrice={minPrice}
-          onMinPrice={setMinPrice}
-          maxPrice={maxPrice}
-          onMaxPrice={setMaxPrice}
-          sort={urlSort}
-          onSort={handleSortChange}
-          onApply={handleApplyFilters}
-          onClear={handleClearFilters}
-        />
+        {/* ── Filters + sort row ──
+            Mobile: hidden by default, toggles via the filter button in CategoryTabs.
+            Desktop (sm+): always visible. */}
+        <div className={`${showFilters ? "block" : "hidden"} sm:block`}>
+          <FiltersPanel
+            sym={sym}
+            condition={condition}
+            onCondition={setCondition}
+            minPrice={minPrice}
+            onMinPrice={setMinPrice}
+            maxPrice={maxPrice}
+            onMaxPrice={setMaxPrice}
+            sort={urlSort}
+            onSort={handleSortChange}
+            onApply={handleApplyFilters}
+            onClear={handleClearFilters}
+          />
+        </div>
 
         {/* ── Boosted row ── */}
         {boostedAds.length > 0 && !urlSearch && (
