@@ -54,7 +54,7 @@ export const CATEGORIES_SIDEBAR: CategoryDef[] = [
   },
   {
     id: "events",
-    label: "Events & Tickets",
+    label: "Cars & Automobile",
     sub: "Book events easily",
     emoji: "🎟️",
     color: "bg-red-50",
