@@ -1,13 +1,13 @@
 "use client";
 
 // src/app/sell/page.tsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAds } from "@/src/hooks/useAds";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
-import { useAppSelector } from "@/src/app/redux";
+import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { saveReturnState } from "@/src/hooks/useSubscriptionGuard";
 import { AdFormData } from "@/src/types/adForm.types";
 import {
@@ -17,15 +17,24 @@ import {
   DeliveryOption,
 } from "@/src/types/ad.types";
 import AdForm from "../ads/(components)/AdForm";
+import { restoreSession } from "@/src/lib/features/auth/authActions";
+
 
 export default function SellPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { isAuthenticated, hasCheckedAuth, user } = useAppSelector(
     (s) => s.auth,
   );
   const isVendor = isAuthenticated && user?.role === "vendor";
   const { submitCreateAd, mutating, mutateError } = useAds();
   const { country: viewCountry, currency: viewCurrency } = useViewCountry();
+
+  // Self-heal: if Redux says we're authed but not vendor, try ONE refresh
+  // before bouncing. Handles the post-subscription race where backend has
+  // set role to vendor but Redux hasn't synced yet.
+  const [revalidating, setRevalidating] = useState(false);
+  const [didRevalidate, setDidRevalidate] = useState(false);
 
   useEffect(() => {
     if (mutateError) toast.error(mutateError);
@@ -37,20 +46,55 @@ export default function SellPage() {
     if (!isAuthenticated) {
       saveReturnState({ type: "post_product" });
       router.push("/auth/login?reason=sell");
-    } else if (!isVendor) {
+      return;
+    }
+    // Authed but not vendor — try refreshing the session ONCE before bouncing.
+    // If the user just paid for a subscription, the backend set role: "vendor"
+    // but Redux may still have stale role: "guest" from before login.
+    if (!isVendor && !didRevalidate) {
+      setRevalidating(true);
+      dispatch(restoreSession())
+        .unwrap()
+        .catch(() => {
+          /* ignore — will fall through to bounce */
+        })
+        .finally(() => {
+          setDidRevalidate(true);
+          setRevalidating(false);
+        });
+      return;
+    }
+    // Tried refresh, still not vendor → genuine non-vendor, bounce to subscription.
+    if (!isVendor && didRevalidate) {
       saveReturnState({ type: "post_product" });
       toast.info("You need a vendor subscription to post ads.");
       router.push("/subscription");
     }
-  }, [hasCheckedAuth, isAuthenticated, isVendor, router]);
+  }, [
+    hasCheckedAuth,
+    isAuthenticated,
+    isVendor,
+    didRevalidate,
+    router,
+    dispatch,
+  ]);
 
-  if (!hasCheckedAuth) {
+  // While auth check is happening OR we're re-validating after subscription,
+  // show a loader instead of flashing the form / bouncing prematurely.
+  if (!hasCheckedAuth || revalidating) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div
-          className="w-10 h-10 border-2 border-yellow-400 border-t-transparent
-          rounded-full animate-spin"
-        />
+        <div className="text-center">
+          <div
+            className="w-10 h-10 border-2 border-yellow-400 border-t-transparent
+            rounded-full animate-spin mx-auto mb-3"
+          />
+          {revalidating && (
+            <p className="text-xs text-gray-500">
+              Verifying your subscription…
+            </p>
+          )}
+        </div>
       </div>
     );
   }

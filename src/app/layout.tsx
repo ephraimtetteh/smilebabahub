@@ -6,6 +6,7 @@ import LayoutWrapper from "@/src/components/LayoutShell";
 import { RadioProvider } from "@/src/components/RadioContext";
 import { siteMetadata, siteViewport } from "@/src/lib/seo/metadata";
 import SeoHead from "@/src/components/SeoHead";
+import WelcomeDirective from "../components/WelcomeDirective";
 // import FloatingInstallButton from "../components/FloatingInstallButton";
 
 // ── Font ───────────────────────────────────────────────────────────────────
@@ -107,7 +108,10 @@ export default function RootLayout({
         <SeoHead />
         {/* <FloatingInstallButton /> */}
         <RadioProvider>
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <LayoutWrapper>
+            {children}
+            <WelcomeDirective />
+          </LayoutWrapper>
         </RadioProvider>
 
         <ToastContainer

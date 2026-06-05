@@ -428,8 +428,28 @@ export default function PaymentSuccessPage() {
     if (!isLegitimate) router.replace("/");
   }, [isLegitimate, router]);
 
+  // Track whether the user-session refresh has finished. Critical: any redirect
+  // or resume-action must wait for this, otherwise the user lands on a vendor-only
+  // route (like /sell) with stale Redux state showing role: "guest" and the guard
+  // immediately bounces them back to /subscription.
+  const [sessionRefreshed, setSessionRefreshed] = useState(false);
+
   useEffect(() => {
-    if (isLegitimate) dispatch(restoreSession());
+    if (!isLegitimate) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        // Await the refresh so the new role lands in Redux BEFORE we redirect.
+        await dispatch(restoreSession()).unwrap();
+      } catch {
+        /* even on failure we proceed — backend role is set, worst case user
+           refreshes manually */
+      }
+      if (!cancelled) setSessionRefreshed(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [isLegitimate, dispatch]);
 
   useEffect(() => {
@@ -459,13 +479,18 @@ export default function PaymentSuccessPage() {
         create_listing: "Resuming your listing…",
       };
       setResumeLabel(labels[action.type] ?? "Resuming your action…");
-      setTimeout(
-        () =>
-          setRedirectTo(
-            action.type === "boost_product" ? "/vendor/dashboard" : "/sell",
-          ),
-        2000,
-      );
+      // Wait until /auth/me returns with the new vendor role BEFORE redirecting.
+      // Otherwise SellPage sees role: "guest" and bounces back to /subscription.
+      const target =
+        action.type === "boost_product" ? "/vendor/dashboard" : "/sell";
+      const tryRedirect = () => {
+        if (sessionRefreshed) {
+          setTimeout(() => setRedirectTo(target), 1200);
+        } else {
+          setTimeout(tryRedirect, 200); // poll every 200ms until session refreshed
+        }
+      };
+      tryRedirect();
     },
   });
 

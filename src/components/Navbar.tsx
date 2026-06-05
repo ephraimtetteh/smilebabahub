@@ -347,7 +347,7 @@ export default function Navbar() {
             <div className="z-50">
               <UserMenu />
             </div>
-            <InstallAppButton />
+            {/* <InstallAppButton /> */}
 
             {/* Hamburger */}
             <button
