@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppSelector } from "../app/redux";
+import { useAppSelector, useAppDispatch } from "../app/redux";
+import { restoreSession } from "@/src/lib/features/auth/authActions";
 
 // ── Spinner shown while session is being restored ─────────────────────────
 function FullPageSpinner() {
@@ -27,10 +28,18 @@ export default function ProtectedRoute({
   requiredRole?: "vendor" | "admin"; // optional — omit to allow any logged-in user
 }) {
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
   const { user, isAuthenticated, hasCheckedAuth } = useAppSelector(
     (state) => state.auth,
   );
+
+  // Self-heal flag: when we detect a role mismatch, attempt ONE silent session
+  // refresh before bouncing. This handles the post-subscription race where the
+  // backend has set role:"vendor" but our Redux store still has the stale role
+  // from before the subscription was activated.
+  const [revalidating, setRevalidating] = useState(false);
+  const [didRevalidate, setDidRevalidate] = useState(false);
 
   useEffect(() => {
     // ── Wait until restoreSession has finished ──────────────────────────
@@ -44,18 +53,42 @@ export default function ProtectedRoute({
       return;
     }
 
-    // Optional role gate — e.g. requiredRole="vendor" blocks guests
+    // Role gate. If role looks wrong, try refreshing the session ONCE
+    // before bouncing. Otherwise users get sent right back to /subscription
+    // immediately after subscribing.
     if (requiredRole && user?.role !== requiredRole) {
-      router.push(requiredRole === "vendor" ? "/subscribe" : "/auth/login");
+      if (!didRevalidate) {
+        setRevalidating(true);
+        dispatch(restoreSession())
+          .unwrap()
+          .catch(() => {
+            /* fall through to bounce below on next render */
+          })
+          .finally(() => {
+            setDidRevalidate(true);
+            setRevalidating(false);
+          });
+        return;
+      }
+      // We already refreshed; user is genuinely not the required role.
+      router.push(requiredRole === "vendor" ? "/subscription" : "/auth/login");
     }
-  }, [hasCheckedAuth, isAuthenticated, user, requiredRole, router]);
+  }, [
+    hasCheckedAuth,
+    isAuthenticated,
+    user,
+    requiredRole,
+    didRevalidate,
+    router,
+    dispatch,
+  ]);
 
-  // ── Show spinner while auth state is still being determined ────────────
-  if (!hasCheckedAuth) return <FullPageSpinner />;
+  // Show spinner while auth state is determined OR while we're re-validating
+  if (!hasCheckedAuth || revalidating) return <FullPageSpinner />;
 
-  // ── Render nothing during the redirect tick ────────────────────────────
+  // Render nothing during the redirect tick
   if (!isAuthenticated) return null;
-  if (requiredRole && user?.role !== requiredRole) return null;
+  if (requiredRole && user?.role !== requiredRole && didRevalidate) return null;
 
   return <>{children}</>;
 }

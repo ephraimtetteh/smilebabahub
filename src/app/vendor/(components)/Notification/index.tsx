@@ -350,7 +350,7 @@ export default function NotificationBell() {
                 type="button"
                 onClick={() => {
                   setOpen(false);
-                  router.push("/vendor/purchase-history");
+                  router.push("/vendor/history");
                 }}
                 className="flex items-center gap-1 text-xs text-amber-600
                   font-semibold hover:underline mx-auto"

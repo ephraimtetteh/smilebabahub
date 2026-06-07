@@ -310,7 +310,7 @@ const Loginpage = () => {
       >
         {/* ── Left panel ── */}
         <div
-          className="hidden lg:flex flex-col justify-between p-12 text-white
+          className="lg:flex flex-col justify-between p-12 text-white
           bg-gradient-to-br from-black/60 to-black/20 backdrop-blur-md"
         >
           <Link href="/">

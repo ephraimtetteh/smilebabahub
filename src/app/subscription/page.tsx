@@ -16,8 +16,8 @@ import { SubscriptionPlanProps } from "@/src/types/types";
 import { consumeReturnState } from "@/src/hooks/useSubscriptionGuard";
 import axiosInstance from "@/src/lib/api/axios";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
-import { useAppSelector } from "@/src/app/redux";
-
+import { useAppDispatch, useAppSelector } from "@/src/app/redux";
+import { restoreSession } from "@/src/lib/features/auth/authActions";
 
 // ── Pricing (mirrors config/pricing.js) ───────────────────────────────────────
 const PRICES: Record<string, Record<string, Record<string, number>>> = {
@@ -50,6 +50,10 @@ const PLAN_TIERS: Record<string, number> = {
   popular: 2,
   premium: 3,
 };
+
+
+
+
 
 // ── Row helper ─────────────────────────────────────────────────────────────────
 function Row({ label, value }: { label: string; value: string }) {
@@ -119,6 +123,7 @@ const Subscription = ({
   onPlanSelect,
 }: SubscriptionPlanProps) => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const params = useSearchParams();
   const isRenew = params.get("renew") === "1";
 
@@ -134,7 +139,7 @@ const Subscription = ({
   const currentPlanId = user?.subscription?.plan ?? null;
   const expiresAt = user?.subscription?.expiresAt ?? null;
   const currentBilling = user?.subscription?.billingCycle ?? null;
-  const REFERRAL_DISCOUNT_PCT = 15; // must match backend REFERRAL_DISCOUNT * 100
+  const REFERRAL_DISCOUNT_PCT = 15; // matches backend REFERRAL_DISCOUNT = 0.15
   const isSubscribed =
     !!currentPlanId && !!expiresAt && new Date(expiresAt) > new Date();
   const currentTier = PLAN_TIERS[currentPlanId ?? ""] ?? -1;
@@ -266,6 +271,18 @@ const Subscription = ({
       });
 
       if (res.data.free) {
+        // CRITICAL: refresh Redux session BEFORE redirecting. Backend has set
+        // role: "vendor" server-side, but our local Redux still has the stale
+        // role: "guest" from before subscription. Without this await, the
+        // destination route's <ProtectedRoute requiredRole="vendor"> sees
+        // stale state and bounces the user straight back to /subscription —
+        // an endless loop until they manually logout/login.
+        try {
+          await dispatch(restoreSession()).unwrap();
+        } catch {
+          // Even if refresh fails, backend role is set — fall through to redirect.
+          // Worst case the destination guard will run its own self-heal.
+        }
         router.push(res.data.redirectUrl + "?subscribed=1");
         return;
       }
