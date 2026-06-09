@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/logo1.jpeg",
+        url: "/logo1.jpg",
         width: 1200,
         height: 630,
         alt: "SmileBaba Hub — Ghana & Nigeria Online Marketplace",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     title: "SmileBaba Hub — Buy & Sell in Ghana and Nigeria",
     description:
       "Phones, cars, food, fashion and apartments from verified vendors across Ghana and Nigeria.",
-    images: ["/logo1.jpeg"],
+    images: ["/logo1.jpg"],
     site: "@smilebabahub",
   },
 
@@ -82,8 +82,8 @@ export const metadata: Metadata = {
 
   icons: {
     icon: "/logo1.jpeg",
-    shortcut: "/logo1.jpeg",
-    apple: "/logo1.jpeg",
+    shortcut: "/logo1.jpg",
+    apple: "/logo1.jpg",
   },
 
   robots: {
