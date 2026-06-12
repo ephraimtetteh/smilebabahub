@@ -74,7 +74,7 @@ export const packages = [
         status: "yes" as const,
       },
       {
-        package: "Duration: 30 days",
+        package: "Duration: 7 days",
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },
@@ -122,7 +122,7 @@ export const packages = [
         status: "yes" as const,
       },
       {
-        package: "Duration: 30 days",
+        package: "Duration: 14 days",
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },
@@ -170,7 +170,7 @@ export const packages = [
         status: "yes" as const,
       },
       {
-        package: "Duration: 60 days",
+        package: "Duration: 30 days",
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },

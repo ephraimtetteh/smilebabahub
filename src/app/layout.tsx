@@ -81,7 +81,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://smilebabahub.com" },
 
   icons: {
-    icon: "/logo1.jpeg",
+    icon: "/logo1.jpg",
     shortcut: "/logo1.jpg",
     apple: "/logo1.jpg",
   },
