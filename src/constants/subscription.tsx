@@ -25,11 +25,11 @@ export const packages = [
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },
-      {
-        package: "Duration: 3 days",
-        icon: <IoCheckmarkCircleOutline />,
-        status: "yes" as const,
-      },
+      // {
+      //   package: "Duration: 3 days",
+      //   icon: <IoCheckmarkCircleOutline />,
+      //   status: "yes" as const,
+      // },
       {
         package: "Dashboard partial access",
         icon: <IoCheckmarkCircleOutline />,
@@ -69,12 +69,12 @@ export const packages = [
     tile: "what's included",
     includes: [
       {
-        package: "5 Listings",
+        package: "1-3 Listings",
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },
       {
-        package: "Duration: 7 days",
+        package: "Ads Duration: 7 days",
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },
@@ -117,12 +117,12 @@ export const packages = [
     tile: "what's included",
     includes: [
       {
-        package: "10 Listings",
+        package: "1-5 Listings",
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },
       {
-        package: "Duration: 14 days",
+        package: "Ads Duration: 14 days",
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },
@@ -170,7 +170,7 @@ export const packages = [
         status: "yes" as const,
       },
       {
-        package: "Duration: 30 days",
+        package: "Ads Duration: 30 days",
         icon: <IoCheckmarkCircleOutline />,
         status: "yes" as const,
       },
