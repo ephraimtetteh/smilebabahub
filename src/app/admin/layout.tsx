@@ -36,6 +36,11 @@ const NAV = [
     label: "News",
   },
   {
+    href: "/admin/promotions",
+    icon: <Newspaper size={16} />,
+    label: "Promos",
+  },
+  {
     href: "/admin/marketers",
     icon: <Megaphone size={16} />,
     label: "Marketers",
@@ -51,11 +56,11 @@ const NAV = [
     icon: <TrendingUp size={16} />,
     label: "Business Report",
   },
-  {
-    href: "/admin/system",
-    icon: <HeartPlus size={16} />,
-    label: "System",
-  },
+  // {
+  //   href: "/admin/system",
+  //   icon: <HeartPlus size={16} />,
+  //   label: "System",
+  // },
 ];
 
 export default function AdminLayout({
