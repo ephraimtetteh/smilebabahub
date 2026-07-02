@@ -16,7 +16,7 @@ import React, {
   useCallback,
 } from "react";
 
-const STREAM_URL = "https://video2.getstreamhosting.com:2020/stream/8244";
+const STREAM_URL = "https://video2.getstreamhosting.com:2020/stream/8238";
 
 // ── Deterministic daily seed ─────────────────────────────────────────────────
 // Returns the same base count for every user on the same calendar day.
