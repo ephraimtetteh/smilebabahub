@@ -1,846 +1,541 @@
+// frontend/app/admin/promotions/page.tsx
+//
+// Admin promotions management. Shows the new video/business promotion
+// workflow: submitted → under_review → payment_pending → paid → live → expired
+// (with reject/refund side-branches)
+
 "use client";
 
-// src/app/admin/promotions/page.tsx
-//
-// Admin tab for managing promo-video campaigns submitted by vendors.
-//
-// Reads from:
-//   GET   /smilebaba/admin/promotions   — list with filters
-//   PATCH /smilebaba/admin/promotions/:id  — change status, notes, schedule
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
-  Loader2,
   Search,
-  Filter,
-  Megaphone,
+  MoreVertical,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  Play,
   Eye,
   Check,
   X,
+  DollarSign,
   Clock,
-  Calendar,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  Play,
-  MessageSquare,
-  ChevronDown,
-  RefreshCw,
-  ExternalLink,
-  Mail,
-  Phone,
 } from "lucide-react";
-import { toast } from "react-toastify";
-import axiosInstance from "@/src/lib/api/axios";
 
-const STATUS_META: Record<
-  string,
-  { label: string; color: string; emoji: string }
-> = {
-  pending_review: {
-    label: "Under Review",
-    color: "bg-yellow-100 text-yellow-800",
-    emoji: "👀",
-  },
-  approved: {
-    label: "Approved",
-    color: "bg-blue-100 text-blue-800",
-    emoji: "✅",
-  },
-  rejected: {
-    label: "Rejected",
-    color: "bg-red-100 text-red-800",
-    emoji: "❌",
-  },
-  pending_payment: {
-    label: "Awaiting Payment",
-    color: "bg-orange-100 text-orange-800",
-    emoji: "💳",
-  },
-  paid: { label: "Paid", color: "bg-green-100 text-green-800", emoji: "💰" },
-  scheduled: {
-    label: "Scheduled",
-    color: "bg-indigo-100 text-indigo-800",
-    emoji: "📅",
-  },
-  active: { label: "Live", color: "bg-pink-100 text-pink-800", emoji: "🎬" },
-  completed: {
-    label: "Completed",
-    color: "bg-gray-200 text-gray-800",
-    emoji: "🏁",
-  },
-  refunded: {
-    label: "Refunded",
-    color: "bg-gray-100 text-gray-500",
-    emoji: "↩️",
-  },
-};
+import axiosInstance from "@/src/lib/api/axios"; 
 
-const FILTER_TABS = [
-  { id: "all", label: "All" },
-  { id: "pending_review", label: "Under Review" },
-  { id: "approved", label: "Approved" },
-  { id: "pending_payment", label: "Awaiting Pay" },
-  { id: "paid", label: "Paid" },
-  { id: "scheduled", label: "Scheduled" },
-  { id: "active", label: "Live" },
-  { id: "completed", label: "Completed" },
-  { id: "rejected", label: "Rejected" },
-];
+const STATUS_TABS = [
+  { key: "all", label: "All" },
+  { key: "submitted", label: "New" },
+  { key: "under_review", label: "Under review" },
+  { key: "payment_pending", label: "Payment pending" },
+  { key: "paid", label: "Paid" },
+  { key: "live", label: "Live" },
+  { key: "expired", label: "Expired" },
+  { key: "rejected", label: "Rejected" },
+] as const;
+
+type StatusKey = (typeof STATUS_TABS)[number]["key"];
 
 interface Promotion {
   _id: string;
-  title: string;
-  description?: string;
-  tier: "starter" | "growth" | "enterprise";
-  status: keyof typeof STATUS_META;
+  status: string;
+  tier: string;
   amount: number;
-  currency: "GHS" | "NGN";
-  days: number;
-  videoUrl: string;
-  videoName?: string;
+  currency: string;
   country: string;
-  promotionType?: string;
-  targetRegion?: string;
-  targetAudience?: string;
-  startDate?: string;
-  contactName?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  preferredContact?: string;
-  adminNotes?: string;
-  rejectionReason?: string;
-  scheduledStart?: string;
-  scheduledEnd?: string;
+  days: number;
+  businessName: string;
+  category?: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  title?: string;
+  paymentRef?: string;
   paidAt?: string;
-  user?: { _id: string; username: string; email: string };
+  liveAt?: string;
+  expiresAt?: string;
   createdAt: string;
+  userId?: { username: string; email: string };
 }
 
-interface Summary {
-  total: number;
-  byStatus: Record<string, number>;
-  totalRevenue: { GHS: number; NGN: number };
-  pendingReviews: number;
+interface ListRes {
+  counts: Record<string, number>;
+  promotions: Promotion[];
+  pagination: { page: number; limit: number; total: number; pages: number };
 }
 
 export default function AdminPromotionsPage() {
-  const [promos, setPromos] = useState<Promotion[]>([]);
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("all");
+  const [status, setStatus] = useState<StatusKey>("all");
+  const [country, setCountry] = useState<"" | "Ghana" | "Nigeria">("");
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Promotion | null>(null);
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<ListRes | null>(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
 
-  const load = async () => {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const s = sp.get("status") as StatusKey;
+    if (s && STATUS_TABS.some((t) => t.key === s)) setStatus(s);
+  }, []);
+
+  const fetchData = useCallback(async () => {
+    setRefreshing(true);
     try {
-      const params: any = {};
-      if (filter !== "all") params.status = filter;
-      if (search.trim()) params.search = search.trim();
+      const params = new URLSearchParams({ page: String(page), limit: "20" });
+      if (status !== "all") params.set("status", status);
+      if (country) params.set("country", country);
+      if (search.trim()) params.set("search", search.trim());
 
-      const { data } = await axiosInstance.get("/admin/promotions", { params });
-      setPromos(data.promotions ?? []);
-      setSummary(data.summary ?? null);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Failed to load campaigns");
+      const res = await axiosInstance.get<ListRes>(
+        `/admin/promotions?${params}`,
+      );
+      setData(res.data);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [status, country, search, page]);
 
   useEffect(() => {
-    load();
-  }, [filter]);
-
-  // Search with debounce
+    fetchData();
+  }, [fetchData]);
   useEffect(() => {
-    const t = setTimeout(() => load(), 400);
-    return () => clearTimeout(t);
-  }, [search]);
+    setPage(1);
+  }, [status, country, search]);
 
-  const refresh = () => {
-    setRefreshing(true);
-    load();
+  const handleAction = async (id: string, action: string) => {
+    let reason = "",
+      notes = "";
+    if (action === "reject" || action === "refund") {
+      reason = window.prompt(`Reason for ${action}?`) ?? "";
+      if (!reason) {
+        return;
+      }
+    }
+    if (action === "send_payment_link") {
+      notes = window.prompt("Notes for the advertiser (optional):") ?? "";
+    }
+    setActionId(id);
+    try {
+      await axiosInstance.patch(`/admin/promotions/${id}`, {
+        action,
+        reason,
+        notes,
+      });
+      await fetchData();
+    } catch (e: any) {
+      alert(e?.response?.data?.message ?? "Action failed");
+    } finally {
+      setActionId(null);
+    }
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-[1340px] mx-auto px-3 sm:px-4 py-6">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
-              <Megaphone size={20} className="text-yellow-700" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-gray-900">
-                Promo Campaigns
-              </h1>
-              <p className="text-xs text-gray-500">
-                Review, approve, and schedule vendor video promos
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={refresh}
-            className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50
-              text-gray-700 text-xs font-bold px-3 py-2 rounded-xl transition"
-          >
-            <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />{" "}
-            Refresh
-          </button>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900">Promotions</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Review video submissions, send payment links, mark campaigns live.
+          </p>
         </div>
+        <button
+          onClick={fetchData}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-sm font-bold text-gray-700"
+        >
+          <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />{" "}
+          Refresh
+        </button>
+      </div>
 
-        {/* Summary cards */}
-        {summary && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-            <SummaryTile
-              emoji="📊"
-              label="Total campaigns"
-              value={summary.total.toLocaleString()}
-            />
-            <SummaryTile
-              emoji="👀"
-              label="Need review"
-              value={(summary.byStatus.pending_review ?? 0).toLocaleString()}
-              highlight={(summary.byStatus.pending_review ?? 0) > 0}
-            />
-            <SummaryTile
-              emoji="💰"
-              label="Revenue (GHS)"
-              value={`₵${(summary.totalRevenue.GHS ?? 0).toLocaleString()}`}
-            />
-            <SummaryTile
-              emoji="💰"
-              label="Revenue (NGN)"
-              value={`₦${(summary.totalRevenue.NGN ?? 0).toLocaleString()}`}
-            />
-          </div>
-        )}
+      {/* Status chips */}
+      <div className="mt-6 flex flex-wrap gap-2">
+        {STATUS_TABS.map((tab) => {
+          const active = status === tab.key;
+          const count = data?.counts?.[tab.key] ?? 0;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setStatus(tab.key)}
+              className={`px-4 py-2 rounded-xl text-sm font-black flex items-center gap-2 transition ${
+                active
+                  ? "bg-gray-900 text-white"
+                  : "bg-white border border-gray-200 text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              {tab.label}
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-black ${
+                  active
+                    ? "bg-yellow-400 text-gray-900"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-        {/* Filter tabs */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-3 mb-4">
-          <div
-            className="flex items-center gap-2 overflow-x-auto"
-            style={{ scrollbarWidth: "none" }}
-          >
-            <Filter size={14} className="text-gray-400 flex-shrink-0" />
-            {FILTER_TABS.map((t) => {
-              const count =
-                t.id === "all"
-                  ? summary?.total
-                  : (summary?.byStatus[t.id] ?? 0);
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setFilter(t.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap
-                    transition flex items-center gap-1.5
-                    ${
-                      filter === t.id
-                        ? "bg-gray-900 text-yellow-400"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                >
-                  {t.label}
-                  {count !== undefined && (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded-full
-                      ${filter === t.id ? "bg-yellow-400 text-black" : "bg-white text-gray-700"}`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+      {/* Country + search */}
+      <div className="mt-4 flex flex-wrap gap-3 items-center">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          {[
+            { v: "", label: "All countries" },
+            { v: "Ghana", label: "🇬🇭 Ghana" },
+            { v: "Nigeria", label: "🇳🇬 Nigeria" },
+          ].map((c) => (
+            <button
+              key={c.v}
+              onClick={() => setCountry(c.v as any)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black ${
+                country === c.v
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
-
-        {/* Search */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-3 mb-4 flex items-center gap-2">
-          <Search size={14} className="text-gray-400" />
+        <div className="flex-1 max-w-md relative">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
           <input
+            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, vendor name, email…"
-            className="flex-1 text-sm outline-none bg-transparent"
+            placeholder="Search business, title, payment ref..."
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:border-yellow-400 outline-none"
           />
         </div>
+      </div>
 
-        {/* Table */}
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 size={28} className="animate-spin text-yellow-500" />
+      {/* Review banner */}
+      {(data?.counts?.submitted ?? 0) + (data?.counts?.paid ?? 0) > 0 && (
+        <div className="mt-4 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={18} className="text-orange-600 flex-shrink-0" />
+            <div className="flex-1 text-sm">
+              {(data?.counts?.submitted ?? 0) > 0 && (
+                <button
+                  onClick={() => setStatus("submitted")}
+                  className="font-black text-orange-900 hover:underline mr-3"
+                >
+                  {data!.counts.submitted} new to review
+                </button>
+              )}
+              {(data?.counts?.paid ?? 0) > 0 && (
+                <button
+                  onClick={() => setStatus("paid")}
+                  className="font-black text-orange-900 hover:underline"
+                >
+                  {data!.counts.paid} paid, ready to go live
+                </button>
+              )}
+            </div>
           </div>
-        ) : promos.length === 0 ? (
-          <div className="bg-white border border-gray-100 rounded-2xl py-16 text-center">
-            <Megaphone size={36} className="text-gray-200 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">No campaigns in {filter}.</p>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="mt-6 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center text-sm text-gray-500">Loading…</div>
+        ) : !data?.promotions.length ? (
+          <div className="p-12 text-center">
+            <div className="text-3xl">📭</div>
+            <div className="mt-3 font-black text-gray-700">
+              No promotions found
+            </div>
           </div>
         ) : (
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-            {/* Desktop table */}
-            <table className="hidden md:table w-full text-sm">
-              <thead
-                className="bg-gray-50 border-b border-gray-100 text-[11px]
-                font-black text-gray-500 tracking-wider uppercase"
-              >
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="text-left px-4 py-3">Campaign</th>
-                  <th className="text-left px-4 py-3">Vendor</th>
-                  <th className="text-left px-4 py-3">Tier</th>
-                  <th className="text-left px-4 py-3">Amount</th>
-                  <th className="text-left px-4 py-3">Status</th>
-                  <th className="text-left px-4 py-3">Submitted</th>
-                  <th className="text-right px-4 py-3">Action</th>
+                  <Th>BUSINESS</Th>
+                  <Th>TIER</Th>
+                  <Th>AMOUNT</Th>
+                  <Th>STATUS</Th>
+                  <Th>CREATED</Th>
+                  <Th align="right">ACTIONS</Th>
                 </tr>
               </thead>
-              <tbody>
-                {promos.map((p) => {
-                  const meta = STATUS_META[p.status];
-                  const sym = p.currency === "NGN" ? "₦" : "₵";
-                  return (
-                    <tr
-                      key={p._id}
-                      className="border-t border-gray-100 hover:bg-gray-50 transition"
-                    >
-                      <td className="px-4 py-3">
-                        <p className="font-bold text-gray-900 line-clamp-1">
-                          {p.title}
-                        </p>
-                        <p className="text-[11px] text-gray-500">{p.country}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-xs text-gray-900">
-                          {p.user?.username ?? "—"}
-                        </p>
-                        <p className="text-[10px] text-gray-500">
-                          {p.user?.email}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className="inline-block bg-yellow-100 text-yellow-700
-                          text-[10px] font-black px-2 py-0.5 rounded uppercase"
-                        >
-                          {p.tier}
-                        </span>
-                        <p className="text-[10px] text-gray-400 mt-0.5">
-                          {p.days} days
-                        </p>
-                      </td>
-                      <td className="px-4 py-3 text-xs font-bold text-gray-900">
-                        {sym}
-                        {p.amount.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`${meta.color} text-[10px] font-black px-2 py-1 rounded-full`}
-                        >
-                          {meta.emoji} {meta.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-[11px] text-gray-500">
-                        {new Date(p.createdAt).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => setSelected(p)}
-                          className="inline-flex items-center gap-1 bg-gray-900 hover:bg-gray-800
-                            text-yellow-400 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition"
-                        >
-                          <Eye size={11} /> Review
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+              <tbody className="divide-y divide-gray-100">
+                {data.promotions.map((p) => (
+                  <PromoRow
+                    key={p._id}
+                    promo={p}
+                    onAction={handleAction}
+                    actionLoading={actionId === p._id}
+                  />
+                ))}
               </tbody>
             </table>
+          </div>
+        )}
 
-            {/* Mobile cards */}
-            <div className="md:hidden divide-y divide-gray-100">
-              {promos.map((p) => {
-                const meta = STATUS_META[p.status];
-                const sym = p.currency === "NGN" ? "₦" : "₵";
-                return (
-                  <button
-                    key={p._id}
-                    onClick={() => setSelected(p)}
-                    className="w-full text-left p-4 hover:bg-gray-50 transition active:bg-gray-100"
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm text-gray-900 line-clamp-1">
-                          {p.title}
-                        </p>
-                        <p className="text-[11px] text-gray-500">
-                          {p.user?.username ?? "—"} · {p.country}
-                        </p>
-                      </div>
-                      <span
-                        className={`${meta.color} text-[10px] font-black px-2 py-0.5
-                        rounded-full whitespace-nowrap flex-shrink-0`}
-                      >
-                        {meta.emoji} {meta.label}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span
-                        className="bg-yellow-100 text-yellow-700 font-black
-                        px-2 py-0.5 rounded uppercase"
-                      >
-                        {p.tier} · {p.days}d
-                      </span>
-                      <span className="font-bold text-gray-900">
-                        {sym}
-                        {p.amount.toLocaleString()}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
+        {data && data.pagination.pages > 1 && (
+          <div className="p-4 border-t border-gray-100 flex items-center justify-between">
+            <div className="text-xs text-gray-500">
+              Page {data.pagination.page} of {data.pagination.pages} ·{" "}
+              {data.pagination.total} total
+            </div>
+            <div className="flex gap-1">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="w-8 h-8 rounded-lg border border-gray-200 disabled:opacity-30 flex items-center justify-center hover:bg-gray-50"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                disabled={page === data.pagination.pages}
+                onClick={() => setPage((p) => p + 1)}
+                className="w-8 h-8 rounded-lg border border-gray-200 disabled:opacity-30 flex items-center justify-center hover:bg-gray-50"
+              >
+                <ChevronRight size={14} />
+              </button>
             </div>
           </div>
         )}
       </div>
-
-      {/* Detail modal */}
-      {selected && (
-        <CampaignDetailModal
-          promo={selected}
-          onClose={() => setSelected(null)}
-          onUpdated={() => {
-            setSelected(null);
-            load();
-          }}
-        />
-      )}
-    </main>
-  );
-}
-
-// ─── Summary tile ───────────────────────────────────────────────────────────
-function SummaryTile({
-  emoji,
-  label,
-  value,
-  highlight,
-}: {
-  emoji: string;
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`bg-white border rounded-2xl p-4 transition
-      ${highlight ? "border-yellow-400 ring-2 ring-yellow-100" : "border-gray-100"}`}
-    >
-      <div className="text-2xl mb-1">{emoji}</div>
-      <p className="text-xl font-black text-gray-900">{value}</p>
-      <p className="text-[10px] text-gray-500 font-bold tracking-wider uppercase mt-0.5">
-        {label}
-      </p>
     </div>
   );
 }
 
-// ─── Detail / action modal ─────────────────────────────────────────────────
-function CampaignDetailModal({
+function Th({
+  children,
+  align,
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right";
+}) {
+  return (
+    <th
+      className={`px-4 py-3 text-[10px] font-black tracking-wider text-gray-500 text-${align ?? "left"}`}
+    >
+      {children}
+    </th>
+  );
+}
+
+function PromoRow({
   promo,
-  onClose,
-  onUpdated,
+  onAction,
+  actionLoading,
 }: {
   promo: Promotion;
-  onClose: () => void;
-  onUpdated: () => void;
+  onAction: (id: string, action: string) => void;
+  actionLoading: boolean;
 }) {
-  const [updating, setUpdating] = useState(false);
-  const [notes, setNotes] = useState(promo.adminNotes ?? "");
-  const [reason, setReason] = useState(promo.rejectionReason ?? "");
-  const [start, setStart] = useState(promo.scheduledStart?.slice(0, 16) ?? "");
-  const [end, setEnd] = useState(promo.scheduledEnd?.slice(0, 16) ?? "");
-  const [showRejectInput, setShowRejectInput] = useState(false);
-
-  const sym = promo.currency === "NGN" ? "₦" : "₵";
-
-  const update = async (status: string, extras: any = {}) => {
-    setUpdating(true);
-    try {
-      await axiosInstance.patch(`/admin/promotions/${promo._id}`, {
-        status,
-        adminNotes: notes,
-        ...extras,
-      });
-      toast.success(`Campaign ${status.replace("_", " ")}`);
-      onUpdated();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Update failed");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const approve = () => update("approved");
-  const reject = () => {
-    if (!reason.trim()) {
-      setShowRejectInput(true);
-      toast.info("Please provide a rejection reason");
-      return;
-    }
-    update("rejected", { rejectionReason: reason });
-  };
-  const schedule = () => {
-    if (!start || !end) {
-      toast.info("Please set start and end dates");
-      return;
-    }
-    update("scheduled", { scheduledStart: start, scheduledEnd: end });
-  };
-  const goLive = () => update("active");
-  const complete = () => update("completed");
-
+  const sym = promo.currency === "NGN" ? "₦" : "GHC";
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center
-      justify-center p-0 sm:p-4 overflow-y-auto"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        className="bg-white w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl
-        max-h-[95vh] overflow-y-auto"
-      >
-        {/* Header */}
-        <div
-          className="sticky top-0 bg-white border-b border-gray-100 p-4
-          flex items-center justify-between z-10"
+    <tr className="hover:bg-gray-50">
+      <td className="px-4 py-3">
+        <Link
+          href={`/admin/promotions/${promo._id}`}
+          className="flex items-center gap-3 group"
         >
-          <div className="flex-1 min-w-0 pr-3">
-            <p className="text-[10px] font-black text-yellow-700 tracking-wider">
-              CAMPAIGN DETAILS
-            </p>
-            <h2 className="text-base sm:text-lg font-black text-gray-900 truncate">
-              {promo.title}
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-full
-              flex items-center justify-center flex-shrink-0"
-          >
-            <X size={14} />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          {/* Video preview */}
-          <video
-            src={promo.videoUrl}
-            controls
-            className="w-full rounded-xl bg-black aspect-video"
-          />
-
-          {/* Status pill */}
-          <div className="flex items-center justify-center">
-            <span
-              className={`${STATUS_META[promo.status].color} text-sm font-black
-              px-4 py-1.5 rounded-full`}
-            >
-              {STATUS_META[promo.status].emoji}{" "}
-              {STATUS_META[promo.status].label}
-            </span>
-          </div>
-
-          {/* Plan + amount */}
-          <div className="grid grid-cols-3 gap-2">
-            <Stat label="Tier" value={promo.tier.toUpperCase()} />
-            <Stat label="Duration" value={`${promo.days} days`} />
-            <Stat
-              label="Amount"
-              value={`${sym}${promo.amount.toLocaleString()}`}
-            />
-          </div>
-
-          {/* Campaign info */}
-          <Section title="Campaign info">
-            {promo.description && (
-              <Field label="Description" value={promo.description} />
-            )}
-            {promo.promotionType && (
-              <Field label="Type" value={promo.promotionType} />
-            )}
-            {promo.targetRegion && (
-              <Field label="Target region" value={promo.targetRegion} />
-            )}
-            {promo.targetAudience && (
-              <Field label="Target audience" value={promo.targetAudience} />
-            )}
-            {promo.startDate && (
-              <Field
-                label="Preferred start"
-                value={new Date(promo.startDate).toLocaleDateString("en-GB", {
-                  dateStyle: "long",
-                })}
+          {promo.thumbnailUrl ? (
+            <div className="relative">
+              <img
+                src={promo.thumbnailUrl}
+                alt=""
+                className="w-14 h-10 rounded-lg object-cover"
               />
-            )}
-            <Field label="Country" value={promo.country} />
-          </Section>
-
-          {/* Vendor contact */}
-          <Section title="Vendor">
-            <Field
-              label="Name"
-              value={promo.contactName ?? promo.user?.username ?? "—"}
-            />
-            <Field
-              label="Email"
-              value={promo.contactEmail ?? promo.user?.email ?? "—"}
-              icon={<Mail size={12} />}
-            />
-            <Field
-              label="Phone"
-              value={promo.contactPhone ?? "—"}
-              icon={<Phone size={12} />}
-            />
-            {promo.preferredContact && (
-              <Field label="Preferred" value={promo.preferredContact} />
-            )}
-          </Section>
-
-          {/* Admin notes */}
-          <Section title="Admin notes">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              placeholder="Internal notes about this campaign (not visible to vendor)"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm
-                outline-none focus:border-yellow-400"
-            />
-          </Section>
-
-          {/* Reject reason */}
-          {(showRejectInput || promo.status === "rejected") && (
-            <Section title="Rejection reason (visible to vendor)">
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={2}
-                placeholder="Why was this campaign rejected?"
-                className="w-full border border-red-200 rounded-xl px-3 py-2 text-sm
-                  outline-none focus:border-red-400"
-              />
-            </Section>
-          )}
-
-          {/* Scheduling */}
-          {(promo.status === "paid" || promo.status === "scheduled") && (
-            <Section title="Schedule">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-[11px] font-bold text-gray-700 mb-1">
-                    Start
-                  </p>
-                  <input
-                    type="datetime-local"
-                    value={start}
-                    onChange={(e) => setStart(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-2 py-1.5 text-xs
-                      outline-none focus:border-yellow-400"
-                  />
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-gray-700 mb-1">
-                    End
-                  </p>
-                  <input
-                    type="datetime-local"
-                    value={end}
-                    onChange={(e) => setEnd(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-2 py-1.5 text-xs
-                      outline-none focus:border-yellow-400"
-                  />
-                </div>
-              </div>
-            </Section>
-          )}
-
-          {/* Action buttons — adapt to current status */}
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-[10px] font-black text-gray-500 tracking-wider mb-2">
-              ACTIONS
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {promo.status === "pending_review" && (
-                <>
-                  <ActionBtn
-                    onClick={approve}
-                    disabled={updating}
-                    color="green"
-                    icon={<CheckCircle2 size={14} />}
-                    label="Approve"
-                  />
-                  <ActionBtn
-                    onClick={() => setShowRejectInput(true)}
-                    disabled={updating}
-                    color="red"
-                    icon={<XCircle size={14} />}
-                    label="Reject"
-                  />
-                </>
-              )}
-
-              {showRejectInput &&
-                promo.status === "pending_review" &&
-                reason.trim() && (
-                  <ActionBtn
-                    onClick={reject}
-                    disabled={updating}
-                    color="red"
-                    icon={<XCircle size={14} />}
-                    label="Confirm rejection"
-                  />
-                )}
-
-              {promo.status === "paid" && (
-                <ActionBtn
-                  onClick={schedule}
-                  disabled={updating || !start || !end}
-                  color="indigo"
-                  icon={<Calendar size={14} />}
-                  label="Schedule"
-                />
-              )}
-
-              {promo.status === "scheduled" && (
-                <ActionBtn
-                  onClick={goLive}
-                  disabled={updating}
-                  color="pink"
-                  icon={<Play size={14} />}
-                  label="Go Live"
-                />
-              )}
-
-              {promo.status === "active" && (
-                <ActionBtn
-                  onClick={complete}
-                  disabled={updating}
-                  color="gray"
-                  icon={<Check size={14} />}
-                  label="Mark complete"
-                />
-              )}
-
-              {/* Always available — save notes */}
-              <ActionBtn
-                onClick={() => update(promo.status)}
-                disabled={updating}
-                color="yellow"
-                icon={<MessageSquare size={14} />}
-                label="Save notes"
+              <Play
+                size={12}
+                className="absolute inset-0 m-auto text-white drop-shadow"
+                fill="currentColor"
               />
             </div>
+          ) : (
+            <div className="w-14 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+              <Play size={12} className="text-gray-500" />
+            </div>
+          )}
+          <div>
+            <div
+              className="text-sm font-black text-gray-900 group-hover:text-yellow-700 truncate"
+              style={{ maxWidth: 200 }}
+            >
+              {promo.businessName}
+            </div>
+            <div
+              className="text-[10px] text-gray-500 mt-0.5 truncate"
+              style={{ maxWidth: 200 }}
+            >
+              {promo.title || promo.category || "—"}
+            </div>
+          </div>
+        </Link>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-xs font-black text-gray-700 capitalize">
+          {promo.tier}
+        </span>
+        <div className="text-[10px] text-gray-500">{promo.days} days</div>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-sm font-black text-gray-900">
+          {sym} {promo.amount.toLocaleString()}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <StatusBadge status={promo.status} />
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-xs text-gray-600">
+          {new Date(promo.createdAt).toLocaleDateString()}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <ActionMenu promo={promo} onAction={onAction} loading={actionLoading} />
+      </td>
+    </tr>
+  );
+}
 
-            {updating && (
-              <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-gray-500">
-                <Loader2 size={12} className="animate-spin" /> Updating…
+function StatusBadge({ status }: { status: string }) {
+  const cfg: Record<string, { label: string; cls: string }> = {
+    submitted: { label: "New", cls: "bg-blue-100    text-blue-800" },
+    under_review: { label: "Reviewing", cls: "bg-purple-100  text-purple-800" },
+    payment_pending: {
+      label: "Awaiting payment",
+      cls: "bg-yellow-100 text-yellow-800",
+    },
+    paid: { label: "Paid", cls: "bg-emerald-100 text-emerald-800" },
+    live: { label: "Live", cls: "bg-green-100   text-green-800" },
+    expired: { label: "Expired", cls: "bg-gray-100    text-gray-500" },
+    rejected: { label: "Rejected", cls: "bg-red-100     text-red-800" },
+    refunded: { label: "Refunded", cls: "bg-orange-100  text-orange-800" },
+  };
+  const c = cfg[status] ?? { label: status, cls: "bg-gray-100 text-gray-700" };
+  return (
+    <span className={`px-2 py-0.5 rounded text-[10px] font-black ${c.cls}`}>
+      {c.label}
+    </span>
+  );
+}
+
+function ActionMenu({ promo, onAction, loading }: any) {
+  const [open, setOpen] = useState(false);
+
+  const options: {
+    label: string;
+    action: string;
+    icon: React.ReactNode;
+    danger?: boolean;
+  }[] = [];
+  if (promo.status === "submitted") {
+    options.push({
+      label: "Start review",
+      action: "start_review",
+      icon: <Eye size={13} />,
+    });
+    options.push({
+      label: "Send payment link",
+      action: "send_payment_link",
+      icon: <DollarSign size={13} />,
+    });
+    options.push({
+      label: "Reject",
+      action: "reject",
+      icon: <X size={13} />,
+      danger: true,
+    });
+  } else if (promo.status === "under_review") {
+    options.push({
+      label: "Send payment link",
+      action: "send_payment_link",
+      icon: <DollarSign size={13} />,
+    });
+    options.push({
+      label: "Reject",
+      action: "reject",
+      icon: <X size={13} />,
+      danger: true,
+    });
+  } else if (promo.status === "paid") {
+    options.push({
+      label: "Mark live now",
+      action: "mark_live",
+      icon: <Check size={13} />,
+    });
+    options.push({
+      label: "Refund",
+      action: "refund",
+      icon: <DollarSign size={13} />,
+    });
+  } else if (promo.status === "live") {
+    options.push({
+      label: "Expire now",
+      action: "expire",
+      icon: <Clock size={13} />,
+    });
+    options.push({
+      label: "Refund",
+      action: "refund",
+      icon: <DollarSign size={13} />,
+    });
+  }
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        disabled={loading}
+        className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center"
+      >
+        <MoreVertical size={14} />
+      </button>
+      {open && (
+        <>
+          <button
+            className="fixed inset-0 z-10"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl border border-gray-200 shadow-lg z-20 py-1">
+            {options.length === 0 && (
+              <div className="px-3 py-2 text-xs text-gray-400">
+                No actions available
               </div>
             )}
+            {options.map((o) => (
+              <button
+                key={o.action}
+                onClick={() => {
+                  setOpen(false);
+                  onAction(promo._id, o.action);
+                }}
+                className={`w-full px-3 py-2 text-left text-xs font-bold flex items-center gap-2 hover:bg-gray-50 ${
+                  o.danger ? "text-red-600" : "text-gray-700"
+                }`}
+              >
+                {o.icon} {o.label}
+              </button>
+            ))}
+            <Link
+              href={`/admin/promotions/${promo._id}`}
+              className="block px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 border-t border-gray-100"
+            >
+              View details →
+            </Link>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
-  );
-}
-
-// ─── Presentational helpers ────────────────────────────────────────────────
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <p className="text-[10px] font-black text-gray-500 tracking-wider mb-2">
-        {title.toUpperCase()}
-      </p>
-      <div className="bg-gray-50 rounded-xl p-3 space-y-2">{children}</div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <p className="text-[11px] text-gray-500 font-medium">{label}</p>
-      <p className="text-xs text-gray-900 font-medium text-right flex items-center gap-1">
-        {icon} {value}
-      </p>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-gray-50 rounded-xl p-3 text-center">
-      <p className="text-sm font-black text-gray-900">{value}</p>
-      <p className="text-[9px] text-gray-500 font-bold tracking-wider mt-0.5">
-        {label.toUpperCase()}
-      </p>
-    </div>
-  );
-}
-
-function ActionBtn({
-  onClick,
-  disabled,
-  color,
-  icon,
-  label,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-  color: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  const colors: Record<string, string> = {
-    green: "bg-green-500 hover:bg-green-600 text-white",
-    red: "bg-red-500 hover:bg-red-600 text-white",
-    indigo: "bg-indigo-500 hover:bg-indigo-600 text-white",
-    pink: "bg-pink-500 hover:bg-pink-600 text-white",
-    gray: "bg-gray-700 hover:bg-gray-800 text-white",
-    yellow: "bg-yellow-400 hover:bg-yellow-300 text-black",
-  };
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`${colors[color]} font-black text-xs py-2.5 rounded-xl transition
-        flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed
-        active:scale-95`}
-    >
-      {icon} {label}
-    </button>
   );
 }

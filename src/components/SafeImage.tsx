@@ -1,60 +1,138 @@
-"use client";
 // src/components/SafeImage.tsx
-// Drop-in replacement for next/image that handles Cloudinary 404s gracefully.
 //
-// When a Cloudinary image doesn't exist, the browser gets a 404 directly
-// (via our custom cloudinaryLoader — no server proxy). SafeImage catches
-// the error with onError and renders a clean placeholder instead of a
-// broken image icon.
+// Wraps Next.js Image with a fallback that renders when Cloudinary
+// (or any remote host) returns 404. Instead of a broken image icon or
+// server-log spam, users see a subtle placeholder.
 //
-// Usage — same API as next/image:
-//   <SafeImage src={ad.images?.[0]?.url} alt={ad.title} fill className="object-cover" />
-//   <SafeImage src={user.profilePicture} alt="avatar" width={40} height={40} />
+// Uses the custom cloudinaryLoader configured in next.config.ts, so
+// Cloudinary URLs are fetched directly by the browser — no server proxy.
+//
+// USAGE:
+//   <SafeImage src={promo.coverImage} alt={promo.title} width={640} height={360} />
+//   <SafeImage src={ad.coverImage} alt={ad.title} fill className="object-cover" />
 
-import React, { useState } from "react";
-import Image, { ImageProps } from "next/image";
+"use client";
+
+import Image, { type ImageProps } from "next/image";
+import { useState, useEffect } from "react";
 import { ImageOff } from "lucide-react";
 
-type SafeImageProps = Omit<ImageProps, "src"> & {
-  src?: string | null; // allow null/undefined — shows placeholder
-  fallbackClassName?: string; // extra classes on the fallback container
-  fallbackIcon?: React.ReactNode; // custom fallback icon
-};
+// A tiny transparent 1x1 as final fallback so Image never explodes
+const TRANSPARENT_PX =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+interface SafeImageProps extends Omit<ImageProps, "src" | "onError"> {
+  src?: string | null;
+  fallbackSrc?: string;
+  fallbackEmoji?: string;   // shown when the fallback also fails
+  showBrokenIcon?: boolean; // show ImageOff icon instead of emoji
+}
 
 export default function SafeImage({
   src,
-  alt = "",
-  fallbackClassName = "",
-  fallbackIcon,
-  className = "",
-  ...props
+  alt,
+  fallbackSrc,
+  fallbackEmoji = "📺",
+  showBrokenIcon = false,
+  className,
+  ...rest
 }: SafeImageProps) {
-  const [errored, setErrored] = useState(false);
+  // Track which src we're trying
+  const [current, setCurrent] = useState<string | null>(src ?? null);
+  const [broken,  setBroken]  = useState(false);
 
-  const showFallback = errored || !src || src.trim() === "";
+  // Reset when the incoming src changes (parent re-render with new promo, etc.)
+  useEffect(() => {
+    setCurrent(src ?? null);
+    setBroken(false);
+  }, [src]);
 
-  if (showFallback) {
+  // No src at all, or completely broken — render placeholder
+  if (!current || broken) {
     return (
       <div
-        className={`flex items-center justify-center bg-gray-100 w-full h-full
-          ${fallbackClassName}`}
-        role="img"
-        aria-label={alt || "Image unavailable"}
+        className={`flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${className ?? ""}`}
+        style={rest.fill ? { position: "absolute", inset: 0 } : undefined}
       >
-        {fallbackIcon ?? <ImageOff size={24} className="text-gray-300" />}
+        {showBrokenIcon ? (
+          <ImageOff size={24} className="text-gray-400" />
+        ) : (
+          <span className="text-3xl opacity-50">{fallbackEmoji}</span>
+        )}
       </div>
     );
   }
 
   return (
     <Image
-      src={src}
+      {...rest}
+      src={current}
       alt={alt}
       className={className}
-      onError={() => setErrored(true)}
-      // Prevent Next.js from throwing on 404 — we handle it via onError
-      unoptimized={false}
-      {...props}
+      onError={() => {
+        // Try the fallback src once, then give up and show placeholder
+        if (fallbackSrc && current !== fallbackSrc) {
+          console.warn(`[SafeImage] ${current} failed, trying fallback`);
+          setCurrent(fallbackSrc);
+        } else {
+          console.warn(`[SafeImage] ${current} failed, showing placeholder`);
+          setBroken(true);
+        }
+      }}
+    />
+  );
+}
+
+// ─── Alternative: plain <img> version ────────────────────────────────
+// If you're NOT using next/image everywhere and prefer plain img tags,
+// use this instead. Same fallback behavior, no Next.js dependency.
+//
+// USAGE:
+//   <SafeImg src={promo.coverImage} alt="..." className="w-full aspect-video" />
+
+interface SafeImgProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
+  src?: string | null;
+  fallbackSrc?: string;
+  fallbackEmoji?: string;
+}
+
+export function SafeImg({
+  src,
+  fallbackSrc,
+  fallbackEmoji = "📺",
+  alt = "",
+  className,
+  ...rest
+}: SafeImgProps) {
+  const [current, setCurrent] = useState<string | null>(src ?? null);
+  const [broken,  setBroken]  = useState(false);
+
+  useEffect(() => {
+    setCurrent(src ?? null);
+    setBroken(false);
+  }, [src]);
+
+  if (!current || broken) {
+    return (
+      <div className={`flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${className ?? ""}`}>
+        <span className="text-3xl opacity-50">{fallbackEmoji}</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      {...rest}
+      src={current}
+      alt={alt}
+      className={className}
+      onError={() => {
+        if (fallbackSrc && current !== fallbackSrc) {
+          setCurrent(fallbackSrc);
+        } else {
+          setBroken(true);
+        }
+      }}
     />
   );
 }

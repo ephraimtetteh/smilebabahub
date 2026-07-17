@@ -1,59 +1,95 @@
-"use client";
-
-// src/app/promote/page.tsx — Promote landing page
+// frontend/app/promote/page.tsx
 //
-// Sections:
-//   - Hero with live stats (pulled from GET /promote/stats)
-//   - Tier picker (pulled from GET /promote/pricing)
-//   - "How it works" 3-step illustration
-//   - Social proof / FAQ
-// Calls-to-action route to /promote/submit?tier=growth
+// Rebuilt from your original design. Wired to the new backend contract.
+// Robust: shows visible loading/error/empty states, console-logs everything.
+
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ChevronLeft,
   Sparkles,
-  Radio,
+  ArrowRight,
   Tv2,
+  Radio,
   Share2,
   Users,
-  ChevronLeft,
-  CheckCircle2,
-  Upload,
-  FileVideo,
-  Megaphone,
-  Star,
-  Tv,
-  ArrowRight,
   Loader2,
+  AlertCircle,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
+import { useAppSelector } from "../redux";
 import axiosInstance from "@/src/lib/api/axios";
-import { useAppSelector } from "@/src/app/redux";
-import type { PromoTierDef, PromoStats } from "./components/types";
 
+
+// ─── Types ───────────────────────────────────────────────────────────
+interface PromoTierDef {
+  id: string;
+  label: string;
+  price: number;
+  days: number;
+  perks: string[];
+  badge?: string;
+  currency?: string;
+  currencySymbol?: string;
+  channels?: string[];
+}
+
+interface PromoStats {
+  businessesPromoting: number;
+  monthlyViews: number;
+  activeListeners: number;
+  engagementRate: number;
+  avgGoLiveHours: number;
+}
+
+// ═════════════════════════════════════════════════════════════════════
 export default function PromoteLanding() {
   const router = useRouter();
   const user = useAppSelector((s) => s.auth?.user);
   const country = user?.country ?? "Ghana";
   const currency = country === "Nigeria" ? "NGN" : "GHS";
-  const sym = currency === "NGN" ? "₦" : "₵";
+  const sym = currency === "NGN" ? "₦" : "GHC";
 
   const [tiers, setTiers] = useState<PromoTierDef[]>([]);
   const [stats, setStats] = useState<PromoStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load tiers + live stats in parallel
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    console.log("[promote] loading pricing + stats for currency:", currency);
+
+    try {
+      const [pricingRes, statsRes] = await Promise.all([
+        axiosInstance.get(`/promote/pricing?currency=${currency}`),
+        axiosInstance.get("/promote/stats").catch((e) => {
+          console.warn("[promote] stats failed (non-fatal):", e.message);
+          return null;
+        }),
+      ]);
+
+      console.log("[promote] pricing:", pricingRes.data);
+      console.log("[promote] stats:", statsRes?.data);
+
+      setTiers(pricingRes.data.tiers ?? []);
+      if (statsRes) setStats(statsRes.data);
+    } catch (e: any) {
+      console.error("[promote] load failed:", e);
+      setError(
+        e?.response?.data?.message ?? e.message ?? "Could not load pricing",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([
-      axiosInstance.get(`/promote/pricing?currency=${currency}`),
-      axiosInstance.get("/promote/stats").catch(() => null),
-    ])
-      .then(([pricingRes, statsRes]) => {
-        setTiers(pricingRes.data.tiers ?? []);
-        if (statsRes) setStats(statsRes.data);
-      })
-      .finally(() => setLoading(false));
+    load();
   }, [currency]);
 
   const formatNum = (n: number) => {
@@ -64,24 +100,19 @@ export default function PromoteLanding() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      {/* ═══ HERO ═══ */}
       <section className="bg-gradient-to-br from-orange-600 via-red-600 to-pink-700 text-white">
         <div className="max-w-[1340px] mx-auto px-3 sm:px-4 py-10 sm:py-14">
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-xs text-white/70
-              hover:text-white mb-4 font-medium"
+            className="inline-flex items-center gap-1 text-xs text-white/70 hover:text-white mb-4 font-medium"
           >
             <ChevronLeft size={14} /> Back to home
           </Link>
 
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div>
-              <span
-                className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur
-                border border-white/20 text-yellow-200 text-xs font-bold
-                px-3 py-1 rounded-full mb-4"
-              >
+              <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur border border-white/20 text-yellow-200 text-xs font-bold px-3 py-1 rounded-full mb-4">
                 <Sparkles size={11} /> Promote your business
               </span>
 
@@ -110,9 +141,7 @@ export default function PromoteLanding() {
                 ].map((t) => (
                   <span
                     key={t.label}
-                    className="inline-flex items-center gap-1.5
-                    bg-white/10 backdrop-blur text-white text-[11px] font-bold
-                    px-2.5 py-1 rounded-full"
+                    className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur text-white text-[11px] font-bold px-2.5 py-1 rounded-full"
                   >
                     {t.icon} {t.label}
                   </span>
@@ -121,9 +150,7 @@ export default function PromoteLanding() {
 
               <Link
                 href="/promote/submit"
-                className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300
-                  text-black font-black px-6 py-3 rounded-2xl text-sm transition
-                  active:scale-95 shadow-xl"
+                className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-black px-6 py-3 rounded-2xl text-sm transition active:scale-95 shadow-xl"
               >
                 Start promoting <ArrowRight size={14} />
               </Link>
@@ -173,7 +200,7 @@ export default function PromoteLanding() {
         </div>
       </section>
 
-      {/* ── PRICING ──────────────────────────────────────────────────── */}
+      {/* ═══ PRICING ═══ */}
       <section className="max-w-[1340px] mx-auto px-3 sm:px-4 py-8 sm:py-12">
         <div className="text-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-2">
@@ -184,38 +211,62 @@ export default function PromoteLanding() {
           </p>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-12">
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-12">
             <Loader2 size={28} className="animate-spin text-yellow-500" />
+            <p className="mt-3 text-sm font-bold text-gray-500">
+              Loading plans…
+            </p>
           </div>
-        ) : (
+        )}
+
+        {!loading && error && (
+          <div className="max-w-md mx-auto bg-red-50 border-2 border-red-200 rounded-2xl p-6 text-center">
+            <AlertCircle size={28} className="mx-auto text-red-500" />
+            <div className="mt-3 font-black text-red-900">
+              Could not load pricing
+            </div>
+            <p className="mt-1 text-sm text-red-700">{error}</p>
+            <button
+              onClick={load}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white font-black text-sm hover:bg-red-700"
+            >
+              <RefreshCw size={14} /> Try again
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && tiers.length === 0 && (
+          <div className="max-w-md mx-auto bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-6 text-center">
+            <div className="text-3xl">📋</div>
+            <div className="mt-3 font-black text-gray-900">
+              No plans available yet
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && tiers.length > 0 && (
           <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {tiers.map((tier) => (
               <Link
                 key={tier.id}
                 href={`/promote/submit?tier=${tier.id}`}
-                className={`relative text-left bg-white rounded-2xl p-6
-                  border-2 transition group hover:-translate-y-1 hover:shadow-xl
-                  ${
-                    tier.badge === "Most Popular"
-                      ? "border-yellow-400 scale-105 shadow-lg"
-                      : "border-gray-100 hover:border-yellow-200"
-                  }`}
+                className={`relative text-left bg-white rounded-2xl p-6 border-2 transition group hover:-translate-y-1 hover:shadow-xl ${
+                  tier.badge === "Most Popular"
+                    ? "border-yellow-400 scale-105 shadow-lg"
+                    : "border-gray-100 hover:border-yellow-200"
+                }`}
               >
                 {tier.badge && (
-                  <span
-                    className="absolute -top-2 right-4 bg-yellow-400 text-black
-                    text-[10px] font-black px-2 py-0.5 rounded-full"
-                  >
+                  <span className="absolute -top-2 right-4 bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded-full">
                     {tier.badge}
                   </span>
                 )}
-
                 <h3 className="text-lg font-black text-gray-900 mb-1">
                   {tier.label}
                 </h3>
                 <p className="text-3xl font-black text-gray-900 mb-1">
-                  {sym}
+                  {tier.currencySymbol ?? sym}
                   {tier.price.toLocaleString()}
                 </p>
                 <p className="text-[10px] text-gray-400 mb-4">
@@ -235,9 +286,7 @@ export default function PromoteLanding() {
                 </ul>
 
                 <div
-                  className={`w-full py-2.5 rounded-xl text-xs font-black text-center
-                  transition
-                  ${
+                  className={`w-full py-2.5 rounded-xl text-xs font-black text-center transition ${
                     tier.badge === "Most Popular"
                       ? "bg-yellow-400 text-black"
                       : "bg-gray-100 text-gray-700 group-hover:bg-gray-900 group-hover:text-yellow-400"
@@ -251,7 +300,7 @@ export default function PromoteLanding() {
         )}
       </section>
 
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
+      {/* ═══ HOW IT WORKS ═══ */}
       <section className="bg-white py-10 sm:py-14">
         <div className="max-w-[1340px] mx-auto px-3 sm:px-4">
           <h2 className="text-2xl sm:text-3xl font-black text-gray-900 text-center mb-2">
@@ -283,10 +332,7 @@ export default function PromoteLanding() {
               },
             ].map((s) => (
               <div key={s.n} className="text-center">
-                <div
-                  className="w-16 h-16 mx-auto bg-yellow-100 rounded-3xl
-                  flex items-center justify-center mb-3 text-3xl"
-                >
+                <div className="w-16 h-16 mx-auto bg-yellow-100 rounded-3xl flex items-center justify-center mb-3 text-3xl">
                   {s.emoji}
                 </div>
                 <p className="text-xs font-black text-yellow-600 tracking-wider mb-1">
@@ -302,12 +348,11 @@ export default function PromoteLanding() {
         </div>
       </section>
 
-      {/* ── REACH BREAKDOWN ─────────────────────────────────────────── */}
+      {/* ═══ REACH ═══ */}
       <section className="max-w-[1340px] mx-auto px-3 sm:px-4 py-10 sm:py-14">
         <h2 className="text-2xl sm:text-3xl font-black text-gray-900 text-center mb-8">
           Where your video will appear
         </h2>
-
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             {
@@ -333,8 +378,7 @@ export default function PromoteLanding() {
           ].map((s) => (
             <div
               key={s.title}
-              className="bg-white border border-gray-100 rounded-2xl p-5
-                hover:shadow-md transition"
+              className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md transition"
             >
               <div className="text-3xl mb-2">{s.emoji}</div>
               <p className="font-black text-gray-900 mb-1">{s.title}</p>
@@ -344,7 +388,7 @@ export default function PromoteLanding() {
         </div>
       </section>
 
-      {/* ── BOTTOM CTA ──────────────────────────────────────────────── */}
+      {/* ═══ BOTTOM CTA ═══ */}
       <section className="bg-gray-900 text-white">
         <div className="max-w-[1340px] mx-auto px-3 sm:px-4 py-10 sm:py-14 text-center">
           <h2 className="text-2xl sm:text-3xl font-black mb-3">
@@ -355,9 +399,7 @@ export default function PromoteLanding() {
           </p>
           <Link
             href="/promote/submit"
-            className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300
-              text-black font-black px-6 py-3 rounded-2xl text-sm transition
-              active:scale-95 shadow-xl"
+            className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-black px-6 py-3 rounded-2xl text-sm transition active:scale-95 shadow-xl"
           >
             <Sparkles size={14} /> Start your campaign
           </Link>

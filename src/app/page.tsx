@@ -35,6 +35,8 @@ import ProductCarousel from "@/src/components/home/ProductCarousel";
 import TrustBar from "@/src/components/home/TrustBar";
 import MobileBottomNav from "@/src/components/home/MobileBottomNav";
 import Video from "../components/Video";
+import { ActivePromotions } from "../components/promote/ActivePromotions";
+
 
 const HOMEPAGE_CATEGORIES = [
   "food",
@@ -67,7 +69,7 @@ export default function HomePage() {
       </div>
 
       {/* ─── MOBILE ONLY: horizontal news cards ─── */}
-      <NewsCards />
+      {/* <NewsCards /> */}
 
       {/* ─── MOBILE ONLY: shortcuts emoji grid ─── */}
       <MobileShortcuts />
@@ -87,14 +89,18 @@ export default function HomePage() {
             <CategorySidebar title="SHOP BY CATEGORY" viewAllHref="/ads" />
           </div>
 
-          {/* Live Radio — full width on mobile, half on sm, 1/4 on lg */}
-          <div className="col-span-1 sm:col-span-1 lg:col-span-3">
-            <LiveRadioCard />
-          </div>
-
           {/* Live TV — full width on mobile, half on sm, 1/4 on lg */}
           <div className="col-span-1 sm:col-span-1 lg:col-span-3">
             <LiveTvCard />
+          </div>
+
+          {/* ─── MOBILE ONLY: horizontal news cards ─── */}
+          {/* <NewsCards /> */}
+          {/* <ActivePromotions /> */}
+
+          {/* Live Radio — full width on mobile, half on sm, 1/4 on lg */}
+          <div className="col-span-1 sm:col-span-1 lg:col-span-3">
+            <LiveRadioCard />
           </div>
 
           {/* Highlights — hidden on mobile (replaced by carousels below), shown on lg+ */}

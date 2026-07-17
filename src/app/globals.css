@@ -160,3 +160,12 @@
 .animate-floatin {
   animation: floatin 400ms ease-out;
 }
+
+
+@keyframes fadeslide {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeslide {
+  animation: fadeslide 400ms ease-out;
+}

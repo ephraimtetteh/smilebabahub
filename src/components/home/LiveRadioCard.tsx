@@ -41,17 +41,19 @@ export default function LiveRadioCard() {
 
       <div
         className="bg-[#0a0a0a] rounded-2xl overflow-hidden border border-gray-900
-        flex flex-col min-h-[480px] sm:min-h-[560px] relative"
+        flex flex-col min-h-[480px] sm:min-h-[560px] relative mb-5"
       >
         <div className="flex-1 flex items-center justify-center p-6 relative z-10">
           <div className="text-center w-full">
             {/* Logo */}
             <div className="flex items-center justify-center gap-1 mb-1">
-              <span className="text-2xl font-black text-yellow-400">SmileBaba</span>
+              <span className="text-xl font-black text-yellow-400">
+                SmileBaba RADIO
+              </span>
             </div>
-            <p className="text-lg font-bold text-white -mt-1 tracking-wide">
-             RADIO
-            </p>
+            {/* <p className="text-lg font-bold text-white -mt-1 tracking-wide">
+              RADIO
+            </p> */}
             <p className="text-[10px] text-gray-500 italic mt-1">
               Your smile, our pride
             </p>
@@ -100,7 +102,7 @@ export default function LiveRadioCard() {
             </button>
 
             {/* Now playing */}
-            <div className="mt-6">
+            {/* <div className="mt-6">
               <p className="text-[10px] text-gray-500 font-bold tracking-wider">
                 NOW PLAYING
               </p>
@@ -108,7 +110,7 @@ export default function LiveRadioCard() {
                 The Best of African Hits
               </p>
               <p className="text-xs text-gray-400">DJ Nii Wayne</p>
-            </div>
+            </div> */}
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3 mt-5">

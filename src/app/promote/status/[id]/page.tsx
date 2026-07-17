@@ -1,8 +1,10 @@
 "use client";
 
 // src/app/promote/status/[id]/page.tsx
+//
 // Status page for an individual promotion campaign.
-// Shows current status, paid receipt, payment link if approved, etc.
+// Aligned with the backend workflow: submitted → under_review →
+// payment_pending → paid → live → expired (with reject/refund branches).
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -12,30 +14,72 @@ import {
   ChevronLeft,
   CreditCard,
   CheckCircle2,
-  AlertCircle,
   XCircle,
   Clock,
   Sparkles,
-  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/src/lib/api/axios";
-import { STATUS_META, type Promotion } from "../../components/types";
+import type { Promotion } from "../../components/types";
+
+// ─── Status metadata (runtime object — used to render each state) ──────
+const STATUS_META: Record<
+  string,
+  { label: string; emoji: string; color: string }
+> = {
+  submitted: {
+    label: "Awaiting review",
+    emoji: "📥",
+    color: "bg-yellow-100 text-yellow-800",
+  },
+  under_review: {
+    label: "Under review",
+    emoji: "👀",
+    color: "bg-purple-100 text-purple-800",
+  },
+  payment_pending: {
+    label: "Approved · pay now",
+    emoji: "💳",
+    color: "bg-blue-100 text-blue-800",
+  },
+  paid: {
+    label: "Payment received",
+    emoji: "✅",
+    color: "bg-emerald-100 text-emerald-800",
+  },
+  live: { label: "🔴 LIVE now", emoji: "🚀", color: "bg-red-100 text-red-800" },
+  expired: {
+    label: "Campaign ended",
+    emoji: "🏁",
+    color: "bg-gray-100 text-gray-700",
+  },
+  rejected: {
+    label: "Not approved",
+    emoji: "🚫",
+    color: "bg-red-100 text-red-800",
+  },
+  refunded: {
+    label: "Refunded",
+    emoji: "💸",
+    color: "bg-orange-100 text-orange-800",
+  },
+};
 
 export default function StatusPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const search = useSearchParams();
   const id = params?.id;
-  const queryStatus = search.get("status"); // ?status=paid|failed|amount_mismatch
+  const queryStatus = search.get("status");
 
   const [promo, setPromo] = useState<Promotion | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
 
-  // Load campaign details
-  useEffect(() => {
+  const load = () => {
     if (!id) return;
+    setLoading(true);
     axiosInstance
       .get("/promote/my")
       .then(({ data }) => {
@@ -49,9 +93,10 @@ export default function StatusPage() {
       })
       .catch(() => toast.error("Failed to load campaign"))
       .finally(() => setLoading(false));
-  }, [id, router]);
+  };
 
-  // Show toasts for ?status= query param after Flutterwave redirect
+  useEffect(load, [id, router]);
+
   useEffect(() => {
     if (queryStatus === "paid") toast.success("Payment received!");
     else if (queryStatus === "failed")
@@ -65,8 +110,9 @@ export default function StatusPage() {
     setPaying(true);
     try {
       const { data } = await axiosInstance.post(`/promote/${promo._id}/pay`);
-      // Redirect to Flutterwave hosted checkout
-      window.location.href = data.paymentLink;
+      // Backend returns { status, checkoutUrl, txRef }
+      if (!data.checkoutUrl) throw new Error("No checkout URL returned");
+      window.location.href = data.checkoutUrl;
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Failed to start payment");
       setPaying(false);
@@ -80,60 +126,83 @@ export default function StatusPage() {
       </main>
     );
   }
-
   if (!promo) return null;
 
-  const meta = STATUS_META[promo.status];
+  const meta = STATUS_META[promo.status] ?? STATUS_META.submitted;
   const sym = promo.currency === "NGN" ? "₦" : "₵";
-  const canPay =
-    promo.status === "approved" || promo.status === "pending_payment";
+  const canPay = promo.status === "payment_pending";
+  const cover = promo.coverImage || promo.thumbnailUrl;
 
   return (
     <main className="min-h-screen bg-gray-50">
+      {/* ─── Top bar ─── */}
       <section className="bg-white border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-5">
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-5 flex items-center justify-between">
           <Link
             href="/promote"
-            className="inline-flex items-center gap-1 text-xs text-gray-500
-              hover:text-gray-900"
+            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900"
           >
             <ChevronLeft size={13} /> Back to promote
           </Link>
+          <button
+            onClick={load}
+            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 font-bold"
+          >
+            <RefreshCw size={12} /> Refresh
+          </button>
         </div>
       </section>
 
       <div className="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-10 space-y-5">
-        {/* Big status card */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm text-center">
-          <div className="text-6xl mb-3">{meta.emoji}</div>
-          <span
-            className={`inline-block ${meta.color} text-sm font-black px-4 py-1.5 rounded-full mb-3`}
-          >
-            {meta.label}
-          </span>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 mb-1">
-            {promo.title}
-          </h1>
-          <p className="text-sm text-gray-500">
-            Submitted{" "}
-            {new Date(promo.createdAt).toLocaleDateString("en-GH", {
-              dateStyle: "long",
-            })}
-          </p>
+        {/* ─── Big status card ─── */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          {cover && (
+            <div className="aspect-video bg-gray-100 relative">
+              <img
+                src={cover}
+                alt={promo.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <span
+                className={`absolute top-4 left-4 ${meta.color} text-xs font-black px-3 py-1 rounded-full`}
+              >
+                {meta.label}
+              </span>
+            </div>
+          )}
+          <div className="p-6 sm:p-8 text-center">
+            {!cover && <div className="text-6xl mb-3">{meta.emoji}</div>}
+            {!cover && (
+              <span
+                className={`inline-block ${meta.color} text-sm font-black px-4 py-1.5 rounded-full mb-3`}
+              >
+                {meta.label}
+              </span>
+            )}
+            <h1 className="text-xl sm:text-2xl font-black text-gray-900 mb-1">
+              {promo.title}
+            </h1>
+            <p className="text-sm text-gray-500">
+              Submitted{" "}
+              {new Date(promo.createdAt).toLocaleDateString("en-GH", {
+                dateStyle: "long",
+              })}
+            </p>
+          </div>
         </div>
 
-        {/* Status-specific guidance */}
-        {promo.status === "pending_review" && (
+        {/* ─── Status-specific guidance ─── */}
+        {(promo.status === "submitted" || promo.status === "under_review") && (
           <Banner
             color="yellow"
             icon={<Clock size={18} />}
             title="Under review"
-            desc="Our team is reviewing your video. We'll email you within 2–3 business days."
+            desc="Our team is reviewing your video. We'll email you within 24–48 hours."
           />
         )}
 
-        {(promo.status === "approved" ||
-          promo.status === "pending_payment") && (
+        {canPay && (
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
             <div className="flex items-start gap-3 mb-4">
               <CheckCircle2
@@ -166,10 +235,7 @@ export default function StatusPage() {
             <button
               onClick={initiatePayment}
               disabled={paying}
-              className="w-full bg-yellow-400 hover:bg-yellow-300 text-black
-                font-black py-3.5 rounded-2xl text-sm transition
-                flex items-center justify-center gap-2 disabled:opacity-50
-                active:scale-[0.99]"
+              className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3.5 rounded-2xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99]"
             >
               {paying ? (
                 <>
@@ -197,25 +263,20 @@ export default function StatusPage() {
           />
         )}
 
-        {promo.status === "scheduled" && (
-          <Banner
-            color="indigo"
-            icon={<Clock size={18} />}
-            title="Scheduled to go live"
-            desc="Your campaign is in the queue. Check back soon!"
-          />
-        )}
-
-        {promo.status === "active" && (
+        {promo.status === "live" && (
           <Banner
             color="pink"
             icon={<Sparkles size={18} />}
             title="🎉 Your campaign is LIVE!"
-            desc="Your video is airing across SmileBaba Radio, TV, and Social."
+            desc={
+              promo.expiresAt
+                ? `Airing until ${new Date(promo.expiresAt).toLocaleDateString("en-GH", { dateStyle: "long" })}.`
+                : "Your video is airing across SmileBaba Radio, TV, and Social."
+            }
           />
         )}
 
-        {promo.status === "completed" && (
+        {promo.status === "expired" && (
           <Banner
             color="gray"
             icon={<CheckCircle2 size={18} />}
@@ -229,11 +290,26 @@ export default function StatusPage() {
             color="red"
             icon={<XCircle size={18} />}
             title="Campaign not approved"
-            desc="Check your email for details. You can submit a revised version anytime."
+            desc={
+              promo.rejectionReason ||
+              "Check your email for details. You can submit a revised version anytime."
+            }
           />
         )}
 
-        {/* Campaign details */}
+        {promo.status === "refunded" && (
+          <Banner
+            color="gray"
+            icon={<XCircle size={18} />}
+            title="Refunded"
+            desc={
+              promo.refundReason ||
+              "This campaign was refunded. Contact support if you have questions."
+            }
+          />
+        )}
+
+        {/* ─── Campaign details ─── */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100">
           <h3 className="text-sm font-black text-gray-900 mb-3">
             Campaign details
@@ -249,6 +325,12 @@ export default function StatusPage() {
               value={`${sym}${promo.amount.toLocaleString()}`}
             />
             <Detail label="Country" value={promo.country} />
+            {promo.targetRegion && (
+              <Detail label="Region" value={promo.targetRegion} />
+            )}
+            {promo.targetAudience && (
+              <Detail label="Audience" value={promo.targetAudience} />
+            )}
             {promo.paidAt && (
               <Detail
                 label="Paid on"
@@ -257,8 +339,16 @@ export default function StatusPage() {
                 })}
               />
             )}
-            {promo.txRef && (
-              <Detail label="Reference" value={promo.txRef} mono />
+            {promo.liveAt && (
+              <Detail
+                label="Live from"
+                value={new Date(promo.liveAt).toLocaleDateString("en-GH", {
+                  dateStyle: "long",
+                })}
+              />
+            )}
+            {promo.paymentRef && (
+              <Detail label="Reference" value={promo.paymentRef} mono />
             )}
           </dl>
 
@@ -268,6 +358,7 @@ export default function StatusPage() {
               <p className="text-xs font-bold text-gray-500 mb-2">Your video</p>
               <video
                 src={promo.videoUrl}
+                poster={cover || undefined}
                 controls
                 className="w-full rounded-xl bg-black aspect-video"
               />
@@ -286,7 +377,7 @@ export default function StatusPage() {
   );
 }
 
-// ─── presentational helpers ─────────────────────────────────────────────────
+// ─── Presentational helpers ─────────────────────────────────────────────
 function Banner({
   color,
   icon,
@@ -300,12 +391,12 @@ function Banner({
 }) {
   const styles = {
     yellow: "bg-yellow-50 border-yellow-200 text-yellow-800",
-    blue: "bg-blue-50 border-blue-200 text-blue-800",
-    green: "bg-green-50 border-green-200 text-green-800",
-    red: "bg-red-50 border-red-200 text-red-800",
-    pink: "bg-pink-50 border-pink-200 text-pink-800",
+    blue: "bg-blue-50   border-blue-200   text-blue-800",
+    green: "bg-green-50  border-green-200  text-green-800",
+    red: "bg-red-50    border-red-200    text-red-800",
+    pink: "bg-pink-50   border-pink-200   text-pink-800",
     indigo: "bg-indigo-50 border-indigo-200 text-indigo-800",
-    gray: "bg-gray-50 border-gray-200 text-gray-800",
+    gray: "bg-gray-50   border-gray-200   text-gray-800",
   }[color];
   return (
     <div className={`${styles} border rounded-2xl p-5 flex items-start gap-3`}>
@@ -331,7 +422,7 @@ function Detail({
     <div className="flex items-center justify-between">
       <dt className="text-xs text-gray-500 font-medium">{label}</dt>
       <dd
-        className={`text-xs font-bold text-gray-900 ${mono ? "font-mono" : ""}`}
+        className={`text-xs font-bold text-gray-900 ${mono ? "font-mono break-all" : ""}`}
       >
         {value}
       </dd>

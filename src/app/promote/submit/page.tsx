@@ -127,6 +127,12 @@ function SubmitForm() {
   const [uploadProg, setUploadProg] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [coverImage, setCoverImage] = useState<string>("");
+  const [coverName, setCoverName] = useState<string>("");
+  const [coverUpload, setCoverUpload] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const IMAGE_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
   // Load tiers from backend
   useEffect(() => {
@@ -215,6 +221,48 @@ function SubmitForm() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+
+  const handleCoverSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (JPG, PNG, WebP).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Cover image must be under 5 MB.");
+      return;
+    }
+
+    setCoverName(file.name);
+    setCoverUpload(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("upload_preset", UPLOAD_PRESET);
+      fd.append("folder", "smilebaba/promotions/covers");
+
+      const res = await fetch(IMAGE_UPLOAD_URL, { method: "POST", body: fd });
+      const data = await res.json();
+      if (!data.secure_url)
+        throw new Error(data.error?.message ?? "Upload failed");
+
+      setCoverImage(data.secure_url);
+      toast.success("Cover image uploaded!");
+    } catch (err) {
+      toast.error("Cover upload failed. Please try again.");
+      setCoverName("");
+    } finally {
+      setCoverUpload(false);
+    }
+  };
+
+  const removeCover = () => {
+    setCoverImage("");
+    setCoverName("");
+    if (coverInputRef.current) coverInputRef.current.value = "";
+  };
+
   // ── Submit ─────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!videoUrl) {
@@ -238,6 +286,7 @@ function SubmitForm() {
         ...form,
         videoUrl,
         videoName,
+        coverImage,
         tier: selectedTier,
       });
       toast.success("Campaign submitted!");
@@ -477,6 +526,74 @@ function SubmitForm() {
               onChange={handleVideoSelect}
               className="hidden"
             />
+{/* image */}
+            <div className="mt-4">
+              <label className="block mb-2">
+                <p className="text-sm font-black text-gray-900">
+                  Cover image{" "}
+                  <span className="text-gray-400 font-normal">(optional)</span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  Shown on the homepage promotions row. If skipped, we'll
+                  auto-generate one from your video.
+                </p>
+              </label>
+
+              {!coverImage ? (
+                <div
+                  onClick={() => coverInputRef.current?.click()}
+                  className="border-2 border-dashed border-gray-200 rounded-2xl p-6
+        text-center bg-white hover:border-yellow-400 hover:bg-yellow-50
+        cursor-pointer transition"
+                >
+                  {coverUpload ? (
+                    <>
+                      <Loader2
+                        size={22}
+                        className="mx-auto text-yellow-500 animate-spin"
+                      />
+                      <p className="text-xs text-gray-500 mt-2">Uploading…</p>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={22} className="mx-auto text-gray-400" />
+                      <p className="text-sm font-bold text-gray-900 mt-2">
+                        Click to upload cover image
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        JPG, PNG, WebP up to 5 MB
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden">
+                  <img
+                    src={coverImage}
+                    alt="Cover preview"
+                    className="w-full aspect-video object-cover"
+                  />
+                  <button
+                    onClick={removeCover}
+                    className="absolute top-2 right-2 w-8 h-8 bg-black/60 hover:bg-black/80
+          rounded-full flex items-center justify-center"
+                  >
+                    <X size={14} className="text-white" />
+                  </button>
+                  <div className="p-2 text-xs text-gray-600 truncate">
+                    {coverName}
+                  </div>
+                </div>
+              )}
+
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleCoverSelect}
+                className="hidden"
+              />
+            </div>
 
             {/* Tips */}
             <div className="bg-white border border-gray-100 rounded-2xl p-5 mt-4">

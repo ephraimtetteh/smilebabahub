@@ -16,6 +16,8 @@ import SafeImage from "@/src/components/SafeImage";
 import { ShoppingBag, ArrowRight, Clock } from "lucide-react";
 import { useProducts } from "@/src/hooks/useProducts";
 import { useNewsTicker } from "./useNewsTicker";
+import { ActivePromotions } from "../promote/ActivePromotions";
+import { useAppSelector } from "@/src/app/redux";
 
 // ── Auto-rotating highlight: shows N items at a time, rotates window ───────
 function useRotatingWindow<T>(
@@ -234,10 +236,13 @@ function NewsHighlights() {
 
 // ── Export — both stacked ──────────────────────────────────────────────────
 export default function HighlightsColumn() {
+ 
+  const country = useAppSelector((s) => s.auth?.user?.country) ?? "Ghana";
   return (
     <div className="space-y-5">
       <FoodHighlights />
-      <NewsHighlights />
+      {/* <NewsHighlights /> */}
+      <ActivePromotions />
     </div>
   );
 }
