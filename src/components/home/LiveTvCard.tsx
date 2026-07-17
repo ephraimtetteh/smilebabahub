@@ -173,7 +173,7 @@ export default function LiveTvCard() {
             </div>
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition" />
           </button>
-{/* 
+
           <div className="flex-1 px-4 pb-3 overflow-y-auto">
             <div
               className="bg-white/5 border border-white/10 rounded-xl p-3
@@ -212,7 +212,7 @@ export default function LiveTvCard() {
                 </div>
               ))}
             </div>
-          </div> */}
+          </div>
 
           <button
             onClick={() => setExpanded(true)}
