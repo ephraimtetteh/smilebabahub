@@ -14,7 +14,7 @@
 "use client";
 
 import Image, { type ImageProps } from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, JSX } from "react";
 import { ImageOff } from "lucide-react";
 
 // A tiny transparent 1x1 as final fallback so Image never explodes
@@ -24,8 +24,9 @@ const TRANSPARENT_PX =
 interface SafeImageProps extends Omit<ImageProps, "src" | "onError"> {
   src?: string | null;
   fallbackSrc?: string;
-  fallbackEmoji?: string;   // shown when the fallback also fails
+  fallbackEmoji?: string; // shown when the fallback also fails
   showBrokenIcon?: boolean; // show ImageOff icon instead of emoji
+  fallbackIcon?: JSX.Element;
 }
 
 export default function SafeImage({
