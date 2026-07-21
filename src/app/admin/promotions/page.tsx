@@ -21,6 +21,7 @@ import {
   X,
   DollarSign,
   Clock,
+  Plus,
 } from "lucide-react";
 
 import axiosInstance from "@/src/lib/api/axios"; 
@@ -153,6 +154,13 @@ export default function AdminPromotionsPage() {
           <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />{" "}
           Refresh
         </button>
+
+        <Link
+          href="/admin/promotions/new"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black text-sm font-black"
+        >
+          <Plus size={14} /> New promotion
+        </Link>
       </div>
 
       {/* Status chips */}
