@@ -18,8 +18,8 @@ import Script from "next/script";
 import { useSearchParams } from "next/navigation";
 
 const CLOZAR_SCRIPT =
-  "https://clozarbusiness.com/account/api/clozar-api/checkout/clozar-sendmoney.js?v=2";
-
+`https://clozarbusiness.com/account/api/clozar-api/checkout/clozar-sendmoney.js?v=1788004997" data-key="pk_clz_7B99A6048527238C1763928C" data-color="#F3F4F6" data-logo="https://clozarbusiness.com/account/api/clozar-api/store-media/944/58d3c9730b75e968.jpg`;
+//<script src="https://clozarbusiness.com/account/api/clozar-api/checkout/clozar-sendmoney.js?v=1788004997" data-key="pk_clz_7B99A6048527238C1763928C" data-color="#F3F4F6" data-logo="https://clozarbusiness.com/account/api/clozar-api/store-media/944/58d3c9730b75e968.jpg"></script>
 /** Only ever redirect to our own app. Blocks an open-redirect via ?return. */
 const ALLOWED_RETURN_PREFIXES = [
   "smilebabahub://",
