@@ -2,13 +2,14 @@
 //
 // Hosts the Clozar Send Money widget.
 //
-// Serves two callers:
-//   1. Web users on smilebabahub.com — normal page
-//   2. The mobile app — loaded in a WebView, results bridged back via
-//      window.ReactNativeWebView.postMessage
+// Two callers:
+//   1. Web users on smilebabahub.com — normal page, no ?return
+//   2. The mobile app — passes ?return=<deep link>. On success we redirect
+//      there with the result on the query string, which closes the browser
+//      session and hands control back to the app.
 //
-// The Clozar key is publishable, so NEXT_PUBLIC_ is correct here. Do not
-// put a secret key in this file — Clozar's widget doesn't use one.
+// The Clozar key is publishable, so NEXT_PUBLIC_ is correct. There is no
+// secret key in this integration.
 
 "use client";
 
@@ -18,6 +19,18 @@ import { useSearchParams } from "next/navigation";
 
 const CLOZAR_SCRIPT =
   "https://clozarbusiness.com/account/api/clozar-api/checkout/clozar-sendmoney.js?v=2";
+
+/** Only ever redirect to our own app. Blocks an open-redirect via ?return. */
+const ALLOWED_RETURN_PREFIXES = [
+  "smilebabahub://",
+  "exp://", // Expo Go / dev client
+  "https://www.smilebabahub.com",
+  "https://smilebabahub.com",
+];
+
+function isAllowedReturn(url: string) {
+  return ALLOWED_RETURN_PREFIXES.some((p) => url.startsWith(p));
+}
 
 declare global {
   interface Window {
@@ -31,26 +44,18 @@ declare global {
         onError?: (e: any) => void;
       }) => void;
     };
-    ReactNativeWebView?: { postMessage: (msg: string) => void };
-  }
-}
-
-/** Send a message to the RN host if we're inside the app's WebView. */
-function bridge(type: string, payload: unknown = {}) {
-  if (typeof window !== "undefined" && window.ReactNativeWebView) {
-    window.ReactNativeWebView.postMessage(JSON.stringify({ type, payload }));
   }
 }
 
 export default function ClozarSendPage() {
   const params = useSearchParams();
 
-  // Mobile passes these through so the widget opens pre-configured
   const sendCurrency = params.get("from") ?? "GHS";
   const receiveCurrency = params.get("to") ?? "NGN";
   const amountParam = params.get("amount");
-  const isEmbedded = params.get("embed") === "1";
   const autoOpen = params.get("auto") === "1";
+  const returnRaw = params.get("return") ?? "";
+  const returnUrl = isAllowedReturn(returnRaw) ? returnRaw : "";
 
   const [ready, setReady] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -58,12 +63,26 @@ export default function ClozarSendPage() {
   const [done, setDone] = useState<any>(null);
   const opened = useRef(false);
 
+  /** Hand control back to the app. */
+  const returnToApp = useCallback(
+    (result: Record<string, string | number | undefined>) => {
+      if (!returnUrl) return false;
+      const qs = new URLSearchParams();
+      Object.entries(result).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
+      });
+      const sep = returnUrl.includes("?") ? "&" : "?";
+      window.location.href = `${returnUrl}${sep}${qs.toString()}`;
+      return true;
+    },
+    [returnUrl],
+  );
+
   const openWidget = useCallback(() => {
     if (!window.ClozarSendMoney) {
       setError(
         "Send Money isn't available right now. Please try again shortly.",
       );
-      bridge("error", { message: "widget_not_loaded" });
       return;
     }
 
@@ -79,15 +98,15 @@ export default function ClozarSendPage() {
         setOpening(false);
         setDone(r);
 
-        // Record it against the user's SmileBaba history.
-        // Fire-and-forget — never block the success screen on our own API.
+        // Record against SmileBaba history. Fire-and-forget — never block
+        // the user's success path on our own API.
         fetch("/api/money/record", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             payoutRef: r?.payout_ref,
-            receiveAmount: r?.receive_amount,
             sendAmount: r?.send_amount,
+            receiveAmount: r?.receive_amount,
             sendCurrency: r?.send_currency ?? sendCurrency,
             receiveCurrency: r?.receive_currency ?? receiveCurrency,
             rate: r?.rate,
@@ -98,23 +117,35 @@ export default function ClozarSendPage() {
           }),
         }).catch(() => {});
 
-        bridge("success", r);
+        returnToApp({
+          status: "success",
+          payout_ref: r?.payout_ref,
+          send_amount: r?.send_amount,
+          receive_amount: r?.receive_amount,
+          send_currency: r?.send_currency ?? sendCurrency,
+          receive_currency: r?.receive_currency ?? receiveCurrency,
+          rate: r?.rate,
+          fee: r?.fee,
+          recipient_name: r?.recipient_name,
+        });
       },
 
       onClose: () => {
         setOpening(false);
-        bridge("close");
+        // Auto-opened with nothing completed → bounce straight back so the
+        // user doesn't land on a dead page inside the browser session.
+        if (autoOpen) returnToApp({ status: "cancelled" });
       },
 
       onError: (e: any) => {
         setOpening(false);
-        setError(e?.message ?? "Something went wrong. Please try again.");
-        bridge("error", e);
+        const message = e?.message ?? "Something went wrong. Please try again.";
+        setError(message);
+        if (autoOpen) returnToApp({ status: "error", message });
       },
     });
-  }, [sendCurrency, receiveCurrency, amountParam]);
+  }, [sendCurrency, receiveCurrency, amountParam, autoOpen, returnToApp]);
 
-  // Auto-open once the script is live (mobile drops straight into the widget)
   useEffect(() => {
     if (ready && autoOpen && !opened.current) {
       opened.current = true;
@@ -128,30 +159,26 @@ export default function ClozarSendPage() {
         src={CLOZAR_SCRIPT}
         data-key={process.env.NEXT_PUBLIC_CLOZAR_KEY}
         strategy="afterInteractive"
-        onReady={() => {
-          setReady(true);
-          bridge("ready");
-        }}
+        onReady={() => setReady(true)}
         onError={() => {
-          setError(
-            "Couldn't load Send Money. Check your connection and try again.",
-          );
-          bridge("error", { message: "script_failed" });
+          const message = "Couldn't load Send Money. Check your connection.";
+          setError(message);
+          if (autoOpen) returnToApp({ status: "error", message });
         }}
       />
 
       <main
         style={{
-          minHeight: isEmbedded ? "100vh" : "auto",
+          minHeight: "100vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "24px",
-          background: isEmbedded ? "#fff" : undefined,
+          padding: 24,
+          background: "#fff",
         }}
       >
         <div style={{ width: "100%", maxWidth: 420 }}>
-          {/* ─── Brand header ─── */}
+          {/* ─── Brand ─── */}
           <div style={{ textAlign: "center", marginBottom: 28 }}>
             <div
               style={{
@@ -179,7 +206,6 @@ export default function ClozarSendPage() {
                 <path d="M22 2 11 13" />
               </svg>
             </div>
-
             <h1
               style={{
                 fontSize: 22,
@@ -203,7 +229,6 @@ export default function ClozarSendPage() {
             </p>
           </div>
 
-          {/* ─── Success ─── */}
           {done ? (
             <div
               style={{
@@ -242,20 +267,20 @@ export default function ClozarSendPage() {
                   Reference: <strong>{done.payout_ref}</strong>
                 </p>
               )}
-
-              <button
-                onClick={() => {
-                  setDone(null);
-                  openWidget();
-                }}
-                style={{ ...btnPrimary, marginTop: 20 }}
-              >
-                Send another
-              </button>
+              {!returnUrl && (
+                <button
+                  onClick={() => {
+                    setDone(null);
+                    openWidget();
+                  }}
+                  style={{ ...btnPrimary, marginTop: 20 }}
+                >
+                  Send another
+                </button>
+              )}
             </div>
           ) : (
             <>
-              {/* ─── Corridor summary ─── */}
               <div
                 style={{
                   background: "#F9FAFB",
