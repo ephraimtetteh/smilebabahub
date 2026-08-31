@@ -1,15 +1,22 @@
 // client/app/money/clozar/page.tsx
 //
-// Hosts the Clozar Send Money widget.
+// Hosts the Clozar Send Money widget, branded as SmileBaba.
+//
+// The widget accepts three data attributes on the script tag:
+//   data-key    — publishable key (safe client-side, that's what pk_ means)
+//   data-color  — accent colour used inside their UI
+//   data-logo   — logo shown on their checkout
+//
+// A note on data-color: if Clozar paints it as a button background with
+// white text, yellow (#FFC105) fails contrast — it needs black text.
+// Navy is the safer default and already matches the Money banner and the
+// send screen in the app. Flip CLOZAR_COLOR once you've seen one render.
 //
 // Two callers:
 //   1. Web users on smilebabahub.com — normal page, no ?return
 //   2. The mobile app — passes ?return=<deep link>. On success we redirect
-//      there with the result on the query string, which closes the browser
-//      session and hands control back to the app.
-//
-// The Clozar key is publishable, so NEXT_PUBLIC_ is correct. There is no
-// secret key in this integration.
+//      there with the result, which closes the browser session and hands
+//      control back to the app.
 
 "use client";
 
@@ -17,10 +24,27 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Script from "next/script";
 import { useSearchParams } from "next/navigation";
 
+// ─── Brand ───────────────────────────────────────────────────────────
+const NAVY = "#0B2A63";
+const YELLOW = "#FFC105";
+
 const CLOZAR_SCRIPT =
-`https://clozarbusiness.com/account/api/clozar-api/checkout/clozar-sendmoney.js?v=1788004997" data-key="pk_clz_7B99A6048527238C1763928C" data-color="#F3F4F6" data-logo="https://clozarbusiness.com/account/api/clozar-api/store-media/944/58d3c9730b75e968.jpg`;
-//<script src="https://clozarbusiness.com/account/api/clozar-api/checkout/clozar-sendmoney.js?v=1788004997" data-key="pk_clz_7B99A6048527238C1763928C" data-color="#F3F4F6" data-logo="https://clozarbusiness.com/account/api/clozar-api/store-media/944/58d3c9730b75e968.jpg"></script>
-/** Only ever redirect to our own app. Blocks an open-redirect via ?return. */
+  process.env.NEXT_PUBLIC_CLOZAR_SCRIPT ??
+  "https://clozarbusiness.com/account/api/clozar-api/checkout/clozar-sendmoney.js?v=1788004997";
+
+const CLOZAR_KEY = process.env.NEXT_PUBLIC_CLOZAR_KEY ?? "";
+
+// Accent Clozar uses inside their own UI
+const CLOZAR_COLOR = process.env.NEXT_PUBLIC_CLOZAR_COLOR ?? NAVY;
+
+// Must be a publicly reachable image. If Clozar only accepts assets from
+// their own media store, upload the SmileBaba mark in their dashboard and
+// put that URL here instead.
+const CLOZAR_LOGO =
+  process.env.NEXT_PUBLIC_CLOZAR_LOGO ??
+  "https://www.smilebabahub.com/logo.png";
+
+/** Only ever redirect to our own app. Blocks an open redirect via ?return. */
 const ALLOWED_RETURN_PREFIXES = [
   "smilebabahub://",
   "exp://", // Expo Go / dev client
@@ -133,7 +157,7 @@ export default function ClozarSendPage() {
       onClose: () => {
         setOpening(false);
         // Auto-opened with nothing completed → bounce straight back so the
-        // user doesn't land on a dead page inside the browser session.
+        // user isn't left on a dead page inside the browser session.
         if (autoOpen) returnToApp({ status: "cancelled" });
       },
 
@@ -157,7 +181,9 @@ export default function ClozarSendPage() {
     <>
       <Script
         src={CLOZAR_SCRIPT}
-        data-key={process.env.NEXT_PUBLIC_CLOZAR_KEY}
+        data-key={CLOZAR_KEY}
+        data-color={CLOZAR_COLOR}
+        data-logo={CLOZAR_LOGO}
         strategy="afterInteractive"
         onReady={() => setReady(true)}
         onError={() => {
@@ -185,7 +211,7 @@ export default function ClozarSendPage() {
                 width: 56,
                 height: 56,
                 borderRadius: 16,
-                background: "#0B2A63",
+                background: NAVY,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -197,7 +223,7 @@ export default function ClozarSendPage() {
                 height="26"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#FFC105"
+                stroke={YELLOW}
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -206,6 +232,7 @@ export default function ClozarSendPage() {
                 <path d="M22 2 11 13" />
               </svg>
             </div>
+
             <h1
               style={{
                 fontSize: 22,
@@ -225,7 +252,7 @@ export default function ClozarSendPage() {
                 lineHeight: 1.5,
               }}
             >
-              Send money across Africa in seconds. Powered by Clozar.
+              Send money across Africa in seconds.
             </p>
           </div>
 
@@ -354,8 +381,7 @@ export default function ClozarSendPage() {
                   lineHeight: 1.6,
                 }}
               >
-                Transfers are processed by Clozar. Rates and fees are shown
-                before you confirm.
+                Rates and fees are shown before you confirm.
               </p>
             </>
           )}
@@ -428,7 +454,7 @@ const btnPrimary: React.CSSProperties = {
   height: 52,
   border: "none",
   borderRadius: 16,
-  background: "#FFC105",
+  background: YELLOW,
   color: "#111827",
   fontSize: 15,
   fontWeight: 700,
