@@ -1,154 +1,176 @@
 "use client";
 
-// src/app/page.tsx  (or src/components/HomePage.tsx)
+// src/app/page.tsx
 //
-// Marketplace homepage — responsive.
-//   • Mobile (< lg): vertical hierarchy matching the design mockup
-//     1. News cards (horizontal scroll, photos)
-//     2. Shortcuts (5x2 emoji grid)
-//     3. Live & Featured (Radio + TV stacked or side-by-side)
-//     4. 4-column CTA banners
-//     5. Trending Restaurants carousel
-//     6. Popular Apartments carousel
-//     7. Trust bar
+// Landing page, rebuilt to match the app.
 //
-//   • Desktop (lg+): 4-column hero row (categories | radio | tv | highlights)
-//     unchanged from the current desktop design.
+// Order is deliberate — the TV hero and Send Money sit above the fold
+// because they're the two things unique to SmileBaba, then the four
+// verticals give people a way in, then the picks rows do the browsing.
 //
-// All sections are country-scoped via useProducts → loadFeatured(country, cat).
+//   1. TV hero
+//   2. Send Money banner
+//   3. Four vertical cards
+//   4. E-Commerce picks
+//   5. Featured promotions
+//   6. Food picks
+//   7. Stays picks
+//   8. Marketplace picks
+//   9. Category strip
+//  10. Sticky radio bar
+//
+// Desktop keeps the news ticker and the trust bar. The old four-column
+// hero row is gone — the vertical cards replace it and read better at
+// every width.
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useProducts } from "@/src/hooks/useProducts";
 
-// Mobile-only sections
-import NewsCards from "@/src/components/home/NewsCards";
-import MobileShortcuts from "@/src/components/home/MobileShortcuts";
-
-// Shared (different layouts inside via Tailwind responsive utils)
 import NewsTicker from "@/src/components/home/NewsTicker";
-import CategorySidebar from "@/src/components/home/CategorySidebar";
-import LiveRadioCard from "@/src/components/home/LiveRadioCard";
 import LiveTvCard from "@/src/components/home/LiveTvCard";
-import HighlightsColumn from "@/src/components/home/HighlightsColumn";
-import CtaBanners from "@/src/components/home/CtaBanners";
-import ProductCarousel from "@/src/components/home/ProductCarousel";
 import TrustBar from "@/src/components/home/TrustBar";
 import MobileBottomNav from "@/src/components/home/MobileBottomNav";
-import Video from "../components/Video";
-import { ActivePromotions } from "../components/promote/ActivePromotions";
+import { ActivePromotions } from "@/src/components/promote/ActivePromotions";
 
+// New
+import SendMoneyBanner from "@/src/components/home/SendMoneyBanner";
+import BigCategoryCards from "@/src/components/home/BigCategoryCards";
+import PicksRow from "@/src/components/home/PicksRow";
+import CategoryStrip from "@/src/components/home/CategoryStrip";
+import StickyRadioBar from "@/src/components/home/StickyRadioBar";
+import Link from "next/link";
 
+// The real category.main values. E-Commerce isn't one of them — it's
+// three retail categories shown together, which is why the row merges
+// rather than fetching a category that doesn't exist.
 const HOMEPAGE_CATEGORIES = [
+  "phones",
+  "fashion",
+  "home-office",
   "food",
   "apartments",
   "marketplace",
-  "fashion",
-  "pharmacy",
-  "services",
 ] as const;
 
 export default function HomePage() {
   const { featured, featuredLoading, loadFeatured, userCountry } =
     useProducts();
 
-  // Prefetch every category in parallel — country-scoped
   useEffect(() => {
     if (!userCountry) return;
     HOMEPAGE_CATEGORIES.forEach((cat) => loadFeatured(userCountry, cat));
   }, [userCountry, loadFeatured]);
+
+  // Interleave the three retail categories rather than concatenating, so
+  // the row isn't four phones followed by four shirts.
+  const ecommerce = useMemo(() => {
+    const lists = [
+      featured?.phones ?? [],
+      featured?.fashion ?? [],
+      featured?.["home-office"] ?? [],
+    ];
+    const out: any[] = [];
+    for (let i = 0; i < 4; i++) {
+      for (const list of lists) if (list[i]) out.push(list[i]);
+    }
+    return out.slice(0, 8);
+  }, [featured]);
 
   const restaurants = featured?.food ?? [];
   const apartments = featured?.apartments ?? [];
   const deals = featured?.marketplace ?? [];
 
   return (
-    <main className="bg-gray-50 pb-20 lg:pb-0 mt-20">
-      {/* ─── DESKTOP ONLY: slim news ticker under header ─── */}
+    <main className="bg-gray-50 pb-32 lg:pb-24 mt-20">
+      {/* ─── Desktop news ticker ─── */}
       <div className="hidden lg:block">
         <NewsTicker />
       </div>
 
-      {/* ─── MOBILE ONLY: horizontal news cards ─── */}
-      {/* <NewsCards /> */}
+      <div className="max-w-[1340px] mx-auto px-3 sm:px-4">
+        {/* ─── 1. TV hero ─── */}
+        <section className="pt-3">
+          <LiveTvCard />
+        </section>
 
-      {/* ─── MOBILE ONLY: shortcuts emoji grid ─── */}
-      <MobileShortcuts />
+        {/* ─── 2. Send Money ─── */}
+        <section className="mt-4">
+          <SendMoneyBanner />
+        </section>
 
-      {/* ─── MOBILE: Live & Featured section header ─── */}
-      <div className="lg:hidden px-3 pt-1 pb-2">
-        <h2 className="text-xs font-black text-gray-900 tracking-wider">
-          LIVE & FEATURED
-        </h2>
+        {/* ─── 3. Verticals ─── */}
+        <section className="mt-4">
+          <BigCategoryCards />
+        </section>
+
+        {/* ─── 4. E-Commerce ─── */}
+        <PicksRow
+          title="E-Commerce Picks for You"
+          accent="#059669"
+          items={ecommerce}
+          loading={featuredLoading}
+          viewAllHref="/ads?category=phones,fashion,home-office"
+          emptyHint="No products listed in your area yet."
+          showDelivery
+        />
+
+        {/* ─── 5. Promotions ─── */}
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-bold text-gray-900 tracking-tight">
+              Featured Promotions
+            </h2>
+            <Link
+              href="/promote"
+              className="text-xs font-semibold text-gray-500 hover:text-gray-900"
+            >
+              See All
+            </Link>
+          </div>
+          <ActivePromotions />
+        </section>
+
+        {/* ─── 6-8. Verticals ─── */}
+        <PicksRow
+          title="SmileBaba Food Picks"
+          accent="#DC2626"
+          items={restaurants}
+          loading={featuredLoading}
+          viewAllHref="/ads?category=food"
+          emptyHint="No restaurants in your area yet."
+          showRating
+        />
+
+        <PicksRow
+          title="SmileStays Picks"
+          accent="#0D9488"
+          items={apartments}
+          loading={featuredLoading}
+          viewAllHref="/ads?category=apartments"
+          emptyHint="No properties listed yet."
+          priceSuffix="/ night"
+        />
+
+        <PicksRow
+          title="Featured Products from Marketplace"
+          accent="#2563EB"
+          items={deals}
+          loading={featuredLoading}
+          viewAllHref="/ads?category=marketplace"
+          emptyHint="No listings yet."
+          showLocation
+        />
+
+        {/* ─── 9. Category strip ─── */}
+        <CategoryStrip />
       </div>
-
-      {/* ─── HERO ROW: Desktop = 4-col grid, Mobile = vertical stack ─── */}
-      <section className="max-w-[1340px] mx-auto px-3 sm:px-4 lg:py-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
-          {/* Desktop sidebar (hidden on mobile, MobileShortcuts above replaces it) */}
-          <div className="hidden lg:block lg:col-span-3">
-            <CategorySidebar title="SHOP BY CATEGORY" viewAllHref="/ads" />
-          </div>
-
-          {/* Live TV — full width on mobile, half on sm, 1/4 on lg */}
-          <div className="col-span-1 sm:col-span-1 lg:col-span-3">
-            <LiveTvCard />
-          </div>
-
-          {/* ─── MOBILE ONLY: horizontal news cards ─── */}
-          {/* <NewsCards /> */}
-          {/* <ActivePromotions /> */}
-
-          {/* Live Radio — full width on mobile, half on sm, 1/4 on lg */}
-          <div className="col-span-1 sm:col-span-1 lg:col-span-3">
-            <LiveRadioCard />
-          </div>
-
-          {/* Highlights — hidden on mobile (replaced by carousels below), shown on lg+ */}
-          <div className="hidden lg:block lg:col-span-3">
-            <HighlightsColumn />
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 4 CTA banner cards ─── */}
-      <CtaBanners />
-
-      {/* ─── 3 carousels — side by side on desktop, stacked on mobile ─── */}
-      <section className="max-w-[1340px] mx-auto px-3 sm:px-4 py-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <ProductCarousel
-            title="TRENDING RESTAURANTS"
-            items={restaurants}
-            loading={featuredLoading}
-            viewAllHref="/ads?category=food"
-            emptyHint="No restaurants in your area yet."
-            showBestSellerBadge
-          />
-
-          <ProductCarousel
-            title="POPULAR APARTMENTS"
-            items={apartments}
-            loading={featuredLoading}
-            viewAllHref="/ads?category=apartments"
-            emptyHint="No properties listed yet."
-            showBestSellerBadge
-          />
-
-          <ProductCarousel
-            title="HOT DEALS NEAR YOU"
-            items={deals}
-            loading={featuredLoading}
-            viewAllHref="/ads"
-            emptyHint="No deals available yet."
-            showDiscount
-          />
-        </div>
-      </section>
 
       {/* ─── Trust bar ─── */}
       <TrustBar />
 
-      {/* ─── Mobile bottom tab bar (mobile only) ─── */}
+      {/* ─── 10. Radio ─── */}
+      <StickyRadioBar />
+
       <MobileBottomNav />
     </main>
   );
