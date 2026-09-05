@@ -37,6 +37,13 @@ export default function MobileBottomNav() {
           active={isActive("/ads")}
         />
 
+        {/* <NavTab
+          href="/money/send"
+          icon={<Grid3x3 size={20} />}
+          label="Categories"
+          active={isActive("/money/send")}
+        /> */}
+
         {/* Center elevated SELL button */}
         <Link
           href={isAuthed ? "/sell" : "/auth/login?redirect=/sell"}

@@ -37,6 +37,7 @@ function Footer() {
             title="COMPANY"
             links={[
               ["About Us", "/about"],
+              ["Send Money", "/money/send"],
               ["Careers", "/careers"],
               ["Press & Media", "/press"],
               ["Contact Us", "/contact"],

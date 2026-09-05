@@ -26,6 +26,7 @@ import {
 import ChatNavBadge from "./Chat/ChatNavBadge";
 import NotificationBell from "../app/vendor/(components)/Notification";
 import InstallAppButton from "@/src/components/InstallAppButton";
+import { FaMoneyBill } from "react-icons/fa";
 
 // ── Desktop dropdown for one nav category ─────────────────────────────────
 function NavDropdown({ cat }: { cat: NavCategory }) {
@@ -277,6 +278,14 @@ export default function Navbar() {
 
             {/* ── Ads link — always visible ── */}
             <Link
+              href="/money/send"
+              className="flex items-center gap-1.5 text-sm hover:text-yellow-400
+                transition"
+            >
+              <FaMoneyBill size={14} />
+              Send Money
+            </Link>
+            <Link
               href="/ads"
               className="flex items-center gap-1.5 text-sm hover:text-yellow-400
                 transition"
@@ -406,6 +415,16 @@ export default function Navbar() {
           ))}
 
           {/* Ads */}
+          <Link
+            href="/money/send"
+            onClick={closeMobile}
+            className="flex items-center gap-2 text-lg text-white
+              hover:text-yellow-400 transition"
+          >
+            <FaMoneyBill size={18} className="text-white/70" />
+            Send Money
+          </Link>
+
           <Link
             href="/ads"
             onClick={closeMobile}
