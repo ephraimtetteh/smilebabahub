@@ -55,7 +55,7 @@ function Footer() {
             title="POLICIES"
             links={[
               ["Terms & Conditions", "/terms"],
-              ["Privacy Policy", "/privacy"],
+              ["Privacy Policy", "/legal/privacy"],
               ["Shipping Policy", "/shipping"],
               ["Cookie Policy", "/cookies"],
             ]}
