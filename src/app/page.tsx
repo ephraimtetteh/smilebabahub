@@ -40,6 +40,7 @@ import CategoryStrip from "@/src/components/home/CategoryStrip";
 import StickyRadioBar from "@/src/components/home/StickyRadioBar";
 import Link from "next/link";
 import LiveTvHero from "../components/home/LiveTvHero";
+import CtaBanners from "../components/home/CtaBanners";
 
 // The real category.main values. E-Commerce isn't one of them — it's
 // three retail categories shown together, which is why the row merges
@@ -136,6 +137,11 @@ export default function HomePage() {
           // emptyHint="No restaurants in your area yet."
           showRating
         />
+
+        <section className="mt-8">
+          <CtaBanners />
+        </section>
+
         <PicksRow
           title="SmileStays Picks"
           accent="#0D9488"

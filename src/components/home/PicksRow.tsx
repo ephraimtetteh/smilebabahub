@@ -2,15 +2,19 @@
 
 // src/components/home/PicksRow.tsx
 //
-// A titled row of four products. One component for all four verticals.
-// What differs is the accent, and which extras each shows: food gets a
-// rating, stays get a per-night suffix, marketplace gets a location.
+// A titled row of products. Six across on desktop, two on mobile.
 //
-// Scrolls horizontally on mobile rather than stacking, so a row stays a
-// row and the page does not run to a mile.
+// Six rather than four means a row shows a real selection instead of a
+// teaser, which is the point of a picks row. The cards shrink to suit —
+// smaller radius, tighter padding, one line of title — so six reads as
+// a set rather than as clutter.
+//
+// One component for every vertical. What differs is the accent and which
+// extras show: food gets a rating, stays get a per-night suffix,
+// marketplace gets a location.
 
 import Link from "next/link";
-import { Heart, MapPin, Star, CheckCircle2, Package } from "lucide-react";
+import { Heart, MapPin, Star, Package } from "lucide-react";
 
 interface Props {
   title: string;
@@ -23,6 +27,8 @@ interface Props {
   showLocation?: boolean;
   priceSuffix?: string;
 }
+
+const PER_ROW = 6;
 
 // The API returns price as { amount, currency }, not a number
 const priceOf = (ad: any): number => {
@@ -81,20 +87,21 @@ export default function PicksRow({
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {Array.from({ length: PER_ROW }).map((_, i) => (
             <div
               key={i}
-              className="h-56 animate-pulse rounded-2xl border border-gray-100 bg-white"
+              className="h-44 animate-pulse rounded-xl border border-gray-100 bg-white"
             />
           ))}
         </div>
       ) : (
-        <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
-          {items.slice(0, 4).map((ad) => (
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {items.slice(0, PER_ROW).map((ad) => (
             <ProductCard
               key={ad._id}
               ad={ad}
+              accent={accent}
               showDelivery={showDelivery}
               showRating={showRating}
               showLocation={showLocation}
@@ -109,12 +116,14 @@ export default function PicksRow({
 
 function ProductCard({
   ad,
+  accent,
   showDelivery,
   showRating,
   showLocation,
   priceSuffix,
 }: {
   ad: any;
+  accent: string;
   showDelivery?: boolean;
   showRating?: boolean;
   showLocation?: boolean;
@@ -126,21 +135,21 @@ function ProductCard({
   return (
     <Link
       href={`/ads/${ad.slug ?? ad._id}`}
-      className="group w-[46vw] shrink-0 snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition hover:shadow-md sm:w-auto"
+      className="group overflow-hidden rounded-xl border border-gray-100 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         {img ? (
-          // Plain img rather than next/image, because listing photos come
-          // from Cloudinary with unpredictable dimensions
+          // Plain img, because listing photos come from Cloudinary with
+          // unpredictable dimensions
           <img
             src={img}
             alt={ad.title ?? "Listing"}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <Package size={28} className="text-gray-300" />
+            <Package size={22} className="text-gray-300" />
           </div>
         )}
 
@@ -148,53 +157,52 @@ function ProductCard({
           type="button"
           onClick={(e) => e.preventDefault()}
           aria-label="Save"
-          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm transition hover:bg-white"
+          className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-sm transition group-hover:opacity-100 sm:opacity-100"
         >
-          <Heart size={13} className="text-gray-500" />
+          <Heart size={11} className="text-gray-500" />
         </button>
 
         {ad?.boost?.isBoosted && (
-          <span className="absolute left-2 top-2 rounded-md bg-amber-400 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-gray-900">
+          <span className="absolute left-1.5 top-1.5 rounded bg-amber-400 px-1.5 py-0.5 text-[7.5px] font-bold tracking-wide text-gray-900">
             BOOSTED
+          </span>
+        )}
+
+        {showDelivery && ad?.delivery?.available && (
+          <span className="absolute bottom-1.5 left-1.5 rounded bg-white/95 px-1.5 py-0.5 text-[7.5px] font-bold text-emerald-700">
+            FREE DELIVERY
           </span>
         )}
       </div>
 
-      <div className="p-3">
-        <h3 className="line-clamp-2 min-h-[32px] text-[13px] font-medium leading-tight text-gray-900">
+      <div className="p-2.5">
+        <h3 className="line-clamp-1 text-[11.5px] font-medium leading-tight text-gray-900">
           {ad.title ?? "Untitled listing"}
         </h3>
 
-        <p className="mt-1.5 text-sm font-bold text-gray-900">
+        <p className="mt-1 text-[12.5px] font-bold leading-none text-gray-900">
           {amount > 0
             ? `${symbolOf(ad)} ${amount.toLocaleString()}`
             : "Ask price"}
           {priceSuffix && amount > 0 && (
-            <span className="ml-1 text-[11px] font-normal text-gray-400">
+            <span className="ml-0.5 text-[9.5px] font-normal text-gray-400">
               {priceSuffix}
             </span>
           )}
         </p>
 
         {showRating && (
-          <p className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
-            <Star size={11} className="fill-amber-400 text-amber-400" />
+          <p className="mt-1 flex items-center gap-0.5 text-[10px] text-gray-500">
+            <Star size={9} className="fill-amber-400 text-amber-400" />
             {ad.rating ?? "4.6"}
           </p>
         )}
 
         {showLocation && placeOf(ad) && (
-          <p className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
-            <MapPin size={10} />
+          <p className="mt-1 flex items-center gap-1 text-[10px] text-gray-400">
+            <MapPin size={9} />
             <span className="line-clamp-1">{placeOf(ad)}</span>
           </p>
-        )}
-
-        {showDelivery && ad?.delivery?.available && (
-          <span className="mt-2 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700">
-            <CheckCircle2 size={9} />
-            Free Delivery
-          </span>
         )}
       </div>
     </Link>
