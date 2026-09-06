@@ -2,8 +2,7 @@
 
 // src/components/home/BigCategoryCards.tsx
 //
-// The four verticals. Four across on desktop, two on mobile — the same
-// 2×2 the app shows.
+// The four verticals. Four across on desktop, two on mobile.
 //
 // Each card carries its own tint and accent, which is what lets someone
 // scan the row without reading it.
@@ -14,6 +13,7 @@ import {
   Store,
   UtensilsCrossed,
   BedDouble,
+  ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,8 +28,7 @@ interface Vertical {
   bg: string;
   accent: string;
   button: string;
-  /** Emoji stand-ins until there's product photography */
-  art: string[];
+  blob: string;
 }
 
 const VERTICALS: Vertical[] = [
@@ -44,7 +43,7 @@ const VERTICALS: Vertical[] = [
     bg: "bg-emerald-50",
     accent: "text-emerald-600",
     button: "bg-emerald-600 hover:bg-emerald-700",
-    art: ["🎧", "👜", "👟"],
+    blob: "bg-emerald-200",
   },
   {
     id: "marketplace",
@@ -57,12 +56,12 @@ const VERTICALS: Vertical[] = [
     bg: "bg-blue-50",
     accent: "text-blue-600",
     button: "bg-blue-600 hover:bg-blue-700",
-    art: ["🪑", "📱", "🏀"],
+    blob: "bg-blue-200",
   },
   {
     id: "food",
     tag: "SMILEBABA FOOD",
-    title: "Order your favorite\nmeals & enjoy",
+    title: "Order your favorite\nmeals and enjoy",
     subtitle: "Delicious meals from trusted restaurants near you.",
     cta: "Order Now",
     href: "/ads?category=food",
@@ -70,7 +69,7 @@ const VERTICALS: Vertical[] = [
     bg: "bg-red-50",
     accent: "text-red-600",
     button: "bg-red-600 hover:bg-red-700",
-    art: ["🍛", "🥗"],
+    blob: "bg-red-200",
   },
   {
     id: "stays",
@@ -83,7 +82,7 @@ const VERTICALS: Vertical[] = [
     bg: "bg-teal-50",
     accent: "text-teal-600",
     button: "bg-teal-600 hover:bg-teal-700",
-    art: ["🛏️", "🪴"],
+    blob: "bg-teal-200",
   },
 ];
 
@@ -103,29 +102,19 @@ function Card({ vertical: v }: { vertical: Vertical }) {
   return (
     <Link
       href={v.href}
-      className={`group relative flex min-h-[180px] flex-col justify-between
-                  overflow-hidden rounded-2xl ${v.bg} p-4
-                  transition hover:shadow-md sm:min-h-[210px] sm:p-5`}
+      className={`group relative flex min-h-[180px] flex-col justify-between overflow-hidden rounded-2xl ${v.bg} p-4 transition hover:shadow-md sm:min-h-[210px] sm:p-5`}
     >
-      {/* Art — decorative, hidden from screen readers */}
+      {/* Decoration */}
       <div
-        className="pointer-events-none absolute bottom-0 right-0 select-none"
+        className={`pointer-events-none absolute -bottom-10 -right-10 h-36 w-36 rounded-full ${v.blob} opacity-50`}
         aria-hidden
-      >
-        <span className="absolute bottom-2 right-3 text-5xl sm:text-6xl">
-          {v.art[0]}
-        </span>
-        {v.art[1] && (
-          <span className="absolute bottom-10 right-14 rotate-[-8deg] text-3xl sm:bottom-14 sm:right-16 sm:text-4xl">
-            {v.art[1]}
-          </span>
-        )}
-        {v.art[2] && (
-          <span className="absolute bottom-1 right-16 rotate-[10deg] text-2xl sm:right-20 sm:text-3xl">
-            {v.art[2]}
-          </span>
-        )}
-      </div>
+      />
+      <Icon
+        size={72}
+        strokeWidth={1}
+        className={`pointer-events-none absolute -bottom-2 -right-2 ${v.accent} opacity-20`}
+        aria-hidden
+      />
 
       <div className="relative">
         <div className="flex items-center gap-2">
@@ -138,23 +127,20 @@ function Card({ vertical: v }: { vertical: Vertical }) {
         </div>
 
         <h3
-          className={`mt-3 whitespace-pre-line text-[15px] font-bold leading-tight
-                      tracking-tight ${v.accent} sm:text-lg`}
+          className={`mt-3 whitespace-pre-line text-[15px] font-bold leading-tight tracking-tight ${v.accent} sm:text-lg`}
         >
           {v.title}
         </h3>
-        <p className="mt-1.5 max-w-[70%] text-[11px] leading-snug text-gray-500 sm:text-xs">
+        <p className="mt-1.5 max-w-[75%] text-[11px] leading-snug text-gray-500 sm:text-xs">
           {v.subtitle}
         </p>
       </div>
 
       <span
-        className={`relative mt-4 inline-flex w-fit items-center gap-1.5 rounded-lg
-                    ${v.button} px-3 py-1.5 text-[11px] font-bold text-white
-                    transition sm:text-xs`}
+        className={`relative mt-4 inline-flex w-fit items-center gap-1.5 rounded-lg ${v.button} px-3 py-1.5 text-[11px] font-bold text-white transition sm:text-xs`}
       >
         {v.cta}
-        <span aria-hidden>→</span>
+        <ArrowRight size={12} />
       </span>
     </Link>
   );

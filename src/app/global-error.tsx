@@ -1,11 +1,9 @@
-// ═══════════════════════════════════════════════════════════════════════
-// client/app/global-error.tsx
-//
-// error.tsx can't catch a failure in the root layout itself — that needs
-// its own boundary, which has to render its own <html> and <body>.
-// ═══════════════════════════════════════════════════════════════════════
-
 "use client";
+
+// src/app/global-error.tsx
+//
+// error.tsx cannot catch a failure in the root layout itself. This one
+// can, which is why it renders its own html and body.
 
 import { useEffect } from "react";
 
@@ -37,6 +35,7 @@ export default function GlobalError({
         <div
           style={{
             maxWidth: 460,
+            width: "100%",
             background: "white",
             borderRadius: 20,
             padding: 32,
@@ -44,12 +43,28 @@ export default function GlobalError({
             textAlign: "center",
           }}
         >
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#111827", margin: 0 }}>
-            SmileBabaHub couldn't load
+          <h1
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              color: "#111827",
+              margin: 0,
+            }}
+          >
+            SmileBabaHub could not load
           </h1>
-          <p style={{ fontSize: 15, color: "#4B5563", lineHeight: 1.6, marginTop: 12 }}>
-            Something broke before the page could start. Reloading usually fixes it.
+          <p
+            style={{
+              fontSize: 15,
+              color: "#4B5563",
+              lineHeight: 1.6,
+              marginTop: 12,
+            }}
+          >
+            Something broke before the page could start. Reloading usually fixes
+            it.
           </p>
+
           <pre
             style={{
               background: "#F9FAFB",
@@ -65,6 +80,7 @@ export default function GlobalError({
           >
             {error.message}
           </pre>
+
           <button
             onClick={reset}
             style={{
@@ -87,4 +103,3 @@ export default function GlobalError({
     </html>
   );
 }
-

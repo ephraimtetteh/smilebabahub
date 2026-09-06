@@ -39,6 +39,7 @@ import PicksRow from "@/src/components/home/PicksRow";
 import CategoryStrip from "@/src/components/home/CategoryStrip";
 import StickyRadioBar from "@/src/components/home/StickyRadioBar";
 import Link from "next/link";
+import LiveTvHero from "../components/home/LiveTvHero";
 
 // The real category.main values. E-Commerce isn't one of them — it's
 // three retail categories shown together, which is why the row merges
@@ -89,20 +90,18 @@ export default function HomePage() {
 
       <div className="max-w-[1340px] mx-auto px-3 sm:px-4">
         {/* ─── 1. TV hero ─── */}
+        {/* replacing <LiveTvCard variant="wide" /> */}
         <section className="pt-3">
-          <LiveTvCard />
+          <LiveTvHero />
         </section>
-
         {/* ─── 2. Send Money ─── */}
         <section className="mt-4">
           <SendMoneyBanner />
         </section>
-
         {/* ─── 3. Verticals ─── */}
         <section className="mt-4">
           <BigCategoryCards />
         </section>
-
         {/* ─── 4. E-Commerce ─── */}
         <PicksRow
           title="E-Commerce Picks for You"
@@ -110,10 +109,8 @@ export default function HomePage() {
           items={ecommerce}
           loading={featuredLoading}
           viewAllHref="/ads?category=phones,fashion,home-office"
-          emptyHint="No products listed in your area yet."
           showDelivery
         />
-
         {/* ─── 5. Promotions ─── */}
         <section className="mt-8">
           <div className="flex items-center justify-between mb-3">
@@ -129,7 +126,6 @@ export default function HomePage() {
           </div>
           <ActivePromotions />
         </section>
-
         {/* ─── 6-8. Verticals ─── */}
         <PicksRow
           title="SmileBaba Food Picks"
@@ -137,30 +133,27 @@ export default function HomePage() {
           items={restaurants}
           loading={featuredLoading}
           viewAllHref="/ads?category=food"
-          emptyHint="No restaurants in your area yet."
+          // emptyHint="No restaurants in your area yet."
           showRating
         />
-
         <PicksRow
           title="SmileStays Picks"
           accent="#0D9488"
           items={apartments}
           loading={featuredLoading}
           viewAllHref="/ads?category=apartments"
-          emptyHint="No properties listed yet."
+          // emptyHint="No properties listed yet."
           priceSuffix="/ night"
         />
-
         <PicksRow
           title="Featured Products from Marketplace"
           accent="#2563EB"
           items={deals}
           loading={featuredLoading}
           viewAllHref="/ads?category=marketplace"
-          emptyHint="No listings yet."
+          // emptyHint="No listings yet."
           showLocation
         />
-
         {/* ─── 9. Category strip ─── */}
         <CategoryStrip />
       </div>

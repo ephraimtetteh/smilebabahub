@@ -1,21 +1,22 @@
-// ═══════════════════════════════════════════════════════════════════════
+"use client";
+
 // src/components/home/StickyRadioBar.tsx
 //
-// The dark radio bar pinned to the bottom. Plays in place — clicking the
-// button starts audio without navigating, because sending someone to a
-// player page to hear a stream they asked for is a wasted step.
+// The dark radio bar pinned to the bottom.
 //
-// Dismissible, and it stays dismissed for the session. A bar you can't
-// close is an ad.
-// ═══════════════════════════════════════════════════════════════════════
-
-"use client";
+// Plays in place — clicking the button starts audio without navigating,
+// because sending someone to a player page to hear a stream they just
+// asked for is a wasted step.
+//
+// Dismissible, and it stays dismissed for the session. A bar you cannot
+// close is an advert, and this one covers content.
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Play, Pause, X, Radio } from "lucide-react";
 
-const STREAM = "https://media2.streambrothers.com:1936/8056/8056.mp3";
+const STREAM = "https://video2.getstreamhosting.com:2020/stream/8238";
+const BARS = [10, 16, 8, 18, 12, 20, 9];
 
 export default function StickyRadioBar() {
   const [playing, setPlaying] = useState(false);
@@ -23,7 +24,6 @@ export default function StickyRadioBar() {
   const [loading, setLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Respect a dismissal for the rest of the session
   useEffect(() => {
     if (sessionStorage.getItem("sb_radio_hidden") === "1") setHidden(true);
   }, []);
@@ -52,8 +52,8 @@ export default function StickyRadioBar() {
       await audioRef.current.play();
       setPlaying(true);
     } catch {
-      // Autoplay policy, or the stream is down — either way, don't
-      // leave the button looking stuck
+      // Autoplay policy, or the stream is down. Either way, do not leave
+      // the button looking stuck.
       setPlaying(false);
     } finally {
       setLoading(false);
@@ -70,23 +70,13 @@ export default function StickyRadioBar() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 px-3 pb-3 lg:px-6 lg:pb-4">
-      <div
-        className="mx-auto flex max-w-[1340px] items-center gap-3 rounded-2xl
-                   border-2 border-amber-400 bg-neutral-950 px-3 py-2.5
-                   shadow-lg shadow-amber-400/10 sm:gap-4 sm:px-4"
-      >
+      <div className="mx-auto flex max-w-[1340px] items-center gap-3 rounded-2xl border-2 border-amber-400 bg-neutral-950 px-3 py-2.5 shadow-lg sm:gap-4 sm:px-4">
         {/* Mark */}
         <div className="relative shrink-0">
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl
-                       border border-amber-400 bg-gray-900 sm:h-11 sm:w-11"
-          >
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-400 bg-gray-900 sm:h-11 sm:w-11">
             <span className="text-sm font-bold text-amber-400">SB</span>
           </div>
-          <span
-            className="absolute -left-1 -top-1.5 flex items-center gap-1 rounded
-                       bg-red-500 px-1 py-px text-[7px] font-bold text-white"
-          >
+          <span className="absolute -left-1 -top-1.5 flex items-center gap-1 rounded bg-red-500 px-1 py-px text-[7px] font-bold text-white">
             <span className="h-1 w-1 rounded-full bg-white" />
             LIVE
           </span>
@@ -98,23 +88,19 @@ export default function StickyRadioBar() {
             SmileBaba <span className="text-amber-400">RADIO</span>
           </p>
           <p className="truncate text-[10px] text-white/60">
-            Good Vibes, Great Music!
+            Good Vibes, Great Music
           </p>
         </div>
 
-        {/* Waveform — decorative */}
+        {/* Waveform */}
         <div className="hidden items-end gap-[3px] sm:flex" aria-hidden>
-          {[10, 16, 8, 18, 12, 20, 9].map((h, i) => (
+          {BARS.map((h, i) => (
             <span
               key={i}
-              className="w-[3px] rounded-full bg-amber-400"
+              className="w-[3px] rounded-full bg-amber-400 transition-all duration-300"
               style={{
                 height: playing ? h : 5,
                 opacity: playing ? 1 : 0.4,
-                transition: "height .25s ease",
-                animation: playing
-                  ? `sbwave 1s ease-in-out ${i * 0.09}s infinite alternate`
-                  : undefined,
               }}
             />
           ))}
@@ -127,9 +113,7 @@ export default function StickyRadioBar() {
           aria-label={
             playing ? "Pause SmileBaba Radio" : "Play SmileBaba Radio"
           }
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full
-                     border-2 border-amber-400 transition hover:bg-amber-400/10
-                     disabled:opacity-50 sm:h-10 sm:w-10"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-amber-400 transition hover:bg-amber-400/10 disabled:opacity-50 sm:h-10 sm:w-10"
         >
           {playing ? (
             <Pause size={14} className="fill-amber-400 text-amber-400" />
@@ -146,8 +130,7 @@ export default function StickyRadioBar() {
 
         <button
           onClick={toggle}
-          className="hidden items-center gap-1.5 rounded-full bg-red-500 px-4 py-2
-                     text-xs font-bold text-white transition hover:bg-red-600 lg:flex"
+          className="hidden items-center gap-1.5 rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-600 lg:flex"
         >
           {playing ? "Playing" : "Listen Live"}
           <Radio size={12} />
@@ -168,17 +151,6 @@ export default function StickyRadioBar() {
           <X size={14} />
         </button>
       </div>
-
-      <style jsx>{`
-        @keyframes sbwave {
-          from {
-            transform: scaleY(0.45);
-          }
-          to {
-            transform: scaleY(1);
-          }
-        }
-      `}</style>
     </div>
   );
 }

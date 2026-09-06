@@ -2,15 +2,15 @@
 
 // src/components/home/PicksRow.tsx
 //
-// A titled row of four products. One component for all four verticals —
-// what differs is the accent, and which extras each shows: food gets a
-// rating, stays get "/ night", marketplace gets a location.
+// A titled row of four products. One component for all four verticals.
+// What differs is the accent, and which extras each shows: food gets a
+// rating, stays get a per-night suffix, marketplace gets a location.
 //
 // Scrolls horizontally on mobile rather than stacking, so a row stays a
-// row and the page doesn't become a mile long.
+// row and the page does not run to a mile.
 
 import Link from "next/link";
-import { Heart, MapPin, Star, CheckCircle2 } from "lucide-react";
+import { Heart, MapPin, Star, CheckCircle2, Package } from "lucide-react";
 
 interface Props {
   title: string;
@@ -18,32 +18,27 @@ interface Props {
   items: any[];
   loading?: boolean;
   viewAllHref: string;
-  emptyHint?: string;
-  /** "Free Delivery" chip */
   showDelivery?: boolean;
-  /** Star rating under the price */
   showRating?: boolean;
-  /** City and country under the price */
   showLocation?: boolean;
-  /** e.g. "/ night" */
   priceSuffix?: string;
 }
 
-// ─── Shape helpers — the API returns price as { amount, currency } ────
-const price = (ad: any): number => {
+// The API returns price as { amount, currency }, not a number
+const priceOf = (ad: any): number => {
   const p = ad?.price;
   if (p && typeof p === "object") return Number(p.amount) || 0;
   return Number(p) || 0;
 };
 
-const symbol = (ad: any): string => {
+const symbolOf = (ad: any): string => {
   const c =
     (ad?.price && typeof ad.price === "object" && ad.price.currency) ||
     ad?.currency;
-  return c === "NGN" ? "₦" : "GH₵";
+  return c === "NGN" ? "NGN" : "GHS";
 };
 
-const cover = (ad: any): string | undefined => {
+const coverOf = (ad: any): string | undefined => {
   if (ad?.coverImage) return ad.coverImage;
   const imgs = ad?.images;
   if (!Array.isArray(imgs) || !imgs.length) return undefined;
@@ -51,7 +46,7 @@ const cover = (ad: any): string | undefined => {
   return typeof first === "string" ? first : first?.url;
 };
 
-const place = (ad: any): string =>
+const placeOf = (ad: any): string =>
   [ad?.location?.city, ad?.location?.country].filter(Boolean).join(", ");
 
 export default function PicksRow({
@@ -60,7 +55,6 @@ export default function PicksRow({
   items,
   loading,
   viewAllHref,
-  emptyHint,
   showDelivery,
   showRating,
   showLocation,
@@ -96,11 +90,7 @@ export default function PicksRow({
           ))}
         </div>
       ) : (
-        <div
-          className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-1
-                     sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible
-                     sm:px-0 lg:grid-cols-4"
-        >
+        <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
           {items.slice(0, 4).map((ad) => (
             <ProductCard
               key={ad._id}
@@ -130,71 +120,54 @@ function ProductCard({
   showLocation?: boolean;
   priceSuffix?: string;
 }) {
-  const img = cover(ad);
-  const amount = price(ad);
+  const img = coverOf(ad);
+  const amount = priceOf(ad);
 
   return (
     <Link
       href={`/ads/${ad.slug ?? ad._id}`}
-      className="group w-[46vw] shrink-0 snap-start overflow-hidden rounded-2xl
-                 border border-gray-100 bg-white transition hover:shadow-md
-                 sm:w-auto"
+      className="group w-[46vw] shrink-0 snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition hover:shadow-md sm:w-auto"
     >
-      {/* Image */}
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         {img ? (
-          // Plain img rather than next/image — listing photos come from
-          // Cloudinary with unpredictable dimensions
+          // Plain img rather than next/image, because listing photos come
+          // from Cloudinary with unpredictable dimensions
           <img
             src={img}
             alt={ad.title ?? "Listing"}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-300
-                       group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-3xl">
-            📦
+          <div className="flex h-full items-center justify-center">
+            <Package size={28} className="text-gray-300" />
           </div>
         )}
 
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault(); /* wire saves here */
-          }}
+          onClick={(e) => e.preventDefault()}
           aria-label="Save"
-          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center
-                     rounded-full bg-white/90 shadow-sm transition hover:bg-white"
+          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm transition hover:bg-white"
         >
           <Heart size={13} className="text-gray-500" />
         </button>
 
         {ad?.boost?.isBoosted && (
-          <span
-            className="absolute left-2 top-2 rounded-md bg-amber-400 px-1.5 py-0.5
-                       text-[8px] font-bold tracking-wide text-gray-900"
-          >
+          <span className="absolute left-2 top-2 rounded-md bg-amber-400 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-gray-900">
             BOOSTED
           </span>
         )}
       </div>
 
-      {/* Body */}
       <div className="p-3">
         <h3 className="line-clamp-2 min-h-[32px] text-[13px] font-medium leading-tight text-gray-900">
           {ad.title ?? "Untitled listing"}
         </h3>
 
-        {ad?.attributes?.[0]?.value && (
-          <p className="mt-0.5 line-clamp-1 text-[11px] text-gray-400">
-            {String(ad.attributes[0].value)}
-          </p>
-        )}
-
         <p className="mt-1.5 text-sm font-bold text-gray-900">
           {amount > 0
-            ? `${symbol(ad)} ${amount.toLocaleString()}`
+            ? `${symbolOf(ad)} ${amount.toLocaleString()}`
             : "Ask price"}
           {priceSuffix && amount > 0 && (
             <span className="ml-1 text-[11px] font-normal text-gray-400">
@@ -207,22 +180,18 @@ function ProductCard({
           <p className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
             <Star size={11} className="fill-amber-400 text-amber-400" />
             {ad.rating ?? "4.6"}
-            {ad.reviewCount ? ` (${ad.reviewCount})` : ""}
           </p>
         )}
 
-        {showLocation && place(ad) && (
+        {showLocation && placeOf(ad) && (
           <p className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
             <MapPin size={10} />
-            <span className="line-clamp-1">{place(ad)}</span>
+            <span className="line-clamp-1">{placeOf(ad)}</span>
           </p>
         )}
 
         {showDelivery && ad?.delivery?.available && (
-          <span
-            className="mt-2 inline-flex items-center gap-1 rounded bg-emerald-50
-                       px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700"
-          >
+          <span className="mt-2 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700">
             <CheckCircle2 size={9} />
             Free Delivery
           </span>
