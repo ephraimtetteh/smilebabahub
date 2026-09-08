@@ -1,21 +1,60 @@
+"use client";
+
 // client/app/money/send/page.tsx
 //
-// Send Money — the web version.
+// SmileBaba Money — send.
 //
-// Unlike mobile, the browser can load Clozar's widget directly, so this
-// page is both the destination picker and the handoff. No redirect, no
-// second page.
+// ─── THE GATE ────────────────────────────────────────────────────────
 //
-// /money/clozar stays as-is — the mobile app still opens that one in a
-// browser session because it needs the deep-link return.
+// Three things have to be true before the widget opens:
 //
-// Route: /money/send
-
-"use client";
+//   1. Signed in. An anonymous money transfer is a support problem
+//      waiting to happen — when something goes wrong, and it will,
+//      there has to be an account to talk to.
+//
+//   2. We know who they are. Full name, phone, country. Not KYC — these
+//      are the details any remittance service asks for, and what a
+//      support agent needs to trace a transfer.
+//
+//   3. They've picked a destination.
+//
+// Nothing here is vendor onboarding. Someone who only wants to send
+// money never sees a business-name field.
+//
+// Clozar is the regulated party and runs its own identity checks inside
+// the widget where a corridor requires them. This is our side of it, not
+// a substitute — which is why the modal says so rather than implying we
+// verified anyone.
+//
+// ─── WHY THE WIDGET LOADS HERE ───────────────────────────────────────
+//
+// The browser can run Clozar's script in place, so this page is both the
+// destination picker and the handoff. /money/clozar stays as it is —
+// the mobile app still opens that one in a browser session because it
+// needs the deep-link return.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Send,
+  Globe,
+  Zap,
+  ShieldCheck,
+  BadgeCheck,
+  Search,
+  X,
+  Lock,
+  UserCheck,
+  ChevronRight,
+  Loader2,
+  Check,
+} from "lucide-react";
+
+import { useAppDispatch, useAppSelector } from "@/src/app/redux";
+import { setUser } from "@/src/lib/features/auth/authSlice";
+import axiosInstance from "@/src/lib/api/axios";
 
 const NAVY = "#0B2A63";
 const NAVY_MID = "#123A80";
@@ -265,7 +304,12 @@ const REGIONS = [
 
 // ═══════════════════════════════════════════════════════════════════════
 export default function SendMoneyPage() {
-  const [from, setFrom] = useState("GHS");
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { user, isAuthenticated, isAuthenticating } = useAppSelector(
+    (s) => s.auth,
+  );
+
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("all");
   const [selected, setSelected] = useState<Country | null>(null);
@@ -276,10 +320,33 @@ export default function SendMoneyPage() {
   const [error, setError] = useState("");
   const [done, setDone] = useState<any>(null);
 
-  const gridRef = useRef<HTMLDivElement>(null);
+  // Sender details
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [savingDetails, setSaving] = useState(false);
+  const [detailsError, setDetailsError] = useState("");
 
-  const fromCountry =
-    COUNTRIES.find((c) => c.currency === from) ?? COUNTRIES[0];
+  // Set once the redux user arrives, so the modal opens prefilled
+  useEffect(() => {
+    setFullName(user?.username ?? "");
+    setPhone(user?.phone ?? "");
+  }, [user?._id]);
+
+  const country = user?.country ?? "Ghana";
+  const from = country === "Nigeria" ? "NGN" : "GHS";
+  const fromFlag = country === "Nigeria" ? "🇳🇬" : "🇬🇭";
+
+  /**
+   * What we need before a transfer can start. Deliberately short — this
+   * is the minimum any remittance service asks for and the minimum a
+   * support agent needs to trace a transfer.
+   */
+  const detailsComplete =
+    !!user &&
+    (user.username ?? "").trim().length > 2 &&
+    (user.phone ?? "").replace(/\D/g, "").length >= 7 &&
+    !!user.country;
 
   // ─── Filter ───────────────────────────────────────────────────────
   const results = useMemo(() => {
@@ -327,10 +394,8 @@ export default function SendMoneyPage() {
 
         // Record against SmileBaba history. Fire-and-forget — never block
         // the success screen on our own API.
-        fetch("/api/money/record", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        axiosInstance
+          .post("/transfers/record", {
             payoutRef: r?.payout_ref,
             sendAmount: r?.send_amount,
             receiveAmount: r?.receive_amount,
@@ -340,9 +405,8 @@ export default function SendMoneyPage() {
             fee: r?.fee,
             recipientName: r?.recipient_name,
             recipientPhone: r?.recipient_phone,
-            raw: r,
-          }),
-        }).catch(() => {});
+          })
+          .catch(() => {});
       },
 
       onClose: () => setOpening(false),
@@ -353,6 +417,71 @@ export default function SendMoneyPage() {
       },
     });
   }, [selected, from]);
+
+  // ─── Save sender details ──────────────────────────────────────────
+  const saveDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (fullName.trim().length < 3) {
+      setDetailsError("Use the name on your ID or bank account.");
+      return;
+    }
+    if (phone.replace(/\D/g, "").length < 7) {
+      setDetailsError("We need a number we can reach you on.");
+      return;
+    }
+
+    setSaving(true);
+    setDetailsError("");
+
+    try {
+      // The profile endpoint that already exists — no new backend
+      const { data } = await axiosInstance.patch("/auth/profile", {
+        username: fullName.trim(),
+        phone: phone.trim(),
+      });
+
+      // Keep redux in step, otherwise detailsComplete stays false and
+      // they'd be asked again on the very next click
+      if (data?.user) dispatch(setUser(data.user));
+
+      setDetailsOpen(false);
+      // Carry straight on rather than making them press Continue again
+      setTimeout(() => openWidget(), 200);
+    } catch (err: any) {
+      setDetailsError(
+        err?.response?.data?.message ?? "Couldn't save that. Please try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ─── The gate ─────────────────────────────────────────────────────
+  const proceed = () => {
+    if (!selected) return;
+
+    if (selected.currency === from) {
+      setError(
+        `You're sending from ${country}. Choose somewhere else to send to.`,
+      );
+      return;
+    }
+
+    if (!isAuthenticated) {
+      // Your login page reads this and returns them here afterwards
+      localStorage.setItem("redirectAfterLogin", "/money/send");
+      router.push("/auth/login?returnUrl=/money/send");
+      return;
+    }
+
+    if (!detailsComplete) {
+      setDetailsOpen(true);
+      return;
+    }
+
+    openWidget();
+  };
 
   // ─── Success ──────────────────────────────────────────────────────
   if (done) {
@@ -366,8 +495,12 @@ export default function SendMoneyPage() {
             margin: "0 auto",
           }}
         >
-          <div style={successCircle}>✓</div>
+          <div style={successCircle}>
+            <Check size={34} />
+          </div>
+
           <h1 style={{ ...h1, fontSize: 24, marginTop: 18 }}>Transfer sent</h1>
+
           {done?.receive_amount && (
             <p
               style={{
@@ -422,15 +555,32 @@ export default function SendMoneyPage() {
       <Shell>
         {/* ═══ Hero ═══ */}
         <section style={hero}>
-          <div style={heroGlow} />
+          <div style={heroGlow} aria-hidden />
+          <Globe
+            size={220}
+            strokeWidth={0.5}
+            style={{
+              position: "absolute",
+              right: -30,
+              top: 10,
+              color: "#2C6FD1",
+              opacity: 0.3,
+            }}
+            aria-hidden
+          />
+
           <div style={{ position: "relative" }}>
+            <div style={heroIcon}>
+              <Send size={24} color={YELLOW} strokeWidth={2.1} />
+            </div>
+
             <h1
               style={{
                 fontSize: 38,
                 fontWeight: 700,
                 color: "white",
                 letterSpacing: "-1px",
-                margin: 0,
+                margin: "18px 0 0",
                 lineHeight: 1.1,
               }}
             >
@@ -448,6 +598,7 @@ export default function SendMoneyPage() {
             >
               worldwide
             </h1>
+
             <p
               style={{
                 fontSize: 16,
@@ -461,7 +612,7 @@ export default function SendMoneyPage() {
             <p
               style={{
                 fontSize: 15,
-                color: "rgba(255,255,255,0.65)",
+                color: "rgba(255,255,255,0.6)",
                 marginTop: 6,
                 maxWidth: 420,
                 lineHeight: 1.6,
@@ -478,91 +629,84 @@ export default function SendMoneyPage() {
                 flexWrap: "wrap",
               }}
             >
-              <Trust icon="⚡" label="Instant" />
-              <Trust icon="🛡️" label="Secure" />
-              <Trust icon="✅" label="Reliable" />
+              <Trust icon={Zap} label="Instant" colour={YELLOW} />
+              <Trust icon={ShieldCheck} label="Secure" colour="#5B8DEF" />
+              <Trust icon={BadgeCheck} label="Reliable" colour="#4ADE80" />
             </div>
           </div>
         </section>
 
-        {/* ═══ USDT ═══ */}
-        <section style={usdtBanner}>
-          <div
+        {/* ═══ Who's sending ═══ */}
+        {isAuthenticated && (
+          <button
+            onClick={() => setDetailsOpen(true)}
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 18,
-              flexWrap: "wrap",
+              ...senderCard,
+              background: detailsComplete ? "white" : "#FEF9E7",
+              borderColor: detailsComplete ? "#F0F1F3" : "#FDE68A",
             }}
           >
-            <div style={usdtCoin}>₮</div>
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <h2
-                style={{
-                  fontSize: 24,
-                  fontWeight: 700,
-                  margin: 0,
-                  letterSpacing: "-0.5px",
-                }}
-              >
-                <span style={{ color: "#0F766E" }}>Transfer </span>
-                <span style={{ color: "#059669" }}>USDT</span>
-              </h2>
-              <p style={{ fontSize: 15, color: "#374151", margin: "4px 0 0" }}>
-                to your Ghana and Nigerian account.
-              </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "#059669",
-                  fontWeight: 600,
-                  margin: "6px 0 0",
-                }}
-              >
-                Fast · Secure · Low Fees
-              </p>
-            </div>
-            <div
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 26,
+                ...senderIcon,
+                background: detailsComplete ? "#F9FAFB" : "#FEF3C7",
               }}
             >
-              <span>🇬🇭</span>
-              <span style={{ color: "#059669", fontSize: 18 }}>→</span>
-              <span>🇳🇬</span>
-            </div>
-          </div>
-        </section>
+              <UserCheck
+                size={17}
+                color={detailsComplete ? "#059669" : "#B45309"}
+                strokeWidth={2}
+              />
+            </span>
+
+            <span style={{ flex: 1, textAlign: "left" }}>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#111827",
+                }}
+              >
+                {detailsComplete ? user?.username : "Add your details"}
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 12.5,
+                  color: "#6B7280",
+                  marginTop: 2,
+                }}
+              >
+                {detailsComplete
+                  ? `${user?.phone} · ${user?.country}`
+                  : "We need your name and phone before you can send"}
+              </span>
+            </span>
+
+            <ChevronRight size={16} color="#D1D5DB" />
+          </button>
+        )}
 
         {/* ═══ Destination ═══ */}
-        <section style={{ marginTop: 34 }}>
+        <section style={{ marginTop: 30 }}>
           <h2 style={{ ...h2, fontSize: 24 }}>Where are you sending to?</h2>
           <p style={{ ...body, fontSize: 14, marginTop: 6 }}>
-            Sending from{" "}
-            <span style={{ fontSize: 16 }}>{fromCountry.flag}</span>{" "}
-            <strong>{fromCountry.name}</strong>{" "}
-            <select
-              value={from}
-              onChange={(e) => {
-                setFrom(e.target.value);
-                setSelected(null);
-              }}
-              style={fromSelect}
-            >
-              {COUNTRIES.map((c) => (
-                <option key={c.code} value={c.currency}>
-                  {c.name} ({c.currency})
-                </option>
-              ))}
-            </select>
+            Sending from <span style={{ fontSize: 16 }}>{fromFlag}</span>{" "}
+            <strong>{country}</strong>
+            {isAuthenticated && (
+              <>
+                {" · "}
+                <Link href="/account/settings" style={linkStyle}>
+                  Change
+                </Link>
+              </>
+            )}
           </p>
 
           {/* Search */}
           <div style={{ ...searchBox, marginTop: 16 }}>
-            <span style={{ color: "#9CA3AF", fontSize: 17 }}>⌕</span>
+            <Search size={17} color="#9CA3AF" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -570,8 +714,12 @@ export default function SendMoneyPage() {
               style={searchInput}
             />
             {query && (
-              <button onClick={() => setQuery("")} style={clearBtn}>
-                ✕
+              <button
+                onClick={() => setQuery("")}
+                style={clearBtn}
+                aria-label="Clear"
+              >
+                <X size={15} />
               </button>
             )}
           </div>
@@ -613,7 +761,7 @@ export default function SendMoneyPage() {
               code like GBP.
             </p>
           ) : (
-            <div ref={gridRef} style={countryGrid}>
+            <div style={countryGrid}>
               {results.map((c) => {
                 const isFrom = c.currency === from;
                 const on = selected?.code === c.code;
@@ -654,7 +802,10 @@ export default function SendMoneyPage() {
                         {isFrom ? "Sending from" : c.currency}
                       </span>
                     </span>
-                    <span style={{ color: on ? "#2563EB" : "#D1D5DB" }}>›</span>
+                    <ChevronRight
+                      size={15}
+                      color={on ? "#2563EB" : "#D1D5DB"}
+                    />
                   </button>
                 );
               })}
@@ -664,7 +815,7 @@ export default function SendMoneyPage() {
                   onClick={() => setShowAll(true)}
                   style={{ ...countryCard, borderColor: "#E5E7EB" }}
                 >
-                  <span style={{ fontSize: 22 }}>🌍</span>
+                  <Globe size={22} color="#2563EB" />
                   <span style={{ flex: 1, textAlign: "left" }}>
                     <span
                       style={{
@@ -687,7 +838,7 @@ export default function SendMoneyPage() {
                       View all
                     </span>
                   </span>
-                  <span style={{ color: "#D1D5DB" }}>›</span>
+                  <ChevronRight size={15} color="#D1D5DB" />
                 </button>
               )}
             </div>
@@ -717,17 +868,36 @@ export default function SendMoneyPage() {
         {/* ═══ Continue ═══ */}
         <div style={stickyBar}>
           <button
-            onClick={openWidget}
-            disabled={!selected || !ready || opening}
+            onClick={proceed}
+            disabled={!selected || opening || isAuthenticating}
             style={{
               ...btnPrimary,
-              background: selected && ready ? YELLOW : "#F3F4F6",
-              color: selected && ready ? "#111827" : "#9CA3AF",
-              cursor: selected && ready ? "pointer" : "not-allowed",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              background: selected ? YELLOW : "#F3F4F6",
+              color: selected ? "#111827" : "#9CA3AF",
+              cursor: selected ? "pointer" : "not-allowed",
             }}
           >
-            {!ready ? "Loading…" : opening ? "Opening…" : "Continue →"}
+            {opening ? (
+              <>
+                <Loader2 size={17} className="animate-spin" />
+                Opening…
+              </>
+            ) : !isAuthenticated ? (
+              <>
+                <Lock size={16} />
+                Sign in to continue
+              </>
+            ) : !ready ? (
+              "Loading…"
+            ) : (
+              "Continue →"
+            )}
           </button>
+
           <p
             style={{
               ...body,
@@ -737,10 +907,119 @@ export default function SendMoneyPage() {
               color: "#9CA3AF",
             }}
           >
-            You'll be able to review the details before confirming.
+            {!isAuthenticated
+              ? "Transfers need an account so we can help if anything goes wrong."
+              : "You'll be able to review the details before confirming."}
           </p>
         </div>
       </Shell>
+
+      {/* ═══ Sender details ═══ */}
+      {detailsOpen && (
+        <div
+          style={overlay}
+          onClick={() => !savingDetails && setDetailsOpen(false)}
+        >
+          <div style={modal} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <h2 style={{ ...h1, fontSize: 21 }}>Your details</h2>
+                <p style={{ ...body, fontSize: 14, marginTop: 6 }}>
+                  Use the name on your ID or bank account. We ask once, and only
+                  so we can help if a transfer goes wrong.
+                </p>
+              </div>
+
+              <button
+                onClick={() => !savingDetails && setDetailsOpen(false)}
+                style={closeBtn}
+                aria-label="Close"
+              >
+                <X size={19} />
+              </button>
+            </div>
+
+            <form onSubmit={saveDetails}>
+              <div style={{ marginTop: 20 }}>
+                <label style={fieldLabel}>Full name</label>
+                <input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Kwame Mensah"
+                  style={fieldInput}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ marginTop: 16 }}>
+                <label style={fieldLabel}>Phone number</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={
+                    country === "Nigeria" ? "0801 234 5678" : "024 123 4567"
+                  }
+                  style={fieldInput}
+                />
+              </div>
+
+              {detailsError && (
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "#B91C1C",
+                    marginTop: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {detailsError}
+                </p>
+              )}
+
+              {/* Said plainly, because implying we verified someone when
+                  we didn't would be the wrong thing to claim */}
+              <div style={noteBox}>
+                <ShieldCheck
+                  size={15}
+                  color="#059669"
+                  style={{ flexShrink: 0, marginTop: 1 }}
+                />
+                <span
+                  style={{ fontSize: 12.5, color: "#6B7280", lineHeight: 1.55 }}
+                >
+                  Your details stay with SmileBaba. Depending on where you're
+                  sending, our partner may ask for more before completing the
+                  transfer.
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingDetails}
+                style={{
+                  ...btnPrimary,
+                  marginTop: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  opacity: savingDetails ? 0.7 : 1,
+                }}
+              >
+                {savingDetails ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  "Save and continue"
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -765,7 +1044,15 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Trust({ icon, label }: { icon: string; label: string }) {
+function Trust({
+  icon: Icon,
+  label,
+  colour,
+}: {
+  icon: any;
+  label: string;
+  colour: string;
+}) {
   return (
     <span
       style={{
@@ -777,7 +1064,7 @@ function Trust({ icon, label }: { icon: string; label: string }) {
         color: "white",
       }}
     >
-      <span>{icon}</span>
+      <Icon size={16} color={colour} strokeWidth={2.4} />
       {label}
     </span>
   );
@@ -828,25 +1115,37 @@ const heroGlow: React.CSSProperties = {
   background: NAVY_MID,
   opacity: 0.7,
 };
-
-const usdtBanner: React.CSSProperties = {
-  background: "linear-gradient(90deg, #ECFDF5 0%, #FEFCE8 100%)",
-  border: "1px solid #D1FAE5",
-  borderRadius: 20,
-  padding: "22px 26px",
-  marginTop: 16,
-};
-const usdtCoin: React.CSSProperties = {
-  width: 62,
-  height: 62,
-  borderRadius: 999,
-  background: "#10B981",
-  color: "white",
+const heroIcon: React.CSSProperties = {
+  width: 56,
+  height: 56,
+  borderRadius: 16,
+  background: NAVY_MID,
+  border: "1px solid rgba(255,255,255,0.18)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: 32,
-  fontWeight: 700,
+};
+
+const senderCard: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  width: "100%",
+  marginTop: 16,
+  padding: 14,
+  borderRadius: 16,
+  borderWidth: 1,
+  borderStyle: "solid",
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+const senderIcon: React.CSSProperties = {
+  width: 38,
+  height: 38,
+  borderRadius: 12,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   flexShrink: 0,
 };
 
@@ -873,18 +1172,7 @@ const clearBtn: React.CSSProperties = {
   background: "transparent",
   cursor: "pointer",
   color: "#9CA3AF",
-  fontSize: 14,
-};
-
-const fromSelect: React.CSSProperties = {
-  border: "none",
-  background: "transparent",
-  color: "#2563EB",
-  fontWeight: 600,
-  fontSize: 14,
-  cursor: "pointer",
-  fontFamily: "inherit",
-  textDecoration: "underline",
+  display: "flex",
 };
 
 const chip: React.CSSProperties = {
@@ -932,15 +1220,18 @@ const btnPrimary: React.CSSProperties = {
   height: 56,
   border: "none",
   borderRadius: 16,
+  background: YELLOW,
+  color: "#111827",
   fontSize: 17,
   fontWeight: 700,
   fontFamily: "inherit",
   cursor: "pointer",
 };
 const btnGhost: React.CSSProperties = {
-  display: "block",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   width: "100%",
-  textAlign: "center",
   padding: "15px 0",
   border: "1px solid #E5E7EB",
   borderRadius: 16,
@@ -962,7 +1253,6 @@ const successCircle: React.CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   margin: "0 auto",
-  fontSize: 34,
   color: "#16A34A",
 };
 
@@ -986,4 +1276,63 @@ const backLink: React.CSSProperties = {
   color: NAVY,
   textDecoration: "none",
   marginBottom: 24,
+};
+const linkStyle: React.CSSProperties = {
+  color: "#2563EB",
+  fontWeight: 600,
+  textDecoration: "underline",
+};
+
+const overlay: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 60,
+  background: "rgba(17,24,39,0.5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 20,
+};
+const modal: React.CSSProperties = {
+  background: "white",
+  borderRadius: 22,
+  padding: 26,
+  width: "100%",
+  maxWidth: 460,
+};
+const closeBtn: React.CSSProperties = {
+  border: "none",
+  background: "transparent",
+  cursor: "pointer",
+  color: "#9CA3AF",
+  display: "flex",
+  padding: 0,
+};
+
+const fieldLabel: React.CSSProperties = {
+  display: "block",
+  fontSize: 13.5,
+  fontWeight: 600,
+  color: "#374151",
+  marginBottom: 7,
+};
+const fieldInput: React.CSSProperties = {
+  width: "100%",
+  height: 48,
+  border: "1px solid #E5E7EB",
+  borderRadius: 14,
+  padding: "0 14px",
+  fontSize: 15,
+  color: "#111827",
+  outline: "none",
+  fontFamily: "inherit",
+};
+
+const noteBox: React.CSSProperties = {
+  display: "flex",
+  gap: 10,
+  background: "#F9FAFB",
+  borderRadius: 12,
+  padding: 13,
+  marginTop: 18,
 };
