@@ -127,6 +127,27 @@ export const SUBCATEGORIES: Record<
     { id: "tech-repair", label: "Tech Repair", icon: "💻" },
     { id: "other", label: "Other", icon: "🔨" },
   ],
+  phones: [
+    { id: "smartphones", label: "Smartphones", icon: "📱" },
+    { id: "feature", label: "Feature phones", icon: "☎️" },
+    { id: "tablets", label: "Tablets", icon: "📲" },
+    { id: "laptops", label: "Laptops", icon: "💻" },
+    { id: "accessories", label: "Accessories", icon: "🔌" },
+    { id: "audio", label: "Audio & headphones", icon: "🎧" },
+    { id: "wearables", label: "Watches & wearables", icon: "⌚" },
+    { id: "gaming", label: "Gaming", icon: "🎮" },
+  ],
+
+  "home-office": [
+    { id: "furniture", label: "Furniture", icon: "🛋️" },
+    { id: "appliances", label: "Home appliances", icon: "🔌" },
+    { id: "kitchen", label: "Kitchen & dining", icon: "🍽️" },
+    { id: "bedding", label: "Bedding & bath", icon: "🛏️" },
+    { id: "decor", label: "Home decor", icon: "🖼️" },
+    { id: "office", label: "Office furniture", icon: "🪑" },
+    { id: "garden", label: "Garden & outdoor", icon: "🌿" },
+    { id: "tools", label: "Tools & DIY", icon: "🔧" },
+  ],
 };
 
 // ── Category-specific fields shown in the ad form ──────────────────────────
@@ -215,6 +236,27 @@ export const CATEGORY_FIELDS: Record<
     conditionLabel: "",
     pricePlaceholder: "Starting price / per hour",
     descHint: "What you offer, experience, availability, service area",
+  },
+  phones: {
+    showCondition: true,
+    showDelivery: true,
+    showBedrooms: false,
+    showMapPin: false,
+    conditionLabel: "Condition",
+    pricePlaceholder: "Price per unit/pack",
+    descHint:
+      "Storage, colour, battery health, what's included in the box, any faults.",
+  },
+
+  "home-office": {
+    showCondition: true,
+    showDelivery: true,
+    showBedrooms: false,
+    showMapPin: false,
+    conditionLabel: "Condition",
+    pricePlaceholder: "Price per unit/pack",
+    descHint:
+      "Dimensions, material, colour, and whether delivery or assembly is included.",
   },
 };
 

@@ -27,6 +27,7 @@ import ChatNavBadge from "./Chat/ChatNavBadge";
 import NotificationBell from "../app/vendor/(components)/Notification";
 import InstallAppButton from "@/src/components/InstallAppButton";
 import { FaMoneyBill } from "react-icons/fa";
+import PostAdMenu from "@/src/components/PostAdMenu";
 
 // ── Desktop dropdown for one nav category ─────────────────────────────────
 function NavDropdown({ cat }: { cat: NavCategory }) {
@@ -282,7 +283,7 @@ export default function Navbar() {
               className="flex items-center gap-1.5 text-sm hover:text-yellow-400
                 transition"
             >
-              <FaMoneyBill size={14} />
+              {/* <FaMoneyBill size={14} /> */}
               Send Money
             </Link>
             <Link
@@ -321,13 +322,14 @@ export default function Navbar() {
 
           {/* ── Right actions ── */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
+            {/* <button
               onClick={handlePostAd}
               className="hidden md:block bg-yellow-400 text-black px-4 py-2 rounded-full
                 text-sm font-semibold hover:bg-yellow-300 transition active:scale-95"
             >
               Post Ad
-            </button>
+            </button> */}
+            <PostAdMenu variant="desktop" />
 
             {/* ── Cart with live count ── */}
             <Link href="/cart" className="relative" aria-label="Cart">

@@ -785,3 +785,49 @@ export default function HomePage() {
   );
 }
 
+
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// THE WHOLE FLOW,
+//
+//   Post Ad (navbar or CTA)
+//     → useSellFlow: GET /onboarding/me
+//         401              → /auth/login?returnUrl=…
+//         needsOnboarding  → /onboarding
+//         otherwise        → /sell?category=…
+//
+//   /sell
+//     → GET /onboarding/me  (server truth, not Redux — no loop)
+//         401              → /auth/login
+//         needsOnboarding  → /onboarding
+//         otherwise        → AdForm, category prefilled
+//
+//   AdForm submit
+//     → PLAN_LIMIT_REACHED → /subscription, draft intact
+//     → success            → SuccessScreen
+//
+//   /onboarding complete
+//     → role: vendor, storeSlug generated, Basic plan written
+//     → back to redirectAfterOnboarding
+//
+//   /subscription (free Basic)
+//     → activateSubscription: same role, same plan object
+//
+// Both vendor paths now leave the account in the same state, so nothing
+// downstream has to know which one someone took.
+//
+//
+// ─── ONE THING WORTH DECIDING ────────────────────────────────────────
+//
+// getPlanDurationDays("Basic") is 3 days. That's the *ad* duration, and
+// using it as the subscription expiry means a free vendor's plan lapses
+// after three days — after which subscription.expiresAt is in the past
+// and hasActiveSubscription goes false.
+//
+// activateSubscription has the same shape, so this isn't new. But it's
+// worth checking whether you want a free plan that expires at all. If
+// not, set expiresAt to null for Basic in both places, and let the ad's
+// own 3-day expiry do the limiting — which is what actually matters.
+// ═══════════════════════════════════════════════════════════════════════
+ 

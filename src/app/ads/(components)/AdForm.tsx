@@ -30,6 +30,8 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  Smartphone,
+  Sofa,
 } from "lucide-react";
 import { AdFormData, EMPTY_AD_FORM } from "@/src/types/adForm.types";
 import {
@@ -41,6 +43,7 @@ import {
 } from "@/src/types/ad.types";
 import { useAppSelector } from "@/src/app/redux";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
+import { useRouter } from "next/navigation";
 
 // ── Country config — everything that differs between Ghana and Nigeria ──────
 const COUNTRY_CONFIG = {
@@ -149,9 +152,19 @@ import PharmacyOnboarding from "./PharmacyOnboarding";
 
 const MAIN_CATEGORIES = [
   {
-    id: "marketplace",
-    label: "Shop",
-    icon: <Sparkles size={18} className="text-yellow-600" />,
+    id: "phones",
+    label: "Phones",
+    icon: <Smartphone size={18} className="text-blue-600" />,
+  },
+  {
+    id: "fashion",
+    label: "Fashion",
+    icon: <Shirt size={18} className="text-pink-600" />,
+  },
+  {
+    id: "home-office",
+    label: "Home",
+    icon: <Sofa size={18} className="text-emerald-600" />,
   },
   {
     id: "food",
@@ -164,9 +177,9 @@ const MAIN_CATEGORIES = [
     icon: <Home size={18} className="text-teal-600" />,
   },
   {
-    id: "fashion",
-    label: "Fashion",
-    icon: <Shirt size={18} className="text-pink-600" />,
+    id: "marketplace",
+    label: "Shop",
+    icon: <Sparkles size={18} className="text-yellow-600" />,
   },
   {
     id: "pharmacy",
@@ -511,6 +524,7 @@ export default function AdForm({
   mode = "create",
 }: AdFormProps) {
   const user = useAppSelector((s) => s.auth.user);
+  const router = useRouter();
 
   // ── Always read country from useViewCountry — never from user.currency ──
   // This is the fix: user.currency may be stale in the DB ("GHS" for a Nigerian).
@@ -718,8 +732,24 @@ export default function AdForm({
     } catch (err: any) {
       setProgress(0);
       setProgressLabel("");
+
+      const res = err?.response?.data;
+
+      // createAd returns this when a Basic vendor tries to post a second
+      // listing. It's the right moment to offer a plan — they've posted
+      // once, seen it work, and want to post again.
+      //
+      // The draft is already in localStorage, so they come back to a
+      // filled form rather than starting over. That's the difference
+      // between an upsell and an obstacle.
+      if (res?.code === "PLAN_LIMIT_REACHED") {
+        toast.info(res.message, { toastId: "plan-limit", autoClose: 6000 });
+        router.push(res.upgradeUrl ?? "/subscription");
+        return;
+      }
+
       toast.error(
-        err?.response?.data?.message ??
+        res?.message ??
           err?.message ??
           "Something went wrong. Please try again.",
         { toastId: "ad-error", autoClose: 5000 },
@@ -750,10 +780,6 @@ export default function AdForm({
   }, [cfg.currency, country]);
 
   const isSubmitting = submitting || loading;
-  if (successAdId)
-    return (
-      <SuccessScreen adId={successAdId} onPostAnother={handlePostAnother} />
-    );
 
   // Escape key on step 1 → call onExit (if provided)
   useEffect(() => {
@@ -769,6 +795,13 @@ export default function AdForm({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [step, onExit, isSubmitting]);
+
+  
+
+  if (successAdId)
+    return (
+      <SuccessScreen adId={successAdId} onPostAnother={handlePostAnother} />
+    );
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6">

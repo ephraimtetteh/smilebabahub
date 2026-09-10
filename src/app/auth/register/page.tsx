@@ -1,278 +1,385 @@
-'use client'
+"use client";
 
-import { assets } from '@/src/assets/assets'
-import Image from 'next/image'
-import Link from 'next/link';
-import React, { useState } from 'react'
-import { FaEyeSlash, FaEye } from "react-icons/fa";
-import { useAppDispatch, useAppSelector } from '../../redux';
-import { login, register } from '@/src/lib/features/auth/authActions';
-import { useRouter } from "next/navigation";
-import { toast } from 'react-toastify';
-import { validateEmailClient } from '@/src/utils/ValidateEmail';
+// client/app/auth/register/page.tsx
+//
+// Create account.
+//
+// ─── WHAT CHANGED ────────────────────────────────────────────────────
+//
+// The app collects username, email, phone, country and password. The web
+// form was collecting fewer, which meant a web signup produced a user
+// with no phone and no country — and then:
+//
+//   · Checkout asks for a phone anyway, so they type it there instead
+//   · Send Money blocks on missing details and opens its own modal
+//   · Onboarding step 2 asks for it a third time
+//   · getAds falls back to Ghana, so a Nigerian sees Ghanaian listings
+//     priced in cedis on their very first visit
+//
+// Asking once here removes all four. Phone and country are two fields
+// and both are things people know without looking anything up.
+//
+// ─── STEP 1 OF THE ONBOARDING FLOW ───────────────────────────────────
+//
+// This screen is "Create Account" in the vendor onboarding sequence.
+// Nothing here mentions selling — most people signing up are buyers, and
+// asking a buyer for a business name is how you lose them. The vendor
+// path opens later, when they tap Post Ad.
 
-const AuthRegister
- = () => {
-  const dispatch = useAppDispatch()
-  const [user, setUser] = useState({
-    email: '',
-    password: '',
-    phone: '',
-    username: ''
-  })
-  const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false)
-  const router = useRouter()
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  Check,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react";
 
-  const getPasswordStrength = (password: string) => {
-    if (password.length < 6) return "Weak";
-    if (password.length < 10) return "Medium";
-    return "Strong";
-  };
+import { useAppDispatch, useAppSelector } from "@/src/app/redux";
+import { setUser } from "@/src/lib/features/auth/authSlice";
+import axiosInstance from "@/src/lib/api/axios";
 
-  const isValidPhone = (phone: string) => {
-    return /^[0-9]{10,15}$/.test(phone);
-  };
+const NAVY = "#0B2A63";
+const YELLOW = "#FFC105";
 
-  const isValidEmail = (email: string) => {
-    return /\S+@\S+\.\S+/.test(email);
-  };
+const COUNTRIES = [
+  {
+    value: "Ghana",
+    label: "Ghana",
+    dial: "+233",
+    flag: "🇬🇭",
+    sample: "024 123 4567",
+  },
+  {
+    value: "Nigeria",
+    label: "Nigeria",
+    dial: "+234",
+    flag: "🇳🇬",
+    sample: "0801 234 5678",
+  },
+];
 
-  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUser({...user, [e.target.name]: e.target.value})
-  }
+export default function RegisterPage() {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const params = useSearchParams();
+  const { isAuthenticated } = useAppSelector((s) => s.auth);
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState("Ghana");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const picked = COUNTRIES.find((c) => c.value === country) ?? COUNTRIES[0];
+
+  /** Where to go afterwards. A query param wins over anything stored. */
+  const returnUrl =
+    params.get("returnUrl") ??
+    (typeof window !== "undefined"
+      ? localStorage.getItem("redirectAfterLogin")
+      : null) ??
+    "/";
+
+  // Already signed in — no reason to show them a signup form
+  useEffect(() => {
+    if (isAuthenticated) router.replace(returnUrl);
+  }, [isAuthenticated, returnUrl, router]);
+
+  // ─── Validation ───────────────────────────────────────────────────
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const phoneOk = phone.replace(/\D/g, "").length >= 9;
+  const pwOk = password.length >= 8;
+  const nameOk = username.trim().length >= 2;
+
+  const canSubmit =
+    nameOk && emailOk && phoneOk && pwOk && agreed && !submitting;
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    
+    if (!canSubmit) return;
+
+    setSubmitting(true);
+    setError("");
 
     try {
+      const { data } = await axiosInstance.post("/auth/register", {
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        phone: phone.trim(),
+        country,
+      });
 
-      // Client-side email check before hitting the network
-        const emailCheck = validateEmailClient(user.email);
-        if (!emailCheck.valid) {
-          setError(emailCheck.reason ?? "Invalid email");
-          return;
-        }
-      
-      if (!isValidPhone(user.phone)) {
-        const message = "Please enter a valid phone number";
-        setError(message);
-        toast.error(message);
-        return;
-      }
+      if (data?.user) dispatch(setUser(data.user));
 
-      if (!isValidEmail(user.email)) {
-        const message = "Enter a valid email address";
-        setError(message);
-        toast.error(message);
-        return;
-      }
-
-      const result = await dispatch(register(user));
-      
-      if (register.fulfilled.match(result)) {
-        toast.success("Account created!");
-        
-        const loginResult = await dispatch(login({
-          email: user.email,
-          password: user.password
-        }));
-        
-        if (login.fulfilled.match(loginResult)) {
-          router.push("/");
-          // router.push(`/auth/verify?email=${user.email}&phone=${user.phone}`);
-        }
-
-        const redirect = localStorage.getItem("redirectAfterLogin");
-
-        if (redirect) {
-          router.push(redirect);
-          localStorage.removeItem("redirectAfterLogin");
-        } else {
-          router.push("/");
-        }
-      
-        setUser({
-          email: "",
-          password: "",
-          phone: "",
-          username: "",
-        });
-      } else {
-        const message = result.payload as string;
-        setError(message || "Registration failed.");
-        toast.error(message || "Registration failed.");
-      }
-    } catch {
-      console.error(error);
-      const message = "Something went wrong.";
-      setError(message);
-      toast.error(message);
-
-    } 
-  
+      localStorage.removeItem("redirectAfterLogin");
+      router.replace(returnUrl);
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ??
+          "We couldn't create your account. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-black">
-      {/* Background */}
-      <Image
-        src={assets.bgImage}
-        alt="Background"
-        fill
-        priority
-        className="object-cover"
-      />
+    <main className="min-h-screen bg-gray-50 px-5 py-12">
+      <div className="mx-auto max-w-md">
+        <Link href="/" className="text-2xl font-bold text-gray-900">
+          Smile<span className="text-amber-400">Baba</span>Hub
+        </Link>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <div className="mt-7 rounded-3xl border border-gray-100 bg-white p-7">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Create your account
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-gray-500">
+            Buy, sell, book stays and send money across Ghana and Nigeria.
+          </p>
 
-      {/* Container */}
-      <div className="relative z-10 grid lg:grid-cols-2 w-[95%] max-w-7xl rounded-3xl overflow-hidden shadow-2xl">
-        {/* LEFT SIDE */}
-        <div className="hidden lg:flex flex-col justify-between p-12 text-white bg-gradient-to-br from-black/60 to-black/20 backdrop-blur-md">
-          <Link href={"/"}>
-            <Image
-              src={assets.logo}
-              alt="logo"
-              width={90}
-              height={90}
-              className="rounded-xl"
+          <form onSubmit={submit} className="mt-6">
+            <Field
+              label="Your name"
+              value={username}
+              onChange={setUsername}
+              placeholder="Kwame Mensah"
+              autoComplete="name"
             />
-          </Link>
 
-          <div>
-            <h1 className="text-5xl font-bold leading-tight mb-6">
-              Start Selling. Start Smiling.
-            </h1>
-            <p className="text-lg text-gray-300 max-w-md">
-              Join thousands of vendors across Ghana & Nigeria growing their
-              businesses on SmileBabaHub.
-            </p>
-          </div>
+            <Field
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              placeholder="you@example.com"
+              autoComplete="email"
+              hint={
+                email && !emailOk ? "That email doesn't look right." : undefined
+              }
+              invalid={!!email && !emailOk}
+            />
 
-          <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} SmileBabaHub
+            {/* ─── Country ─── */}
+            <div className="mt-4">
+              <label className="mb-1.5 block text-[13px] font-semibold text-gray-700">
+                Country
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                {COUNTRIES.map((c) => {
+                  const on = country === c.value;
+                  return (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setCountry(c.value)}
+                      className={`flex items-center gap-2.5 rounded-2xl border p-3 transition ${
+                        on
+                          ? "border-amber-400 bg-amber-50"
+                          : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
+                    >
+                      <span className="text-xl">{c.flag}</span>
+                      <span className="flex-1 text-left">
+                        <span className="block text-sm font-semibold text-gray-900">
+                          {c.label}
+                        </span>
+                        <span className="block text-[11px] text-gray-400">
+                          {c.dial}
+                        </span>
+                      </span>
+                      {on && <Check size={15} className="text-amber-600" />}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Country sets the currency and which listings they see, so
+                  it earns its own row rather than being buried in a select */}
+              <p className="mt-1.5 text-[11.5px] text-gray-400">
+                Sets your currency and the listings you see. You can change it
+                any time.
+              </p>
+            </div>
+
+            <Field
+              label="Phone number"
+              type="tel"
+              value={phone}
+              onChange={setPhone}
+              placeholder={picked.sample}
+              autoComplete="tel"
+              hint="Buyers only see this after they order from you."
+              invalid={!!phone && !phoneOk}
+            />
+
+            {/* ─── Password ─── */}
+            <div className="mt-4">
+              <label className="mb-1.5 block text-[13px] font-semibold text-gray-700">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPw ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
+                  className="h-12 w-full rounded-2xl border border-gray-200 pl-4 pr-12 text-[15px] text-gray-900 outline-none transition focus:border-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-600"
+                  aria-label={showPw ? "Hide password" : "Show password"}
+                >
+                  {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+              {password && !pwOk && (
+                <p className="mt-1.5 text-[11.5px] text-red-600">
+                  Use at least 8 characters.
+                </p>
+              )}
+            </div>
+
+            {/* ─── Terms ─── */}
+            <label className="mt-5 flex cursor-pointer items-start gap-2.5">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-amber-400"
+              />
+              <span className="text-[12.5px] leading-relaxed text-gray-600">
+                I agree to the{" "}
+                <Link
+                  href="/legal/terms"
+                  className="font-semibold text-gray-900 underline"
+                >
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/legal/privacy"
+                  className="font-semibold text-gray-900 underline"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+
+            {error && (
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-[13px] leading-relaxed text-red-800">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-bold transition"
+              style={{
+                height: 52,
+                background: canSubmit ? YELLOW : "#F3F4F6",
+                color: canSubmit ? "#111827" : "#9CA3AF",
+                cursor: canSubmit ? "pointer" : "not-allowed",
+              }}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 size={17} className="animate-spin" />
+                  Creating your account…
+                </>
+              ) : (
+                <>
+                  Create account
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          </form>
+
+          <p className="mt-5 text-center text-[13.5px] text-gray-500">
+            Already have an account?{" "}
+            <Link
+              href={`/auth/login${returnUrl !== "/" ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`}
+              className="font-bold text-gray-900"
+            >
+              Sign in
+            </Link>
           </p>
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="flex items-center justify-center bg-white/90 backdrop-blur-xl p-6 lg:p-12">
-          <div className="w-full max-w-md">
-            <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-              Create your account 🚀
-            </h2>
-
-            {error && (
-              <p className="text-red-500 text-sm text-center mb-4">{error}</p>
-            )}
-
-            <form onSubmit={handleRegister} className="space-y-4">
-              {/* Email */}
-              <input
-                type="email"
-                required
-                placeholder="Email Address"
-                name="email"
-                value={user.email}
-                onChange={handleUserChange}
-                className="w-full p-4 rounded-xl border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition"
-              />
-
-              {/* Name */}
-              <input
-                type="text"
-                required
-                placeholder="Full Name"
-                name="username"
-                value={user.username}
-                onChange={handleUserChange}
-                className="w-full p-4 rounded-xl border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition"
-              />
-
-              {/* Phone */}
-              <input
-                type="tel"
-                required
-                placeholder="Phone Number"
-                name="phone"
-                value={user.phone}
-                onChange={handleUserChange}
-                className="w-full p-4 rounded-xl border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition"
-              />
-
-              {/* Password */}
-              <div className="flex items-center border border-gray-200 rounded-xl focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-100 transition">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  placeholder="Password"
-                  name="password"
-                  value={user.password}
-                  onChange={handleUserChange}
-                  className="flex-1 p-4 rounded-xl outline-none"
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="pr-4 cursor-pointer text-gray-500 hover:text-black"
-                >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-
-              {/* Password Strength Bar */}
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all ${
-                    user.password.length < 4
-                      ? "w-1/4 bg-red-400"
-                      : user.password.length < 6
-                        ? "w-2/4 bg-yellow-400"
-                        : user.password.length < 8
-                          ? "w-3/4 bg-blue-400"
-                          : "w-full bg-green-500"
-                  }`}
-                />
-              </div>
-
-              <p className="text-xs text-gray-500">
-                Password strength: {getPasswordStrength(user.password)}
-              </p>
-
-              {/* Button */}
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-white font-semibold py-4 rounded-xl shadow-lg hover:scale-[1.02] transition disabled:opacity-50"
-              >
-                Create Account
-              </button>
-
-              {/* Terms */}
-              <p className="text-xs text-gray-500 text-center">
-                By continuing, you agree to our{" "}
-                <span className="underline cursor-pointer text-gray-700">
-                  Privacy Policy
-                </span>
-              </p>
-
-              {/* Login */}
-              <p className="text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <Link
-                  href={"/auth/login"}
-                  className="text-amber-600 font-medium hover:underline"
-                >
-                  Login
-                </Link>
-              </p>
-            </form>
-          </div>
+        {/* Not a sales pitch — just what the account is for */}
+        <div className="mt-5 flex items-start gap-2.5 rounded-2xl bg-white p-4">
+          <ShieldCheck size={16} className="mt-0.5 shrink-0 text-emerald-600" />
+          <p className="text-[12px] leading-relaxed text-gray-500">
+            Your account is free. Selling is free to start too — we take 5% only
+            when you make a sale, and never anything up front.
+          </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
-export default AuthRegister
+// ─── Field ───────────────────────────────────────────────────────────
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  hint,
+  invalid,
+  autoComplete,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  hint?: string;
+  invalid?: boolean;
+  autoComplete?: string;
+}) {
+  return (
+    <div className="mt-4">
+      <label className="mb-1.5 block text-[13px] font-semibold text-gray-700">
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className={`h-12 w-full rounded-2xl border px-4 text-[15px] text-gray-900 outline-none transition ${
+          invalid
+            ? "border-red-300 focus:border-red-400"
+            : "border-gray-200 focus:border-gray-400"
+        }`}
+      />
+      {hint && (
+        <p
+          className={`mt-1.5 text-[11.5px] ${
+            invalid ? "text-red-600" : "text-gray-400"
+          }`}
+        >
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}

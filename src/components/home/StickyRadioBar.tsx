@@ -69,7 +69,7 @@ export default function StickyRadioBar() {
   if (hidden) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 px-3 pb-3 lg:px-6 lg:pb-4">
+    <div className="fixed inset-x-0 lg:bottom-0 bottom-20 z-40 px-3 pb-3 lg:px-6 lg:pb-4">
       <div className="mx-auto flex max-w-[1340px] items-center gap-3 rounded-2xl border-2 border-amber-400 bg-neutral-950 px-3 py-2.5 shadow-lg sm:gap-4 sm:px-4">
         {/* Mark */}
         <div className="relative shrink-0">
