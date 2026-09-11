@@ -38,7 +38,7 @@ const VERTICALS: Vertical[] = [
     title: "Shop from\nTrusted Brands",
     subtitle: "Quality products with warranty and fast delivery.",
     cta: "Shop Now",
-    href: "/ads?category=phones,fashion,home-office",
+    href: "/ads?category=ecommerce,phones,fashion,home-office",
     icon: ShoppingBag,
     bg: "bg-emerald-50",
     accent: "text-emerald-600",

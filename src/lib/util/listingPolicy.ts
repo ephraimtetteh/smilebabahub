@@ -76,6 +76,7 @@ const ALLOW_PRE_PURCHASE_CHAT = false;
 const STAYS = new Set(["apartments", "properties"]);
 
 const TRANSACTIONAL = new Set([
+  "ecommerce",
   "phones",
   "fashion",
   "home-office",

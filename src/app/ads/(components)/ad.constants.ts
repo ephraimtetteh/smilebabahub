@@ -17,6 +17,7 @@ export type ConditionFilter = AdConditionValue | "all";
 // ── Main categories (shown in nav + feed tabs) ─────────────────────────────
 export const CATEGORIES = [
   { id: "all", label: "All", icon: "🏠" },
+  { id: "ecommerce", label: "Shop", icon: "🛍️" },
   { id: "marketplace", label: "Shop", icon: "🛍️" },
   { id: "food", label: "Food", icon: "🍔" },
   { id: "apartments", label: "Property", icon: "🏢" },
@@ -148,6 +149,28 @@ export const SUBCATEGORIES: Record<
     { id: "garden", label: "Garden & outdoor", icon: "🌿" },
     { id: "tools", label: "Tools & DIY", icon: "🔧" },
   ],
+  ecommerce: [
+    { id: "phones", label: "Phones & Tablets", icon: "📱" },
+    { id: "computers", label: "Computers & Laptops", icon: "💻" },
+    { id: "electronics", label: "Electronics & TV", icon: "📺" },
+    { id: "audio", label: "Audio & Headphones", icon: "🎧" },
+    { id: "fashion", label: "Fashion & Clothing", icon: "👕" },
+    { id: "shoes", label: "Shoes & Bags", icon: "👟" },
+    { id: "beauty", label: "Beauty & Personal Care", icon: "💄" },
+    { id: "watches", label: "Watches & Jewellery", icon: "⌚" },
+    { id: "furniture", label: "Furniture", icon: "🛋️" },
+    { id: "appliances", label: "Home Appliances", icon: "🔌" },
+    { id: "kitchen", label: "Kitchen & Dining", icon: "🍽️" },
+    { id: "office", label: "Office & Stationery", icon: "🪑" },
+    { id: "baby", label: "Baby & Kids", icon: "🧸" },
+    { id: "sports", label: "Sports & Fitness", icon: "🏀" },
+    { id: "gaming", label: "Gaming", icon: "🎮" },
+    { id: "groceries", label: "Groceries & Drinks", icon: "🛒" },
+    { id: "books", label: "Books & Media", icon: "📚" },
+    { id: "tools", label: "Tools & DIY", icon: "🔧" },
+    { id: "auto", label: "Car Parts & Accessories", icon: "🚗" },
+    { id: "other", label: "Something else", icon: "📦" },
+  ],
 };
 
 // ── Category-specific fields shown in the ad form ──────────────────────────
@@ -172,6 +195,16 @@ export const CATEGORY_FIELDS: Record<
     conditionLabel: "Item condition",
     pricePlaceholder: "e.g. 500",
     descHint: "Describe the item — brand, age, any defects, what's included",
+  },
+  ecommerce: {
+    showDelivery: true,
+    showBedrooms: false,
+    showMapPin: false,
+    showCondition: true,
+    conditionLabel: "Condition",
+    pricePlaceholder: "Price per unit/pack",
+    descHint:
+      "Brand, model, size or capacity, what's included, and any faults. Buyers who know what they're getting don't message to ask.",
   },
   food: {
     showCondition: false,

@@ -35,7 +35,7 @@ import { useProducts } from "@/src/hooks/useProducts";
 import PicksRow from "@/src/components/home/PicksRow";
 
 const ACCENT = "#059669";
-const CATEGORIES = ["phones", "fashion", "home-office"] as const;
+const CATEGORIES = ["ecommerce", "phones", "fashion", "home-office"] as const;
 
 const PERKS = [
   { icon: Truck, title: "Fast Delivery", hint: "Same-day possible" },
@@ -59,13 +59,13 @@ const TILES: Tile[] = [
     id: "phones",
     label: "Phones",
     icon: Smartphone,
-    href: "/ads?category=phones",
+    href: "/ads?category=ecommerce,phones",
   },
   {
     id: "fashion",
     label: "Fashion",
     icon: Shirt,
-    href: "/ads?category=fashion",
+    href: "/ads?category=ecommerce,fashion",
   },
   { id: "home", label: "Home", icon: Sofa, href: "/ads?category=home-office" },
   { id: "laptops", label: "Laptops", icon: Laptop, href: "/ads?q=laptop" },
@@ -156,7 +156,7 @@ export default function EcommercePage() {
             </p>
 
             <Link
-              href="/ads?category=phones,fashion,home-office"
+              href="/ads?category=ecommerce,phones,fashion,home-office"
               className="mt-6 inline-flex items-center gap-2 rounded-full bg-white
                          px-5 py-2.5 text-sm font-bold text-emerald-700
                          transition hover:bg-emerald-50"
@@ -227,7 +227,7 @@ export default function EcommercePage() {
           accent={ACCENT}
           items={phones}
           loading={featuredLoading}
-          viewAllHref="/ads?category=phones"
+          viewAllHref="/ads?category=ecommerce,phones"
           showDelivery
         />
         <PicksRow
@@ -235,7 +235,7 @@ export default function EcommercePage() {
           accent={ACCENT}
           items={fashion}
           loading={featuredLoading}
-          viewAllHref="/ads?category=fashion"
+          viewAllHref="/ads?category=ecommerce,fashion"
           showDelivery
         />
         <PicksRow
@@ -243,7 +243,7 @@ export default function EcommercePage() {
           accent={ACCENT}
           items={home}
           loading={featuredLoading}
-          viewAllHref="/ads?category=home-office"
+          viewAllHref="/ads?category=ecommerce,home-office"
           showDelivery
         />
 

@@ -32,6 +32,7 @@ import {
   ChevronRight,
   Smartphone,
   Sofa,
+  ShoppingBag,
 } from "lucide-react";
 import { AdFormData, EMPTY_AD_FORM } from "@/src/types/adForm.types";
 import {
@@ -152,51 +153,49 @@ import PharmacyOnboarding from "./PharmacyOnboarding";
 
 const MAIN_CATEGORIES = [
   {
-    id: "phones",
-    label: "Phones",
-    icon: <Smartphone size={18} className="text-blue-600" />,
-  },
-  {
-    id: "fashion",
-    label: "Fashion",
-    icon: <Shirt size={18} className="text-pink-600" />,
-  },
-  {
-    id: "home-office",
-    label: "Home",
-    icon: <Sofa size={18} className="text-emerald-600" />,
+    id: "ecommerce",
+    label: "Sell a product - ecommerce",
+    hint: "Phones, fashion, home, anything",
+    icon: <ShoppingBag size={18} className="text-emerald-600" />,
   },
   {
     id: "food",
     label: "Food",
+    hint: "Meals, catering, restaurants",
     icon: <UtensilsCrossed size={18} className="text-orange-500" />,
   },
   {
     id: "apartments",
     label: "Property",
+    hint: "Apartments, short lets",
     icon: <Home size={18} className="text-teal-600" />,
   },
   {
     id: "marketplace",
-    label: "Shop",
+    label: "Marketplace",
+    hint: "Vehicles, jobs, second-hand",
     icon: <Sparkles size={18} className="text-yellow-600" />,
+  },
+  {
+    id: "services",
+    label: "Services",
+    hint: "Repairs, cleaning, trades",
+    icon: <Wrench size={18} className="text-gray-500" />,
   },
   {
     id: "pharmacy",
     label: "Pharmacy",
+    hint: "Medicine, health products",
     icon: <Pill size={18} className="text-blue-600" />,
   },
   {
     id: "delivery",
     label: "Delivery",
+    hint: "Riders, courier services",
     icon: <Truck size={18} className="text-gray-700" />,
   },
-  {
-    id: "services",
-    label: "Services",
-    icon: <Wrench size={18} className="text-gray-500" />,
-  },
 ];
+
 
 const CONDITIONS: { id: AdCondition; label: string; icon: React.ReactNode }[] =
   [
@@ -639,6 +638,8 @@ export default function AdForm({
       if (!form.category) e.category = "Select a category";
       if (!form.description.trim() || form.description.trim().length < 20)
         e.description = "Description must be at least 20 characters";
+      if (form.category === "ecommerce" && !form.subcategory)
+        e.subcategory = "Pick what kind of product this is";
     }
     if (s === 2) {
       if (!form.images.some(Boolean) && existingImages.length === 0)
@@ -916,43 +917,94 @@ export default function AdForm({
                 />
               </Field>
 
-              <Field label="Category" required error={errors.category}>
-                <div className="grid grid-cols-3 gap-2">
-                  {MAIN_CATEGORIES.map((c) => (
-                    <button
-                      type="button"
-                      key={c.id}
-                      onClick={() => {
-                        set("category", c.id);
-                        set("subcategory", "");
-                        set("type", "");
-                        // Clear specialty fields from any previous category selection
-                        set("deliveryServiceType", "");
-                        set("deliveryCoverageArea", "");
-                        set("deliveryWorkingHours", "");
-                        set("deliveryHasTracking", false);
-                        set("pharmacyProductType", "");
-                        set("pharmacyBrand", "");
-                        set("pharmacyExpiryDate", "");
-                        set("pharmacyPrescription", false);
-                      }}
-                      className={`py-2.5 rounded-xl text-xs font-semibold border flex flex-col
-                    items-center gap-1 transition
-                    ${
-                      form.category === c.id
-                        ? "bg-yellow-400 border-yellow-400 text-black"
-                        : "bg-white border-gray-200 text-gray-600 hover:border-yellow-300"
-                    }`}
-                    >
-                      <span className="text-base">{c.icon}</span>
-                      {c.label}
-                    </button>
-                  ))}
+              <Field
+                label="What are you listing?"
+                required
+                error={errors.category}
+              >
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {MAIN_CATEGORIES.map((c) => {
+                    const on = form.category === c.id;
+                    return (
+                      <button
+                        type="button"
+                        key={c.id}
+                        onClick={() => {
+                          set("category", c.id);
+                          set("subcategory", "");
+                          set("type", "");
+                          // Clear specialty fields from any previous selection
+                          set("deliveryServiceType", "");
+                          set("deliveryCoverageArea", "");
+                          set("deliveryWorkingHours", "");
+                          set("deliveryHasTracking", false);
+                          set("pharmacyProductType", "");
+                          set("pharmacyBrand", "");
+                          set("pharmacyExpiryDate", "");
+                          set("pharmacyPrescription", false);
+                        }}
+                        className={`flex flex-col items-start gap-1 rounded-xl border p-3
+            text-left transition
+            ${
+              on
+                ? "border-yellow-400 bg-yellow-400 text-black"
+                : "border-gray-200 bg-white text-gray-600 hover:border-yellow-300"
+            }`}
+                      >
+                        <span className="text-base">{c.icon}</span>
+                        <span className="text-xs font-semibold leading-tight">
+                          {c.label}
+                        </span>
+                        <span
+                          className={`text-[10px] leading-tight
+            ${on ? "text-black/60" : "text-gray-400"}`}
+                        >
+                          {c.hint}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </Field>
 
-              {/* Subcategory — driven by constants, emoji icons included */}
+              {/* Subcategory — a grid for e-commerce, a select for everything else.
+    E-Commerce has twenty options and they're the whole point of the
+    category, so burying them in a dropdown would waste the change. */}
+              {form.category === "ecommerce" && (
+                <Field
+                  label="What kind of product?"
+                  required
+                  error={errors.subcategory}
+                  hint="Helps buyers find it. Pick the closest — you can be specific in the title."
+                >
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {getSubcategories("ecommerce").map((s) => {
+                      const on = form.subcategory === s.id;
+                      return (
+                        <button
+                          type="button"
+                          key={s.id}
+                          onClick={() => set("subcategory", s.id)}
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-2.5
+              text-left text-xs font-medium transition
+              ${
+                on
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-emerald-300"
+              }`}
+                        >
+                          <span className="text-sm">{s.icon}</span>
+                          <span className="leading-tight">{s.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+              )}
+
+              {/* Everything else keeps the existing select */}
               {form.category &&
+                form.category !== "ecommerce" &&
                 (() => {
                   const subs = getSubcategories(form.category);
                   if (!subs.length) return null;

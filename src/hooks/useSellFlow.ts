@@ -47,7 +47,7 @@ export const SELL_VERTICALS: SellVertical[] = [
     id: "ecommerce",
     label: "Product",
     hint: "Phones, fashion, home",
-    href: "/sell?category=phones",
+    href: "/sell?category=ecommerce",
   },
   {
     id: "stays",

@@ -46,6 +46,7 @@ import CtaBanners from "../components/home/CtaBanners";
 // three retail categories shown together, which is why the row merges
 // rather than fetching a category that doesn't exist.
 const HOMEPAGE_CATEGORIES = [
+  "ecommerce",
   "phones",
   "fashion",
   "home-office",
@@ -67,15 +68,17 @@ export default function HomePage() {
   // the row isn't four phones followed by four shirts.
   const ecommerce = useMemo(() => {
     const lists = [
+      featured?.ecommerce ?? [],
       featured?.phones ?? [],
       featured?.fashion ?? [],
       featured?.["home-office"] ?? [],
     ];
     const out: any[] = [];
-    for (let i = 0; i < 4; i++) {
+    const longest = Math.max(...lists.map((l) => l.length));
+    for (let i = 0; i < longest; i++) {
       for (const list of lists) if (list[i]) out.push(list[i]);
     }
-    return out.slice(0, 8);
+    return out.slice(0, 6);
   }, [featured]);
 
   const restaurants = featured?.food ?? [];
