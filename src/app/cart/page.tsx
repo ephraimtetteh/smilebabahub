@@ -1,7 +1,41 @@
 "use client";
-// src/app/cart/page.tsx
 
-import React, { useState } from "react";
+// client/src/app/cart/page.tsx
+//
+// ─── THE CONTRACT, FROM THE CONTROLLER ───────────────────────────────
+//
+//     POST /orders
+//     { items: [{ adId, quantity }], deliveryAddress, paymentMethod, notes }
+//       → { orderGroup, orders, summary }
+//
+//     POST /orders/group/:orderGroup/pay
+//       → { paymentLink }
+//
+// Three things that matter and that I got wrong before:
+//
+//   · It reads `it.adId ?? it.id`. Sending { name, qty, price } means
+//     nothing matches, `wanted` stays empty, and it answers "Your cart
+//     is empty". That was the 400.
+//
+//   · It groups by vendor itself and returns one orderGroup. So this is
+//     a single POST for the whole cart, not one per vendor.
+//
+//   · One deliveryAddress for the whole checkout, not one per vendor.
+//
+// ─── PRICES ARE NOT SENT ─────────────────────────────────────────────
+//
+// The client sends ids and quantities. Every price, subtotal, commission
+// and payout is computed server-side from the Ad documents. The totals
+// shown here are a preview — if a vendor changed a price since the item
+// went in the cart, the server's number wins, which is correct.
+//
+// ─── AND NO DELIVERY LINE ────────────────────────────────────────────
+//
+// `total: subtotal` in the controller, with "delivery fee added by the
+// vendor when known". Showing a delivery total here would be a number
+// nobody is going to charge.
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,9 +50,11 @@ import {
   ShieldCheck,
   Package,
   ChevronRight,
-  Tag,
   Store,
   MapPin,
+  Loader2,
+  BedDouble,
+  AlertTriangle,
 } from "lucide-react";
 
 import { useAppSelector, useAppDispatch } from "@/src/app/redux";
@@ -32,7 +68,8 @@ import {
   CartItem,
 } from "@/src/lib/features/cart/cartSlice";
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+const STAY_CATEGORIES = new Set(["apartments", "properties"]);
+
 function fmt(amount: number, sym: string) {
   return `${sym}${Number(amount).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -40,28 +77,410 @@ function fmt(amount: number, sym: string) {
   })}`;
 }
 
-// Group cart items by vendorId so we can post one order per vendor
 function groupByVendor(items: CartItem[]): Record<string, CartItem[]> {
   return items.reduce(
     (acc, item) => {
       const key = item.vendorId || "unknown";
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(item);
+      (acc[key] ??= []).push(item);
       return acc;
     },
     {} as Record<string, CartItem[]>,
   );
 }
 
-// ── Single cart item row ───────────────────────────────────────────────────
-function CartItemRow({ item }: { item: CartItem }) {
+// ═══════════════════════════════════════════════════════════════════════
+export default function CartPage() {
   const dispatch = useAppDispatch();
-  const { sym } = useViewCountry();
+  const router = useRouter();
+  const { sym, currency } = useViewCountry();
+
+  const { cartItems } = useAppSelector((s) => s.cart);
+  const user = useAppSelector((s) => s.auth.user);
+
+  const [placing, setPlacing] = useState(false);
+  const [removedStays, setRemovedStays] = useState<string[]>([]);
+
+  // One address for the whole checkout — the controller stores a single
+  // deliveryAddress per order and uses the same one across the group
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    setFullName(user?.username ?? "");
+    setPhone(user?.phone ?? "");
+    setCity(user?.city ?? "");
+  }, [user?._id]);
+
+  // ─── Stays don't belong in a cart ─────────────────────────────────
+  useEffect(() => {
+    const stays = cartItems.filter((i) =>
+      STAY_CATEGORIES.has(String(i.category ?? "").toLowerCase()),
+    );
+    if (stays.length === 0) return;
+
+    stays.forEach((s) => dispatch(removeFromCart(s.id)));
+    setRemovedStays(stays.map((s) => s.title));
+  }, [cartItems, dispatch]);
+
+  const vendorGroups = useMemo(() => groupByVendor(cartItems), [cartItems]);
+  const vendorIds = useMemo(() => Object.keys(vendorGroups), [vendorGroups]);
+
+  const subtotal = useMemo(
+    () => cartItems.reduce((s, i) => s + i.price * i.amount, 0),
+    [cartItems],
+  );
+
+  /**
+   * The controller rejects a cart that mixes currencies. Catching it
+   * here means an explanation instead of a 400 after they've filled in
+   * an address.
+   */
+  const mixedCurrency = useMemo(() => {
+    const set = new Set(cartItems.map((i) => i.currency ?? currency));
+    return set.size > 1;
+  }, [cartItems, currency]);
+
+  // ─── Place and pay ────────────────────────────────────────────────
+  const handleCheckout = useCallback(async () => {
+    if (!user) {
+      localStorage.setItem("redirectAfterLogin", "/cart");
+      router.push("/auth/login?returnUrl=/cart");
+      return;
+    }
+
+    if (mixedCurrency) {
+      toast.error(
+        "Your cart mixes currencies. Check out one country's items at a time.",
+      );
+      return;
+    }
+
+    if (!fullName.trim() || !address.trim()) {
+      toast.error("We need a name and a delivery address");
+      return;
+    }
+    if (phone.replace(/\D/g, "").length < 7) {
+      toast.error("We need a phone number the vendor can reach you on");
+      return;
+    }
+
+    setPlacing(true);
+
+    try {
+      // Ids and quantities only. The server prices everything.
+      const { data } = await axiosInstance.post("/orders", {
+        items: cartItems.map((i) => ({
+          adId: i.adId ?? i.id,
+          quantity: i.amount,
+        })),
+        deliveryAddress: {
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+          city: city.trim(),
+          landmark: landmark.trim() || undefined,
+        },
+        paymentMethod: "momo",
+        notes: notes.trim() || undefined,
+      });
+
+      const orderGroup = data?.orderGroup;
+      if (!orderGroup) throw new Error("No order group returned");
+
+      // One charge across every vendor in the cart
+      const pay = await axiosInstance.post(
+        `/orders/group/${orderGroup}/pay`,
+        {},
+      );
+
+      const link =
+        pay?.data?.paymentLink ?? pay?.data?.link ?? pay?.data?.checkoutUrl;
+
+      if (!link) throw new Error("No payment link returned");
+
+      // Cleared only once payment has somewhere to go. Clearing earlier
+      // would lose the cart if the redirect failed.
+      dispatch(clearCart());
+      window.location.assign(link);
+    } catch (err: any) {
+      const res = err?.response?.data;
+
+      // The controller names the items that went away — take them out
+      // rather than making someone hunt for the problem
+      if (res?.code === "ITEMS_UNAVAILABLE" && Array.isArray(res.unavailable)) {
+        res.unavailable.forEach((id: string) => dispatch(removeFromCart(id)));
+        toast.error(res.message ?? "Some items are no longer available.");
+      } else if (res?.code === "OWN_LISTING") {
+        toast.error("You can't buy your own listing.");
+      } else if (res?.code === "MIXED_CURRENCY") {
+        toast.error(res.message);
+      } else {
+        toast.error(
+          res?.message ?? err?.message ?? "Couldn't place your order.",
+        );
+      }
+      setPlacing(false);
+    }
+  }, [
+    user,
+    cartItems,
+    mixedCurrency,
+    fullName,
+    phone,
+    address,
+    city,
+    landmark,
+    notes,
+    dispatch,
+    router,
+  ]);
+
+  // ─── Empty ────────────────────────────────────────────────────────
+  if (!cartItems.length) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-xs text-center">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
+            <ShoppingCart size={34} className="text-amber-500" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">
+            Your cart is empty
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-gray-500">
+            Browse listings and add items to your cart to get started.
+          </p>
+
+          {removedStays.length > 0 && (
+            <div className="mt-5 rounded-2xl bg-teal-50 p-4 text-left">
+              <p className="flex items-center gap-2 text-[13px] font-bold text-teal-900">
+                <BedDouble size={14} />
+                Stays are booked, not carted
+              </p>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-teal-700">
+                {removedStays.join(", ")} needs dates. Open the listing and pick
+                your check-in and check-out.
+              </p>
+            </div>
+          )}
+
+          <Link
+            href="/ads"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-amber-400 px-6 py-3 text-sm font-bold text-gray-900 transition hover:bg-amber-300"
+          >
+            Browse listings
+            <ChevronRight size={15} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-3 py-4 border-b border-gray-50 last:border-0">
-      {/* Image */}
-      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+    <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="sticky top-0 z-20 border-b border-gray-100 bg-white">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3.5">
+          <button
+            onClick={() => router.back()}
+            className="rounded-xl p-1.5 transition hover:bg-gray-100"
+          >
+            <ArrowLeft size={18} className="text-gray-600" />
+          </button>
+          <div className="flex items-center gap-2">
+            <ShoppingCart size={17} className="text-amber-500" />
+            <span className="text-sm font-bold text-gray-900">Cart</span>
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400">
+              {cartItems.length} item{cartItems.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              dispatch(clearCart());
+              toast.info("Cart cleared");
+            }}
+            className="ml-auto rounded-lg px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-50 hover:text-red-500"
+          >
+            Clear all
+          </button>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        {removedStays.length > 0 && (
+          <Notice
+            tone="teal"
+            icon={BedDouble}
+            title="Stays are booked, not carted"
+          >
+            We removed {removedStays.join(", ")} because a stay needs check-in
+            and check-out dates. Open the listing to book it.
+          </Notice>
+        )}
+
+        {mixedCurrency && (
+          <Notice
+            tone="amber"
+            icon={AlertTriangle}
+            title="Two currencies in one cart"
+          >
+            SmileBaba can only check out one country&apos;s items at a time.
+            Remove the items priced in the other currency and order them
+            separately.
+          </Notice>
+        )}
+
+        <div className="flex flex-col items-start gap-6 lg:flex-row">
+          <div className="flex-1 space-y-4">
+            {vendorIds.map((vendorId) => (
+              <VendorGroup
+                key={vendorId}
+                vendorName={vendorGroups[vendorId][0]?.vendorName ?? "Vendor"}
+                items={vendorGroups[vendorId]}
+                sym={sym}
+              />
+            ))}
+
+            {/* ─── Delivery ─── */}
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                <MapPin size={14} className="text-blue-500" />
+                Where should this go?
+              </h2>
+              <p className="mt-1 text-[12px] text-gray-500">
+                {vendorIds.length > 1
+                  ? `All ${vendorIds.length} sellers deliver to this address.`
+                  : "The seller delivers to this address."}
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Input
+                  label="Full name"
+                  value={fullName}
+                  onChange={setFullName}
+                  placeholder="Kwame Mensah"
+                />
+                <Input
+                  label="Phone number"
+                  value={phone}
+                  onChange={setPhone}
+                  placeholder="024 123 4567"
+                  type="tel"
+                />
+              </div>
+
+              <Input
+                label="Address"
+                value={address}
+                onChange={setAddress}
+                placeholder="House number, street, area"
+                className="mt-3"
+              />
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <Input
+                  label="City"
+                  value={city}
+                  onChange={setCity}
+                  placeholder="Accra"
+                />
+                <Input
+                  label="Landmark"
+                  optional
+                  value={landmark}
+                  onChange={setLandmark}
+                  placeholder="Near Accra Mall"
+                />
+              </div>
+
+              <Input
+                label="Note for the seller"
+                optional
+                value={notes}
+                onChange={setNotes}
+                placeholder="Call when you arrive, gate is blue"
+                className="mt-3"
+              />
+            </div>
+
+            <Link
+              href="/ads"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-600 hover:underline"
+            >
+              <ArrowLeft size={14} /> Continue shopping
+            </Link>
+          </div>
+
+          <div className="w-full flex-shrink-0 lg:w-[330px]">
+            <OrderSummary
+              cartItems={cartItems}
+              subtotal={subtotal}
+              vendorCount={vendorIds.length}
+              sym={sym}
+              onCheckout={handleCheckout}
+              placing={placing}
+              signedIn={!!user}
+              blocked={mixedCurrency}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Vendor group ────────────────────────────────────────────────────
+function VendorGroup({
+  vendorName,
+  items,
+  sym,
+}: {
+  vendorName: string;
+  items: CartItem[];
+  sym: string;
+}) {
+  const groupSubtotal = items.reduce((s, i) => s + i.price * i.amount, 0);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+      <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50 px-5 py-3">
+        <Store size={13} className="text-amber-500" />
+        <span className="truncate text-xs font-bold text-gray-700">
+          {vendorName}
+        </span>
+        <span className="ml-auto text-xs text-gray-400">
+          {items.length} item{items.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      <div className="px-5">
+        {items.map((item) => (
+          <CartItemRow key={item.id} item={item} sym={sym} />
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between border-t border-gray-50 px-5 py-3">
+        <span className="flex items-center gap-1.5 text-[11.5px] text-gray-400">
+          <Truck size={11} />
+          Delivery confirmed by the seller
+        </span>
+        <span className="text-sm font-bold text-gray-800">
+          {fmt(groupSubtotal, sym)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Item row ────────────────────────────────────────────────────────
+function CartItemRow({ item, sym }: { item: CartItem; sym: string }) {
+  const dispatch = useAppDispatch();
+
+  return (
+    <div className="flex items-center gap-3 border-b border-gray-50 py-4 last:border-0">
+      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
         {item.image ? (
           <Image
             src={item.image}
@@ -73,26 +492,17 @@ function CartItemRow({ item }: { item: CartItem }) {
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="flex h-full w-full items-center justify-center">
             <Package size={20} className="text-gray-300" />
           </div>
         )}
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-gray-900 line-clamp-1">
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-1 text-sm font-bold text-gray-900">
           {item.title}
         </p>
-        {item.category && (
-          <span
-            className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-semibold
-            text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full capitalize"
-          >
-            <Tag size={8} /> {item.category}
-          </span>
-        )}
-        <p className="text-sm font-black text-gray-900 mt-1">
+        <p className="mt-1 text-sm font-bold text-gray-900">
           {fmt(item.price * item.amount, sym)}
         </p>
         {item.amount > 1 && (
@@ -102,30 +512,28 @@ function CartItemRow({ item }: { item: CartItem }) {
         )}
       </div>
 
-      {/* Qty */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex flex-shrink-0 items-center gap-2">
         <button
           onClick={() => dispatch(decreaseAmount(item.id))}
-          className="w-7 h-7 rounded-full border border-gray-200 flex items-center
-            justify-center hover:bg-gray-100 transition active:scale-95"
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 transition hover:bg-gray-100 active:scale-95"
+          aria-label="Decrease"
         >
           <Minus size={11} />
         </button>
         <span className="w-5 text-center text-sm font-bold">{item.amount}</span>
         <button
           onClick={() => dispatch(increaseAmount(item.id))}
-          className="w-7 h-7 rounded-full border border-gray-200 flex items-center
-            justify-center hover:bg-gray-100 transition active:scale-95"
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 transition hover:bg-gray-100 active:scale-95"
+          aria-label="Increase"
         >
           <Plus size={11} />
         </button>
       </div>
 
-      {/* Remove */}
       <button
         onClick={() => dispatch(removeFromCart(item.id))}
-        className="w-7 h-7 flex items-center justify-center text-gray-300
-          hover:text-red-400 hover:bg-red-50 rounded-lg transition"
+        className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-400"
+        aria-label="Remove"
       >
         <Trash2 size={14} />
       </button>
@@ -133,192 +541,106 @@ function CartItemRow({ item }: { item: CartItem }) {
   );
 }
 
-// ── Vendor group card ──────────────────────────────────────────────────────
-function VendorGroup({
-  vendorId,
-  vendorName,
-  items,
-  sym,
-  address,
-  onAddressChange,
-}: {
-  vendorId: string;
-  vendorName: string;
-  items: CartItem[];
-  sym: string;
-  address: string;
-  onAddressChange: (vendorId: string, val: string) => void;
-}) {
-  const groupSubtotal = items.reduce((s, i) => s + i.price * i.amount, 0);
-  const deliveryFee = items.reduce(
-    (max, i) => (i.deliveryAvailable ? Math.max(max, i.deliveryFee ?? 0) : max),
-    0,
-  );
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      {/* Vendor header */}
-      <div
-        className="px-5 py-3 bg-gray-50 border-b border-gray-100
-        flex items-center gap-2"
-      >
-        <Store size={13} className="text-[#ffc105]" />
-        <span className="text-xs font-bold text-gray-700 truncate">
-          {vendorName || "Vendor"}
-        </span>
-        <span className="ml-auto text-xs text-gray-400">
-          {items.length} item{items.length !== 1 ? "s" : ""}
-        </span>
-      </div>
-
-      {/* Items */}
-      <div className="px-5">
-        {items.map((item) => (
-          <CartItemRow key={item.id} item={item} />
-        ))}
-      </div>
-
-      {/* Delivery address per vendor */}
-      <div className="px-5 pb-4 pt-2 border-t border-gray-50">
-        <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
-          <MapPin size={11} className="text-blue-500" />
-          Delivery address for this seller
-        </label>
-        <input
-          value={address}
-          onChange={(e) => onAddressChange(vendorId, e.target.value)}
-          placeholder="Enter your delivery / pickup address"
-          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm
-            text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#ffc105]
-            focus:border-[#ffc105]"
-        />
-
-        {/* Group subtotal + delivery */}
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <Truck size={11} className="text-blue-400" />
-            <span>
-              Delivery:{" "}
-              <strong
-                className={
-                  deliveryFee === 0 ? "text-green-600" : "text-gray-700"
-                }
-              >
-                {deliveryFee === 0 ? "Free" : fmt(deliveryFee, sym)}
-              </strong>
-            </span>
-          </div>
-          <span className="font-bold text-gray-800">
-            Subtotal: {fmt(groupSubtotal + deliveryFee, sym)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Order summary sidebar ──────────────────────────────────────────────────
+// ─── Summary ─────────────────────────────────────────────────────────
 function OrderSummary({
   cartItems,
-  subTotal,
-  delivery,
-  total,
+  subtotal,
+  vendorCount,
   sym,
-  onOrder,
-  ordering,
+  onCheckout,
+  placing,
+  signedIn,
+  blocked,
 }: {
   cartItems: CartItem[];
-  subTotal: number;
-  delivery: number;
-  total: number;
+  subtotal: number;
+  vendorCount: number;
   sym: string;
-  onOrder: () => void;
-  ordering: boolean;
+  onCheckout: () => void;
+  placing: boolean;
+  signedIn: boolean;
+  blocked: boolean;
 }) {
-  const vendorCount = new Set(cartItems.map((i) => i.vendorId)).size;
   const itemCount = cartItems.reduce((s, i) => s + i.amount, 0);
 
   return (
-    <div
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5
-      sticky top-[72px] space-y-4"
-    >
-      <h2 className="text-base font-black text-gray-900">Order summary</h2>
+    <div className="sticky top-[72px] space-y-4 rounded-2xl border border-gray-100 bg-white p-5">
+      <h2 className="text-base font-bold text-gray-900">Order summary</h2>
 
       <div className="space-y-2.5 text-sm">
         <div className="flex justify-between text-gray-500">
           <span>Items ({itemCount})</span>
           <span className="font-semibold text-gray-900">
-            {fmt(subTotal, sym)}
+            {fmt(subtotal, sym)}
           </span>
         </div>
+
+        {/* No delivery line. The controller sets total to the subtotal
+            and the vendor adds delivery once they know it, so a number
+            here would be one nobody is going to charge. */}
         <div className="flex justify-between text-gray-500">
           <span className="flex items-center gap-1">
             <Truck size={12} className="text-blue-400" /> Delivery
           </span>
-          <span
-            className={`font-semibold ${delivery === 0 ? "text-green-600" : "text-gray-900"}`}
-          >
-            {delivery === 0 ? "Free" : fmt(delivery, sym)}
-          </span>
+          <span className="text-xs text-gray-400">Confirmed by seller</span>
         </div>
+
         {vendorCount > 1 && (
-          <p className="text-[11px] text-amber-600 bg-amber-50 rounded-xl px-3 py-2 leading-relaxed">
-            Your cart has items from {vendorCount} sellers — {vendorCount}{" "}
-            separate orders will be placed.
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-700">
+            Items from {vendorCount} sellers. You pay once — each seller ships
+            and is paid separately.
           </p>
         )}
-        <div className="border-t border-gray-100 pt-2.5 flex justify-between">
-          <span className="font-black text-gray-900">Total</span>
-          <span className="font-black text-gray-900 text-base">
-            {fmt(total, sym)}
+
+        <div className="flex justify-between border-t border-gray-100 pt-2.5">
+          <span className="font-bold text-gray-900">Total</span>
+          <span className="text-base font-bold text-gray-900">
+            {fmt(subtotal, sym)}
           </span>
         </div>
       </div>
 
       <button
-        onClick={onOrder}
-        disabled={ordering}
-        className="w-full py-3.5 bg-[#ffc105] text-black font-black rounded-2xl
-          text-sm hover:bg-yellow-300 transition active:scale-[0.98]
-          disabled:opacity-60 disabled:cursor-not-allowed
-          flex items-center justify-center gap-2"
+        onClick={onCheckout}
+        disabled={placing || blocked}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-sm font-bold text-gray-900 transition hover:bg-amber-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {ordering ? (
+        {placing ? (
           <>
-            <span
-              className="w-4 h-4 border-2 border-black/20 border-t-black
-              rounded-full animate-spin"
-            />
-            Placing order{vendorCount > 1 ? "s" : ""}…
+            <Loader2 size={16} className="animate-spin" />
+            Taking you to payment…
           </>
+        ) : !signedIn ? (
+          "Sign in to check out"
         ) : (
           <>
-            Place order{vendorCount > 1 ? "s" : ""} · {fmt(total, sym)}
+            Pay {fmt(subtotal, sym)}
             <ChevronRight size={15} />
           </>
         )}
       </button>
 
-      <div
-        className="flex items-center gap-2 text-[11px] text-gray-400
-        bg-gray-50 rounded-xl px-3 py-2.5"
-      >
-        <ShieldCheck size={12} className="text-green-500 flex-shrink-0" />
-        Secure checkout · Verified by Flutterwave
+      <div className="flex items-start gap-2.5 rounded-xl bg-emerald-50 px-3 py-2.5">
+        <ShieldCheck
+          size={14}
+          className="mt-0.5 flex-shrink-0 text-emerald-600"
+        />
+        <p className="text-[11px] leading-relaxed text-emerald-800">
+          We hold your payment until you confirm the item arrived. If it
+          doesn&apos;t, you get it back.
+        </p>
       </div>
 
-      {/* Quick item preview */}
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 border-t border-gray-100 pt-3">
         {cartItems.map((item) => (
           <div
             key={item.id}
             className="flex justify-between text-xs text-gray-500"
           >
-            <span className="truncate flex-1 mr-2">
+            <span className="mr-2 flex-1 truncate">
               {item.title} × {item.amount}
             </span>
-            <span className="font-semibold text-gray-700 flex-shrink-0">
+            <span className="flex-shrink-0 font-semibold text-gray-700">
               {fmt(item.price * item.amount, sym)}
             </span>
           </div>
@@ -328,196 +650,78 @@ function OrderSummary({
   );
 }
 
-// ── Empty cart ─────────────────────────────────────────────────────────────
-function EmptyCart() {
+// ─── Bits ────────────────────────────────────────────────────────────
+function Notice({
+  tone,
+  icon: Icon,
+  title,
+  children,
+}: {
+  tone: "teal" | "amber";
+  icon: any;
+  title: string;
+  children: React.ReactNode;
+}) {
+  const c =
+    tone === "teal"
+      ? {
+          bg: "bg-teal-50",
+          icon: "text-teal-600",
+          head: "text-teal-900",
+          body: "text-teal-700",
+        }
+      : {
+          bg: "bg-amber-50",
+          icon: "text-amber-600",
+          head: "text-amber-900",
+          body: "text-amber-700",
+        };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="text-center max-w-xs">
-        <div
-          className="w-20 h-20 bg-[#ffc105]/10 rounded-full flex items-center
-          justify-center mx-auto mb-5"
-        >
-          <ShoppingCart size={36} className="text-[#ffc105]" />
-        </div>
-        <h2 className="text-xl font-black text-gray-900 mb-2">
-          Your cart is empty
-        </h2>
-        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-          Browse listings and add items to your cart to get started.
+    <div className={`mb-4 flex items-start gap-3 rounded-2xl ${c.bg} p-4`}>
+      <Icon size={16} className={`mt-0.5 shrink-0 ${c.icon}`} />
+      <div className="flex-1">
+        <p className={`text-[13px] font-bold ${c.head}`}>{title}</p>
+        <p className={`mt-1 text-[12.5px] leading-relaxed ${c.body}`}>
+          {children}
         </p>
-        <Link
-          href="/ads"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffc105] text-black
-            font-bold rounded-2xl text-sm hover:bg-yellow-300 transition active:scale-95"
-        >
-          Browse listings <ChevronRight size={15} />
-        </Link>
       </div>
     </div>
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────
-export default function CartPage() {
-  const dispatch = useAppDispatch();
-  const router = useRouter();
-  const { sym, currency } = useViewCountry();
-
-  const { cartItems, subTotal, delivery, total } = useAppSelector(
-    (s) => s.cart,
-  );
-  const user = useAppSelector((s) => s.auth.user);
-
-  // One delivery address input per vendor group
-  const [addresses, setAddresses] = useState<Record<string, string>>({});
-  const [ordering, setOrdering] = useState(false);
-
-  const setAddress = (vendorId: string, val: string) =>
-    setAddresses((prev) => ({ ...prev, [vendorId]: val }));
-
-  if (!cartItems.length) return <EmptyCart />;
-
-  const vendorGroups = groupByVendor(cartItems);
-  const vendorIds = Object.keys(vendorGroups);
-
-  const handleOrder = async () => {
-    if (!user) {
-      toast.info("Please log in to place an order");
-      router.push("/auth/login");
-      return;
-    }
-
-    // Validate every vendor group has an address
-    const missing = vendorIds.find((vid) => !(addresses[vid] || "").trim());
-    if (missing) {
-      toast.error(
-        vendorIds.length > 1
-          ? "Please enter a delivery address for each seller"
-          : "Please enter your delivery address",
-      );
-      return;
-    }
-
-    setOrdering(true);
-    let successCount = 0;
-
-    try {
-      // Post one order per vendor group
-      await Promise.all(
-        vendorIds.map(async (vendorId) => {
-          const items = vendorGroups[vendorId];
-          const orderTotal =
-            items.reduce((s, i) => s + i.price * i.amount, 0) +
-            items.reduce(
-              (max, i) =>
-                i.deliveryAvailable ? Math.max(max, i.deliveryFee ?? 0) : max,
-              0,
-            );
-
-          await axiosInstance.post("/orders", {
-            adId: items[0].adId || items[0].id,
-            items: items.map((i) => ({
-              name: i.title,
-              qty: i.amount,
-              price: i.price,
-            })),
-            total: orderTotal,
-            currency: items[0].currency || currency,
-            deliveryAddress: (addresses[vendorId] || "").trim(),
-          });
-
-          successCount++;
-        }),
-      );
-
-      dispatch(clearCart());
-      toast.success(
-        successCount > 1
-          ? `${successCount} orders placed! Vendors have been notified. 🎉`
-          : "Order placed! The vendor has been notified. 🎉",
-        { autoClose: 4000 },
-      );
-      router.push("/account/orders");
-    } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ??
-          "Failed to place order. Please try again.",
-      );
-    } finally {
-      setOrdering(false);
-    }
-  };
-
+function Input({
+  label,
+  optional,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  className = "",
+}: {
+  label: string;
+  optional?: boolean;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  className?: string;
+}) {
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      {/* ── Sticky header ── */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 py-3.5 flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="p-1.5 hover:bg-gray-100 rounded-xl transition"
-          >
-            <ArrowLeft size={18} className="text-gray-600" />
-          </button>
-          <div className="flex items-center gap-2">
-            <ShoppingCart size={17} className="text-[#ffc105]" />
-            <span className="font-black text-gray-900 text-sm">Cart</span>
-            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-              {cartItems.length} item{cartItems.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <button
-            onClick={() => {
-              dispatch(clearCart());
-              toast.info("Cart cleared");
-            }}
-            className="ml-auto text-xs text-red-400 hover:text-red-500
-              hover:bg-red-50 px-3 py-1.5 rounded-lg transition font-medium"
-          >
-            Clear all
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-          {/* ── Left: vendor groups ── */}
-          <div className="flex-1 space-y-4">
-            {vendorIds.map((vendorId) => (
-              <VendorGroup
-                key={vendorId}
-                vendorId={vendorId}
-                vendorName={vendorGroups[vendorId][0]?.vendorName ?? "Vendor"}
-                items={vendorGroups[vendorId]}
-                sym={sym}
-                address={addresses[vendorId] ?? ""}
-                onAddressChange={setAddress}
-              />
-            ))}
-
-            <Link
-              href="/ads"
-              className="inline-flex items-center gap-1.5 text-sm text-[#ffc105]
-                font-semibold hover:underline"
-            >
-              <ArrowLeft size={14} /> Continue shopping
-            </Link>
-          </div>
-
-          {/* ── Right: summary ── */}
-          <div className="w-full lg:w-[320px] flex-shrink-0">
-            <OrderSummary
-              cartItems={cartItems}
-              subTotal={subTotal}
-              delivery={delivery}
-              total={total}
-              sym={sym}
-              onOrder={handleOrder}
-              ordering={ordering}
-            />
-          </div>
-        </div>
-      </div>
+    <div className={className}>
+      <label className="mb-1.5 block text-xs font-semibold text-gray-500">
+        {label}
+        {optional && (
+          <span className="font-normal text-gray-400"> optional</span>
+        )}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-400"
+      />
     </div>
   );
 }

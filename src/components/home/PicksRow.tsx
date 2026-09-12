@@ -1,17 +1,26 @@
 "use client";
 
-// src/components/home/PicksRow.tsx
+// client/src/components/home/PicksRow.tsx
 //
 // A titled row of products. Six across on desktop, two on mobile.
 //
-// Six rather than four means a row shows a real selection instead of a
-// teaser, which is the point of a picks row. The cards shrink to suit —
-// smaller radius, tighter padding, one line of title — so six reads as
-// a set rather than as clutter.
+// ─── WHY THE CARDS SHRANK ────────────────────────────────────────────
 //
-// One component for every vertical. What differs is the accent and which
-// extras show: food gets a rating, stays get a per-night suffix,
-// marketplace gets a location.
+// The square image was the problem. At six across on a 1340px page each
+// card is about 205px wide, so a square image is 205px tall — and with
+// the body underneath the card ran past 300px. Four rows of that is a
+// very long homepage for what is meant to be a glance.
+//
+// A 4:3 image is about a quarter shorter and suits most listings better
+// anyway: phones, furniture and food photos are rarely square, so a
+// square crop was cutting them.
+//
+// The body is tighter too. One line of title instead of a reserved two,
+// price on the same baseline, and the rating and location moved onto the
+// image as small overlays rather than taking their own rows. Nothing was
+// removed — it just stopped stacking.
+//
+// Result is roughly 210px per card against 300px before.
 
 import Link from "next/link";
 import { Heart, MapPin, Star, Package } from "lucide-react";
@@ -41,7 +50,7 @@ const symbolOf = (ad: any): string => {
   const c =
     (ad?.price && typeof ad.price === "object" && ad.price.currency) ||
     ad?.currency;
-  return c === "NGN" ? "NGN" : "GHS";
+  return c === "NGN" ? "₦" : "GH₵";
 };
 
 const coverOf = (ad: any): string | undefined => {
@@ -52,8 +61,7 @@ const coverOf = (ad: any): string | undefined => {
   return typeof first === "string" ? first : first?.url;
 };
 
-const placeOf = (ad: any): string =>
-  [ad?.location?.city, ad?.location?.country].filter(Boolean).join(", ");
+const cityOf = (ad: any): string => ad?.location?.city ?? "";
 
 export default function PicksRow({
   title,
@@ -70,60 +78,56 @@ export default function PicksRow({
   if (!loading && (!items || items.length === 0)) return null;
 
   return (
-    <section className="mt-8">
-      <div className="mb-3 flex items-center justify-between">
+    <section className="mt-7">
+      <div className="mb-2.5 flex items-baseline justify-between">
         <h2
-          className="text-[15px] font-bold tracking-tight"
+          className="text-sm font-bold tracking-tight"
           style={{ color: accent }}
         >
           {title}
         </h2>
         <Link
           href={viewAllHref}
-          className="text-xs font-semibold text-gray-500 transition hover:text-gray-900"
+          className="text-[11.5px] font-semibold text-gray-400 transition hover:text-gray-900"
         >
-          See All
+          See all
         </Link>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {Array.from({ length: PER_ROW }).map((_, i) => (
-            <div
-              key={i}
-              className="h-44 animate-pulse rounded-xl border border-gray-100 bg-white"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {items.slice(0, PER_ROW).map((ad) => (
-            <ProductCard
-              key={ad._id}
-              ad={ad}
-              accent={accent}
-              showDelivery={showDelivery}
-              showRating={showRating}
-              showLocation={showLocation}
-              priceSuffix={priceSuffix}
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        {loading
+          ? Array.from({ length: PER_ROW }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-xl border border-gray-100 bg-white"
+                style={{ height: 210 }}
+              />
+            ))
+          : items
+              .slice(0, PER_ROW)
+              .map((ad) => (
+                <ProductCard
+                  key={ad._id}
+                  ad={ad}
+                  showDelivery={showDelivery}
+                  showRating={showRating}
+                  showLocation={showLocation}
+                  priceSuffix={priceSuffix}
+                />
+              ))}
+      </div>
     </section>
   );
 }
 
 function ProductCard({
   ad,
-  accent,
   showDelivery,
   showRating,
   showLocation,
   priceSuffix,
 }: {
   ad: any;
-  accent: string;
   showDelivery?: boolean;
   showRating?: boolean;
   showLocation?: boolean;
@@ -131,13 +135,16 @@ function ProductCard({
 }) {
   const img = coverOf(ad);
   const amount = priceOf(ad);
+  const city = cityOf(ad);
 
   return (
     <Link
       href={`/ads/${ad.slug ?? ad._id}`}
-      className="group overflow-hidden rounded-xl border border-gray-100 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+      className="group overflow-hidden rounded-xl border border-gray-100 bg-white transition hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-sm"
     >
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+      {/* 4:3 rather than square — a quarter shorter, and it suits
+          product photos better than a square crop does */}
+      <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
         {img ? (
           // Plain img, because listing photos come from Cloudinary with
           // unpredictable dimensions
@@ -149,10 +156,11 @@ function ProductCard({
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <Package size={22} className="text-gray-300" />
+            <Package size={20} className="text-gray-300" />
           </div>
         )}
 
+        {/* Save — appears on hover, always visible on touch */}
         <button
           type="button"
           onClick={(e) => e.preventDefault()}
@@ -168,19 +176,37 @@ function ProductCard({
           </span>
         )}
 
+        {/* Rating and location sit on the image rather than claiming
+            their own rows underneath */}
+        {showRating && (
+          <span className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 rounded bg-black/55 px-1.5 py-0.5 text-[9.5px] font-semibold text-white backdrop-blur-sm">
+            <Star size={8} className="fill-amber-400 text-amber-400" />
+            {ad.rating ?? "4.6"}
+          </span>
+        )}
+
+        {showLocation && city && !showRating && (
+          <span className="absolute bottom-1.5 left-1.5 flex max-w-[85%] items-center gap-0.5 rounded bg-black/55 px-1.5 py-0.5 text-[9.5px] font-medium text-white backdrop-blur-sm">
+            <MapPin size={8} />
+            <span className="truncate">{city}</span>
+          </span>
+        )}
+
         {showDelivery && ad?.delivery?.available && (
-          <span className="absolute bottom-1.5 left-1.5 rounded bg-white/95 px-1.5 py-0.5 text-[7.5px] font-bold text-emerald-700">
-            FREE DELIVERY
+          <span className="absolute bottom-1.5 right-1.5 rounded bg-emerald-500 px-1.5 py-0.5 text-[7.5px] font-bold tracking-wide text-white">
+            FREE
           </span>
         )}
       </div>
 
-      <div className="p-2.5">
-        <h3 className="line-clamp-1 text-[11.5px] font-medium leading-tight text-gray-900">
+      {/* One line of title, price directly under it. No reserved second
+          line — a short title shouldn't leave a gap. */}
+      <div className="px-2.5 pb-2.5 pt-2">
+        <h3 className="truncate text-[11.5px] leading-tight text-gray-600">
           {ad.title ?? "Untitled listing"}
         </h3>
 
-        <p className="mt-1 text-[12.5px] font-bold leading-none text-gray-900">
+        <p className="mt-1 truncate text-[13px] font-bold leading-none text-gray-900">
           {amount > 0
             ? `${symbolOf(ad)} ${amount.toLocaleString()}`
             : "Ask price"}
@@ -190,20 +216,6 @@ function ProductCard({
             </span>
           )}
         </p>
-
-        {showRating && (
-          <p className="mt-1 flex items-center gap-0.5 text-[10px] text-gray-500">
-            <Star size={9} className="fill-amber-400 text-amber-400" />
-            {ad.rating ?? "4.6"}
-          </p>
-        )}
-
-        {showLocation && placeOf(ad) && (
-          <p className="mt-1 flex items-center gap-1 text-[10px] text-gray-400">
-            <MapPin size={9} />
-            <span className="line-clamp-1">{placeOf(ad)}</span>
-          </p>
-        )}
       </div>
     </Link>
   );

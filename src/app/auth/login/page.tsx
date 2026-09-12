@@ -1,26 +1,37 @@
 "use client";
 
-// client/app/auth/login/page.tsx
+// client/src/app/auth/login/page.tsx
 //
-// Sign in.
+// ─── THE LOOP THIS FIXES ─────────────────────────────────────────────
 //
-// ─── WHAT IT HAS TO GET RIGHT ────────────────────────────────────────
+// My previous version called axiosInstance.post("/auth/login") directly
+// and dispatched setUser. The login thunk does four things:
 //
-// Everything that gates on auth sends people here with somewhere to
-// return to — Post Ad, Send Money, chat, checkout. If this page ignores
-// that and drops everyone on the homepage, each of those flows costs the
-// user a second attempt to find their way back.
+//     safeStorage.set("accessToken", …)   ← stores the token
+//     dispatch(setAccessToken(…))
+//     dispatch(setUser(…))
+//     dispatch(setIsAuthenticated(true))  ← flips the flag
 //
-// So returnUrl is read from three places, in order of how specific they
-// are: the query param, then localStorage, then a sensible default based
-// on who they turn out to be.
+// I did one. So no token was stored and isAuthenticated stayed false.
 //
-// ─── AND ONE PROMISE IT KEEPS ────────────────────────────────────────
+// Two things broke as a result:
 //
-// The account-deletion emails say that signing in cancels a pending
-// request. The backend does that in cancelDeletionOnLogin. If someone
-// signs in during their grace period, this page tells them it worked —
-// otherwise they have no way of knowing whether the promise held.
+//   · Every request after login went out with no Authorization header,
+//     got a 401, triggered a refresh, retried, 401 again. That's the
+//     storm on /money/send, which calls an authenticated endpoint the
+//     moment it loads.
+//
+//   · isAuthenticated never flipped, so the Send Money gate fired again
+//     and pushed straight back here.
+//
+// ─── AND THE SECOND CONFLICT ─────────────────────────────────────────
+//
+// login.fulfilled sets pendingRedirect, which AuthRedirect consumes and
+// navigates on. My page navigated too. Two redirects racing over the
+// same moment, and whichever lost sometimes sent people back.
+//
+// This page now uses the thunk and clears pendingRedirect before
+// navigating itself, so exactly one thing decides where you land.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -28,8 +39,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
-import { setUser } from "@/src/lib/features/auth/authSlice";
-import axiosInstance from "@/src/lib/api/axios";
+import { login } from "@/src/lib/features/auth/authActions";
+import { clearPendingRedirect } from "@/src/lib/features/auth/authSlice";
 
 const YELLOW = "#FFC105";
 
@@ -37,17 +48,20 @@ export default function LoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const params = useSearchParams();
-  const { isAuthenticated, isAuthenticating } = useAppSelector((s) => s.auth);
+
+  const { isAuthenticated, isAuthenticating, hasCheckedAuth } = useAppSelector(
+    (s) => s.auth,
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [deletionCancelled, setCancelled] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  /** Query param wins, then anything a gate stored on the way here. */
+  const reason = params.get("reason");
+
+  /** Query param first, then whatever a gate stored on the way here. */
   const returnUrl =
     params.get("returnUrl") ??
     (typeof window !== "undefined"
@@ -55,10 +69,27 @@ export default function LoginPage() {
       : null) ??
     null;
 
-    useEffect(() => {
-      if (isAuthenticating) return;
-      if (isAuthenticated) router.replace(returnUrl ?? "/");
-    }, [isAuthenticated, isAuthenticating, returnUrl, router]);
+  /**
+   * Bounce an already-signed-in visitor — but only once the auth check
+   * has actually finished. Reacting to isAuthenticated alone fires
+   * during restoreSession, which is how a signed-in user ended up here
+   * and then got sent away mid-render.
+   */
+  useEffect(() => {
+    if (!hasCheckedAuth || isAuthenticating) return;
+    if (!isAuthenticated) return;
+
+    localStorage.removeItem("redirectAfterLogin");
+    dispatch(clearPendingRedirect());
+    router.replace(returnUrl ?? "/");
+  }, [
+    hasCheckedAuth,
+    isAuthenticating,
+    isAuthenticated,
+    returnUrl,
+    dispatch,
+    router,
+  ]);
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const canSubmit = emailOk && password.length > 0 && !submitting;
@@ -71,66 +102,57 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { data } = await axiosInstance.post("/auth/login", {
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
-      const user = data?.user;
-      if (user) dispatch(setUser(user));
+      // The thunk, not a bare axios call. It stores the token, sets
+      // isAuthenticated, and returns where to go.
+      const result = await dispatch(
+        login({
+          email: email.trim().toLowerCase(),
+          password,
+          returnUrl: returnUrl ?? undefined,
+        }),
+      ).unwrap();
 
       localStorage.removeItem("redirectAfterLogin");
 
-      // The deletion emails promise that signing in cancels the request.
-      // Say so, rather than leaving them to hope.
-      if (user?.deletionRequestedAt || data?.deletionCancelled) {
-        setCancelled(true);
-        setTimeout(() => router.replace(returnUrl ?? "/"), 2600);
-        return;
-      }
-
-      // Vendors go to their dashboard unless they were headed somewhere
-      // specific — which is the whole point of returnUrl
-      const destination =
-        returnUrl ??
-        (user?.role === "admin"
-          ? "/admin"
-          : user?.role === "vendor"
-            ? "/vendor/dashboard"
-            : "/");
-
-      router.replace(destination);
+      // The thunk already worked out redirectTo from returnUrl and role.
+      // Clearing pendingRedirect stops AuthRedirect navigating as well —
+      // two redirects racing is how people ended up back here.
+      dispatch(clearPendingRedirect());
+      router.replace((result as any)?.redirectTo ?? returnUrl ?? "/");
     } catch (err: any) {
       const status = err?.response?.status;
       setError(
         status === 400 || status === 401
           ? "That email and password don't match. Try again."
           : (err?.response?.data?.message ??
+              err?.message ??
               "We couldn't sign you in. Please try again."),
       );
-    } finally {
       setSubmitting(false);
     }
   };
 
-  // ─── Deletion cancelled ───────────────────────────────────────────
-  if (deletionCancelled) {
+  // Don't flash a login form at someone who's already signed in
+  if (!hasCheckedAuth) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-5">
-        <div className="w-full max-w-md rounded-3xl border border-gray-100 bg-white p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-            <ShieldCheck size={28} className="text-emerald-600" />
-          </div>
-          <h1 className="mt-5 text-xl font-bold text-gray-900">Welcome back</h1>
-          <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
-            Your account deletion request has been cancelled. Everything is
-            exactly where you left it.
-          </p>
-          <p className="mt-4 text-[13px] text-gray-400">Taking you through…</p>
-        </div>
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+        <Loader2 size={26} className="animate-spin text-amber-400" />
       </main>
     );
   }
+
+  const subtitle =
+    reason === "sell"
+      ? "Sign in to post your listing."
+      : reason === "session_expired"
+        ? "Your session expired. Sign in to pick up where you left off."
+        : returnUrl?.startsWith("/money")
+          ? "Sign in to send money."
+          : returnUrl?.startsWith("/cart")
+            ? "Sign in to check out."
+            : returnUrl?.startsWith("/chat")
+              ? "Sign in to message this seller."
+              : "Sign in to your account.";
 
   return (
     <main className="min-h-screen bg-gray-50 px-5 py-12">
@@ -144,13 +166,7 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-gray-500">
-            {returnUrl && returnUrl.startsWith("/sell")
-              ? "Sign in to post your listing."
-              : returnUrl && returnUrl.startsWith("/money")
-                ? "Sign in to send money."
-                : returnUrl && returnUrl.startsWith("/chat")
-                  ? "Sign in to message this seller."
-                  : "Sign in to your account."}
+            {subtitle}
           </p>
 
           <form onSubmit={submit} className="mt-6">
@@ -243,6 +259,16 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
+
+        {reason === "session_expired" && (
+          <div className="mt-5 flex items-start gap-2.5 rounded-2xl bg-white p-4">
+            <ShieldCheck size={16} className="mt-0.5 shrink-0 text-gray-400" />
+            <p className="text-[12px] leading-relaxed text-gray-500">
+              We sign you out after a while of inactivity. Nothing was lost —
+              your cart and listings are exactly where you left them.
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

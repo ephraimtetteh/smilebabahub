@@ -1,30 +1,32 @@
 "use client";
 
-// client/app/auth/register/page.tsx
+// client/src/app/auth/register/page.tsx
 //
-// Create account.
+// ─── SAME BUG AS LOGIN, SAME FIX ─────────────────────────────────────
 //
-// ─── WHAT CHANGED ────────────────────────────────────────────────────
+// The register thunk sets the user and isAuthenticated, but — unlike
+// login — it does NOT store an access token, because /auth/register
+// doesn't return one:
 //
-// The app collects username, email, phone, country and password. The web
-// form was collecting fewer, which meant a web signup produced a user
-// with no phone and no country — and then:
+//     res.status(200).json({ message, user: serializeUser(...) })
 //
-//   · Checkout asks for a phone anyway, so they type it there instead
-//   · Send Money blocks on missing details and opens its own modal
-//   · Onboarding step 2 asks for it a third time
-//   · getAds falls back to Ghana, so a Nigerian sees Ghanaian listings
-//     priced in cedis on their very first visit
+// No accessToken, no cookies set. So a freshly registered user has a
+// Redux session and nothing to authenticate with. Every request 401s,
+// the interceptor refreshes, and there's no refreshToken cookie either.
 //
-// Asking once here removes all four. Phone and country are two fields
-// and both are things people know without looking anything up.
+// That's why registration used to be followed immediately by a login
+// call in the old AuthRegister component. It looked redundant and it
+// wasn't — it's what actually signs them in.
 //
-// ─── STEP 1 OF THE ONBOARDING FLOW ───────────────────────────────────
+// So this registers, then logs in with the same credentials, and lets
+// the login thunk store the token. One extra round trip, and the only
+// version that works without changing the backend.
 //
-// This screen is "Create Account" in the vendor onboarding sequence.
-// Nothing here mentions selling — most people signing up are buyers, and
-// asking a buyer for a business name is how you lose them. The vendor
-// path opens later, when they tap Post Ad.
+// ─── WHY PHONE AND COUNTRY ARE HERE ──────────────────────────────────
+//
+// The app collects them. Without them, the same question gets asked
+// again at checkout, at Send Money, and at onboarding step 2 — and
+// getAds falls back to Ghana, so a Nigerian's first visit shows cedis.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -39,10 +41,9 @@ import {
 } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
-import { setUser } from "@/src/lib/features/auth/authSlice";
-import axiosInstance from "@/src/lib/api/axios";
+import { register, login } from "@/src/lib/features/auth/authActions";
+import { clearPendingRedirect } from "@/src/lib/features/auth/authSlice";
 
-const NAVY = "#0B2A63";
 const YELLOW = "#FFC105";
 
 const COUNTRIES = [
@@ -66,7 +67,10 @@ export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const params = useSearchParams();
-  const { isAuthenticated } = useAppSelector((s) => s.auth);
+
+  const { isAuthenticated, isAuthenticating, hasCheckedAuth } = useAppSelector(
+    (s) => s.auth,
+  );
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -81,20 +85,31 @@ export default function RegisterPage() {
 
   const picked = COUNTRIES.find((c) => c.value === country) ?? COUNTRIES[0];
 
-  /** Where to go afterwards. A query param wins over anything stored. */
   const returnUrl =
     params.get("returnUrl") ??
     (typeof window !== "undefined"
       ? localStorage.getItem("redirectAfterLogin")
       : null) ??
-    "/";
+    null;
 
-  // Already signed in — no reason to show them a signup form
+  // Only once the auth check has finished — reacting to isAuthenticated
+  // alone fires during restoreSession
   useEffect(() => {
-    if (isAuthenticated) router.replace(returnUrl);
-  }, [isAuthenticated, returnUrl, router]);
+    if (!hasCheckedAuth || isAuthenticating) return;
+    if (!isAuthenticated) return;
 
-  // ─── Validation ───────────────────────────────────────────────────
+    localStorage.removeItem("redirectAfterLogin");
+    dispatch(clearPendingRedirect());
+    router.replace(returnUrl ?? "/");
+  }, [
+    hasCheckedAuth,
+    isAuthenticating,
+    isAuthenticated,
+    returnUrl,
+    dispatch,
+    router,
+  ]);
+
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const phoneOk = phone.replace(/\D/g, "").length >= 9;
   const pwOk = password.length >= 8;
@@ -110,28 +125,60 @@ export default function RegisterPage() {
     setSubmitting(true);
     setError("");
 
+    const creds = {
+      email: email.trim().toLowerCase(),
+      password,
+    };
+
     try {
-      const { data } = await axiosInstance.post("/auth/register", {
-        username: username.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        phone: phone.trim(),
-        country,
-      });
-
-      if (data?.user) dispatch(setUser(data.user));
-
-      localStorage.removeItem("redirectAfterLogin");
-      router.replace(returnUrl);
+      await dispatch(
+        register({
+          username: username.trim(),
+          phone: phone.trim(),
+          ...creds,
+        }) as any,
+      ).unwrap();
     } catch (err: any) {
       setError(
-        err?.response?.data?.message ??
-          "We couldn't create your account. Please try again.",
+        typeof err === "string"
+          ? err
+          : (err?.message ??
+              "We couldn't create your account. Please try again."),
       );
-    } finally {
       setSubmitting(false);
+      return;
+    }
+
+    try {
+      // /auth/register returns a user but no token, so this is what
+      // actually signs them in. The login thunk stores the access token
+      // and sets the cookies.
+      const result = await dispatch(
+        login({ ...creds, returnUrl: returnUrl ?? undefined }),
+      ).unwrap();
+
+      localStorage.removeItem("redirectAfterLogin");
+      dispatch(clearPendingRedirect());
+      router.replace((result as any)?.redirectTo ?? returnUrl ?? "/");
+    } catch {
+      // The account exists — that part worked. Send them to sign in
+      // rather than leaving them on a form that would now say the email
+      // is taken.
+      setError(
+        "Your account was created, but we couldn't sign you in automatically. Please sign in.",
+      );
+      setSubmitting(false);
+      setTimeout(() => router.replace("/auth/login"), 2200);
     }
   };
+
+  if (!hasCheckedAuth) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+        <Loader2 size={26} className="animate-spin text-amber-400" />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 px-5 py-12">
@@ -164,13 +211,14 @@ export default function RegisterPage() {
               onChange={setEmail}
               placeholder="you@example.com"
               autoComplete="email"
+              invalid={!!email && !emailOk}
               hint={
                 email && !emailOk ? "That email doesn't look right." : undefined
               }
-              invalid={!!email && !emailOk}
             />
 
-            {/* ─── Country ─── */}
+            {/* Country sets the currency and the whole feed, so it gets
+                its own row rather than being buried in a select */}
             <div className="mt-4">
               <label className="mb-1.5 block text-[13px] font-semibold text-gray-700">
                 Country
@@ -203,11 +251,8 @@ export default function RegisterPage() {
                   );
                 })}
               </div>
-              {/* Country sets the currency and which listings they see, so
-                  it earns its own row rather than being buried in a select */}
               <p className="mt-1.5 text-[11.5px] text-gray-400">
-                Sets your currency and the listings you see. You can change it
-                any time.
+                Sets your currency and the listings you see. Change it any time.
               </p>
             </div>
 
@@ -218,11 +263,10 @@ export default function RegisterPage() {
               onChange={setPhone}
               placeholder={picked.sample}
               autoComplete="tel"
-              hint="Buyers only see this after they order from you."
               invalid={!!phone && !phoneOk}
+              hint="Buyers only see this after they order from you."
             />
 
-            {/* ─── Password ─── */}
             <div className="mt-4">
               <label className="mb-1.5 block text-[13px] font-semibold text-gray-700">
                 Password
@@ -252,7 +296,6 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* ─── Terms ─── */}
             <label className="mt-5 flex cursor-pointer items-start gap-2.5">
               <input
                 type="checkbox"
@@ -288,7 +331,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-bold transition"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-bold transition"
               style={{
                 height: 52,
                 background: canSubmit ? YELLOW : "#F3F4F6",
@@ -313,7 +356,7 @@ export default function RegisterPage() {
           <p className="mt-5 text-center text-[13.5px] text-gray-500">
             Already have an account?{" "}
             <Link
-              href={`/auth/login${returnUrl !== "/" ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`}
+              href={`/auth/login${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`}
               className="font-bold text-gray-900"
             >
               Sign in
@@ -321,12 +364,11 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* Not a sales pitch — just what the account is for */}
         <div className="mt-5 flex items-start gap-2.5 rounded-2xl bg-white p-4">
           <ShieldCheck size={16} className="mt-0.5 shrink-0 text-emerald-600" />
           <p className="text-[12px] leading-relaxed text-gray-500">
             Your account is free. Selling is free to start too — we take 5% only
-            when you make a sale, and never anything up front.
+            when you make a sale, and nothing up front.
           </p>
         </div>
       </div>
@@ -373,9 +415,7 @@ function Field({
       />
       {hint && (
         <p
-          className={`mt-1.5 text-[11.5px] ${
-            invalid ? "text-red-600" : "text-gray-400"
-          }`}
+          className={`mt-1.5 text-[11.5px] ${invalid ? "text-red-600" : "text-gray-400"}`}
         >
           {hint}
         </p>
