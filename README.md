@@ -831,3 +831,113 @@ export default function HomePage() {
 // own 3-day expiry do the limiting — which is what actually matters.
 // ═══════════════════════════════════════════════════════════════════════
  
+
+
+
+
+     <Section title="Seller Details">
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+              <div
+                className="w-12 h-12 rounded-full bg-[#ffc105] flex items-center
+                justify-center text-black font-black text-lg flex-shrink-0"
+              >
+                {ad.contact?.name?.charAt(0)?.toUpperCase() ?? "?"}
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-gray-900 truncate">
+                  {ad.contact?.name ??
+                    (typeof ad.postedBy === "object"
+                      ? (ad.postedBy as any)?.username
+                      : undefined) ??
+                    "Seller"}
+                </p>
+                <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                  <MapPin size={11} className="flex-shrink-0" />
+                  {[ad.location?.city, ad.location?.region]
+                    .filter(Boolean)
+                    .join(", ") || "Location not set"}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              {/* Nigeria: WhatsApp first (primary channel), phone second */}
+              {/* Ghana: phone reveal first, WhatsApp second */}
+
+              {isNigeria && waNumber && (
+                <a
+                  href={`https://wa.me/${waNumber}?text=${waMsg}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => logContactClick(id)}
+                  className="w-full flex items-center justify-center gap-2 py-3
+                    bg-[#25D366] text-white font-bold rounded-2xl text-sm
+                    hover:opacity-90 transition"
+                >
+                  <MessageCircle size={15} />
+                  Chat on WhatsApp
+                </a>
+              )}
+
+              {ad.contact?.showPhone !== false && (
+                <button
+                  onClick={() => {
+                    setPhoneReveal(true);
+                    logContactClick(id);
+                  }}
+                  className={`w-full flex items-center justify-center gap-2 py-3
+                    font-bold rounded-2xl text-sm transition
+                    ${
+                      phoneReveal
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                    }`}
+                >
+                  <Phone size={15} />
+                  {phoneReveal ? ad.contact.phone : "Show Phone Number"}
+                </button>
+              )}
+
+              {!isNigeria && waNumber && (
+                <a
+                  href={`https://wa.me/${waNumber}?text=${waMsg}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => logContactClick(id)}
+                  className="w-full flex items-center justify-center gap-2 py-3
+                    bg-[#25D366] text-white font-bold rounded-2xl text-sm
+                    hover:opacity-90 transition"
+                >
+                  <MessageCircle size={15} />
+                  Chat on WhatsApp
+                </a>
+              )}
+
+              {!isOwner && (
+                <ChatButton
+                  sellerId={String(
+                    (typeof ad.postedBy === "object"
+                      ? (ad.postedBy as any)?._id
+                      : ad.postedBy) ??
+                      ad.postedBy ??
+                      "",
+                  )}
+                  sellerName={
+                    ad.contact?.name ??
+                    (typeof ad.postedBy === "object"
+                      ? (ad.postedBy as any)?.username
+                      : undefined) ??
+                    "Seller"
+                  }
+                />
+              )}
+            </div>
+
+            <div
+              className="flex items-center gap-1.5 text-[11px] text-gray-400
+              mt-4 justify-center"
+            >
+              <Shield size={12} className="text-gray-300" />
+              Meet in a public place. Never pay in advance.
+            </div>
+          </Section>

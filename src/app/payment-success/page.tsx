@@ -1,16 +1,32 @@
 "use client";
-// src/app/payment-success/page.tsx
 
-import { useEffect, useState, useRef } from "react";
+// client/src/app/payment-success/page.tsx
+//
+// Subscriptions and boosts. verifyPayment checks the transaction
+// server-side before redirecting here, so by the time someone lands the
+// outcome is already settled — this page celebrates, it doesn't verify.
+//
+// Orders work the other way round and live at /checkout/complete.
+//
+// ─── TWO FIXES ───────────────────────────────────────────────────────
+//
+// 1 · An order payment that lands here used to be redirected to "/" with
+//     no confirmation at all — the buyer pays and sees the homepage.
+//     It's now forwarded to /checkout/complete, which can confirm it.
+//
+// 2 · The resume poll had no ceiling. If restoreSession never resolved,
+//     tryRedirect called itself every 200ms forever. It now gives up
+//     after ten seconds and goes to the dashboard, which is a worse
+//     destination than the form but far better than a page that never
+//     moves.
+
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   CheckCircle2,
   Package,
   Zap,
-  BarChart2,
-  Megaphone,
-  Globe,
   ArrowRight,
   Plus,
   X,
@@ -19,10 +35,10 @@ import {
   Star,
   Sparkles,
 } from "lucide-react";
+
 import { useResumeAction } from "@/src/hooks/useResumeAction";
-import { useAppSelector } from "@/src/app/redux";
+import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { restoreSession } from "@/src/lib/features/auth/authActions";
-import { useAppDispatch } from "@/src/app/redux";
 import axiosInstance from "@/src/lib/api/axios";
 
 // ── Confetti ────────────────────────────────────────────────────────────────
@@ -37,8 +53,9 @@ function Confetti() {
     "#ffffff",
   ];
   const pieces = Array.from({ length: 40 });
+
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
       {pieces.map((_, i) => (
         <span
           key={i}
@@ -57,16 +74,14 @@ function Confetti() {
       ))}
       <style>{`
         @keyframes confettiFall {
-          0%   { transform: translateY(0)     rotate(0deg)   scaleX(1);   opacity: 1; }
-          50%  { opacity: 1; scaleX(-1); }
-          100% { transform: translateY(105vh) rotate(720deg) scaleX(-1);  opacity: 0; }
+          0%   { transform: translateY(0)     rotate(0deg);   opacity: 1; }
+          100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
         }
       `}</style>
     </div>
   );
 }
 
-// ── Plan feature map ─────────────────────────────────────────────────────────
 const PLAN_FEATURES: Record<string, string[]> = {
   Basic: ["1 listing", "3-day duration", "Basic dashboard"],
   standard: [
@@ -98,7 +113,7 @@ const PLAN_NAMES: Record<string, string> = {
   premium: "SuperSmile",
 };
 
-// ── Congratulations modal ────────────────────────────────────────────────────
+// ── Congratulations modal ───────────────────────────────────────────────────
 function CongratsModal({
   firstName,
   plan,
@@ -126,95 +141,81 @@ function CongratsModal({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end sm:items-center
-      justify-center p-3 sm:p-6"
+      className="fixed inset-0 z-40 flex items-end justify-center p-3 sm:items-center sm:p-6"
       style={{ background: "rgba(0,0,0,0.65)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
-        className="bg-white rounded-3xl w-full max-w-md shadow-2xl
-        overflow-hidden max-h-[92vh] flex flex-col"
-      >
-        {/* ── Header ── */}
-        <div
-          className="relative bg-gradient-to-br from-gray-900 to-gray-800
-          text-white px-6 pt-8 pb-6 text-center flex-shrink-0"
-        >
+      <div className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+        {/* Header */}
+        <div className="relative flex-shrink-0 bg-gradient-to-br from-gray-900 to-gray-800 px-6 pb-6 pt-8 text-center text-white">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-7 h-7 bg-white/10 rounded-full
-              flex items-center justify-center hover:bg-white/20 transition"
+            className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/20"
+            aria-label="Close"
           >
             <X size={14} />
           </button>
 
-          {/* Animated check */}
-          <div
-            className="w-20 h-20 bg-yellow-400 rounded-full flex items-center
-            justify-center mx-auto mb-4 shadow-lg shadow-yellow-400/30
-            animate-[scale-in_0.4s_ease-out]"
-          >
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/30">
             <CheckCircle2 size={36} className="text-black" />
           </div>
 
-          <h2 className="text-2xl font-black mb-1">
-            Congratulations, {firstName}! 🎉
+          <h2 className="mb-1 text-2xl font-black">
+            Congratulations, {firstName}!
           </h2>
-          <p className="text-white/70 text-sm leading-relaxed">
-            Your <span className="text-yellow-400 font-bold">{planName}</span>{" "}
-            plan is now active. Welcome to the SmileBaba vendor family!
+          <p className="text-sm leading-relaxed text-white/70">
+            Your <span className="font-bold text-yellow-400">{planName}</span>{" "}
+            plan is active. Welcome to the SmileBaba vendor family.
           </p>
 
-          {/* Plan features pills */}
-          <div className="flex flex-wrap justify-center gap-1.5 mt-4">
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5">
             {features.slice(0, 3).map((f) => (
               <span
                 key={f}
-                className="bg-white/10 text-white/90 text-[10px]
-                font-semibold px-2.5 py-1 rounded-full border border-white/10"
+                className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-white/90"
               >
                 ✓ {f}
               </span>
             ))}
             {features.length > 3 && (
-              <span
-                className="bg-yellow-400/20 text-yellow-300 text-[10px]
-                font-semibold px-2.5 py-1 rounded-full border border-yellow-400/20"
-              >
+              <span className="rounded-full border border-yellow-400/20 bg-yellow-400/20 px-2.5 py-1 text-[10px] font-semibold text-yellow-300">
                 +{features.length - 3} more
               </span>
             )}
           </div>
         </div>
 
-        {/* ── Tab switcher ── */}
-        <div className="flex gap-1 mx-5 mt-4 bg-gray-100 rounded-xl p-1 flex-shrink-0">
+        {/* Tabs */}
+        <div className="mx-5 mt-4 flex flex-shrink-0 gap-1 rounded-xl bg-gray-100 p-1">
           <button
             onClick={() => setTab("actions")}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition
-              ${tab === "actions" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+              tab === "actions"
+                ? "bg-white text-gray-900 shadow"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             Quick actions
           </button>
           <button
             onClick={() => setTab("boost")}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition
-              ${tab === "boost" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+              tab === "boost"
+                ? "bg-white text-gray-900 shadow"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             Boost an ad
             {nonBoosted.length > 0 && (
-              <span
-                className="ml-1.5 bg-yellow-400 text-black text-[9px]
-                font-black px-1.5 py-0.5 rounded-full"
-              >
+              <span className="ml-1.5 rounded-full bg-yellow-400 px-1.5 py-0.5 text-[9px] font-black text-black">
                 {nonBoosted.length}
               </span>
             )}
           </button>
         </div>
 
-        {/* ── Content ── */}
-        <div className="overflow-y-auto flex-1 px-5 pb-5 pt-3">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-5 pb-5 pt-3">
           {tab === "actions" && (
             <div className="space-y-2.5">
               {[
@@ -223,7 +224,7 @@ function CongratsModal({
                   icon: <Plus size={18} className="text-black" />,
                   iconBg: "bg-yellow-400",
                   title: "Post a new ad",
-                  sub: "List a product, food, property, or service",
+                  sub: "List a product, food, property or service",
                   dark: true,
                 },
                 {
@@ -233,7 +234,7 @@ function CongratsModal({
                   ),
                   iconBg: "bg-purple-100",
                   title: "Go to dashboard",
-                  sub: "Analytics, orders, and messages",
+                  sub: "Analytics, orders and messages",
                   dark: false,
                 },
                 {
@@ -248,11 +249,11 @@ function CongratsModal({
                   dark: false,
                 },
                 {
-                  href: "/vendor/settings",
+                  href: "/account/store",
                   icon: <Star size={16} className="text-orange-500" />,
                   iconBg: "bg-orange-100",
                   title: "Complete your store",
-                  sub: "Add logo, banner, and social links",
+                  sub: "Add a logo, banner and social links",
                   dark: false,
                 },
               ].map((item) => (
@@ -260,38 +261,36 @@ function CongratsModal({
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 p-3.5 rounded-2xl
-                    active:scale-[0.99] transition-all group
-                    ${
-                      item.dark
-                        ? "bg-gray-900 text-white hover:bg-gray-800"
-                        : "bg-white border border-gray-100 hover:border-yellow-200 hover:bg-yellow-50"
-                    }`}
+                  className={`group flex items-center gap-3 rounded-2xl p-3.5 transition-all active:scale-[0.99] ${
+                    item.dark
+                      ? "bg-gray-900 text-white hover:bg-gray-800"
+                      : "border border-gray-100 bg-white hover:border-yellow-200 hover:bg-yellow-50"
+                  }`}
                 >
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center
-                    justify-center flex-shrink-0 ${item.iconBg}`}
+                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}
                   >
                     {item.icon}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p
-                      className={`text-sm font-black
-                      ${item.dark ? "text-white" : "text-gray-900"}`}
+                      className={`text-sm font-black ${item.dark ? "text-white" : "text-gray-900"}`}
                     >
                       {item.title}
                     </p>
                     <p
-                      className={`text-xs mt-0.5
-                      ${item.dark ? "text-white/60" : "text-gray-400"}`}
+                      className={`mt-0.5 text-xs ${item.dark ? "text-white/60" : "text-gray-400"}`}
                     >
                       {item.sub}
                     </p>
                   </div>
                   <ArrowRight
                     size={14}
-                    className={`flex-shrink-0 transition
-                      ${item.dark ? "text-white/40 group-hover:text-white/80" : "text-gray-300 group-hover:text-gray-600"}`}
+                    className={`flex-shrink-0 transition ${
+                      item.dark
+                        ? "text-white/40 group-hover:text-white/80"
+                        : "text-gray-300 group-hover:text-gray-600"
+                    }`}
                   />
                 </Link>
               ))}
@@ -301,19 +300,18 @@ function CongratsModal({
           {tab === "boost" && (
             <div>
               {ads.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package size={28} className="text-gray-200 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-gray-600 mb-1">
+                <div className="py-8 text-center">
+                  <Package size={28} className="mx-auto mb-3 text-gray-200" />
+                  <p className="mb-1 text-sm font-semibold text-gray-600">
                     No ads yet
                   </p>
-                  <p className="text-xs text-gray-400 mb-4">
+                  <p className="mb-4 text-xs text-gray-400">
                     Post your first listing, then come back to boost it.
                   </p>
                   <Link
                     href="/sell"
                     onClick={onClose}
-                    className="inline-block px-5 py-2.5 bg-yellow-400 text-black
-                      text-xs font-black rounded-xl hover:bg-yellow-300 transition"
+                    className="inline-block rounded-xl bg-yellow-400 px-5 py-2.5 text-xs font-black text-black transition hover:bg-yellow-300"
                   >
                     Post an ad →
                   </Link>
@@ -323,39 +321,31 @@ function CongratsModal({
                   {ads.map((ad) => (
                     <div
                       key={ad._id}
-                      className="flex items-center gap-3 bg-white border
-                        border-gray-100 rounded-2xl p-3 hover:border-yellow-300 transition"
+                      className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 transition hover:border-yellow-300"
                     >
-                      <div
-                        className="w-10 h-10 rounded-xl bg-gray-100
-                        flex-shrink-0 overflow-hidden"
-                      >
+                      <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
                         {ad.images?.[0]?.url ? (
                           <img
                             src={ad.images[0].url}
                             alt={ad.title}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
+                          <div className="flex h-full w-full items-center justify-center">
                             <Package size={14} className="text-gray-300" />
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-gray-900 truncate">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-bold text-gray-900">
                           {ad.title}
                         </p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">
+                        <p className="mt-0.5 text-[10px] text-gray-400">
                           {ad.views ?? 0} views
                         </p>
                       </div>
                       {ad.boost?.isBoosted ? (
-                        <span
-                          className="flex items-center gap-1 px-2 py-1
-                          bg-yellow-100 text-yellow-700 text-[10px] font-bold
-                          rounded-full flex-shrink-0"
-                        >
+                        <span className="flex flex-shrink-0 items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[10px] font-bold text-yellow-700">
                           <Zap size={9} /> Boosted
                         </span>
                       ) : (
@@ -364,10 +354,7 @@ function CongratsModal({
                             router.push(`/ads/${ad._id}?boost=1`);
                             onClose();
                           }}
-                          className="flex items-center gap-1 px-3 py-1.5
-                            bg-gray-900 text-yellow-400 text-[11px] font-black
-                            rounded-xl hover:bg-gray-700 active:scale-95
-                            transition-all flex-shrink-0"
+                          className="flex flex-shrink-0 items-center gap-1 rounded-xl bg-gray-900 px-3 py-1.5 text-[11px] font-black text-yellow-400 transition-all hover:bg-gray-700 active:scale-95"
                         >
                           <Zap size={10} /> Boost
                         </button>
@@ -380,14 +367,14 @@ function CongratsModal({
           )}
         </div>
 
-        {/* ── Footer ── */}
-        <div className="px-5 pb-5 pt-2 border-t border-gray-100 flex-shrink-0">
-          <p className="text-[11px] text-center text-gray-400">
-            A confirmation email is on its way to your inbox ·{" "}
+        {/* Footer */}
+        <div className="flex-shrink-0 border-t border-gray-100 px-5 pb-5 pt-2">
+          <p className="text-center text-[11px] text-gray-400">
+            A confirmation email is on its way ·{" "}
             <Link
               href="/vendor/purchase-history"
               onClick={onClose}
-              className="text-yellow-600 font-semibold hover:underline"
+              className="font-semibold text-yellow-600 hover:underline"
             >
               View receipt
             </Link>
@@ -398,7 +385,7 @@ function CongratsModal({
   );
 }
 
-// ── Main page ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
 export default function PaymentSuccessPage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -412,41 +399,50 @@ export default function PaymentSuccessPage() {
   const isLegitimate = isSubscribedCallback || isBoostedCallback || isFlwDirect;
   const isEffectiveSub = isSubscribedCallback || isFlwDirect;
 
-  // Pull plan from URL (set by verifyPayment) or user session
-  const planFromUrl = params.get("plan") ?? null;
-  const planFromUser = user?.subscription?.plan ?? null;
-  const plan = planFromUrl ?? planFromUser;
+  const plan = params.get("plan") ?? user?.subscription?.plan ?? null;
 
   const [showConfetti, setShowConfetti] = useState(isLegitimate);
   const [showModal, setShowModal] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [resumeLabel, setResumeLabel] = useState<string | null>(null);
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  const [sessionRefreshed, setSessionRefreshed] = useState(false);
   const modalShownRef = useRef(false);
 
+  /**
+   * An order group in the URL means someone pointed an order's
+   * redirect_url at this page. Forward it rather than dropping them on
+   * the homepage having just paid — this page can't confirm an order,
+   * /checkout/complete can.
+   */
   useEffect(() => {
-    if (!isLegitimate) router.replace("/");
-  }, [isLegitimate, router]);
+    if (isLegitimate) return;
 
-  // Track whether the user-session refresh has finished. Critical: any redirect
-  // or resume-action must wait for this, otherwise the user lands on a vendor-only
-  // route (like /sell) with stale Redux state showing role: "guest" and the guard
-  // immediately bounces them back to /subscription.
-  const [sessionRefreshed, setSessionRefreshed] = useState(false);
+    const group = params.get("group");
+    if (group) {
+      const qs = typeof window !== "undefined" ? window.location.search : "";
+      router.replace(`/checkout/complete${qs}`);
+      return;
+    }
 
+    router.replace("/");
+  }, [isLegitimate, params, router]);
+
+  // Await the refresh so the new role is in Redux before any redirect —
+  // otherwise /sell sees role "guest" and bounces them to onboarding
   useEffect(() => {
     if (!isLegitimate) return;
     let cancelled = false;
+
     (async () => {
       try {
-        // Await the refresh so the new role lands in Redux BEFORE we redirect.
         await dispatch(restoreSession()).unwrap();
       } catch {
-        /* even on failure we proceed — backend role is set, worst case user
-           refreshes manually */
+        // The backend role is set regardless; worst case they refresh
       }
       if (!cancelled) setSessionRefreshed(true);
     })();
+
     return () => {
       cancelled = true;
     };
@@ -478,17 +474,25 @@ export default function PaymentSuccessPage() {
         boost_product: "Applying your boost…",
         create_listing: "Resuming your listing…",
       };
-      setResumeLabel(labels[action.type] ?? "Resuming your action…");
-      // Wait until /auth/me returns with the new vendor role BEFORE redirecting.
-      // Otherwise SellPage sees role: "guest" and bounces back to /subscription.
+      setResumeLabel(labels[action.type] ?? "Resuming…");
+
       const target =
         action.type === "boost_product" ? "/vendor/dashboard" : "/sell";
+
+      // The old version polled forever if restoreSession never resolved.
+      // Fifty attempts is ten seconds, then give up and go somewhere —
+      // a worse destination beats a page that never moves.
+      let tries = 0;
       const tryRedirect = () => {
         if (sessionRefreshed) {
           setTimeout(() => setRedirectTo(target), 1200);
-        } else {
-          setTimeout(tryRedirect, 200); // poll every 200ms until session refreshed
+          return;
         }
+        if (++tries > 50) {
+          setRedirectTo("/vendor/dashboard");
+          return;
+        }
+        setTimeout(tryRedirect, 200);
       };
       tryRedirect();
     },
@@ -499,50 +503,37 @@ export default function PaymentSuccessPage() {
   const firstName = user?.username?.split(" ")[0] ?? "there";
 
   return (
-    <div
-      className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800
-      to-gray-900 flex items-center justify-center px-4 py-12 relative"
-    >
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-12">
       {showConfetti && <Confetti />}
 
-      {/* Background glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96
-          bg-yellow-400/10 rounded-full blur-3xl"
-        />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-1/2 top-1/4 h-96 w-96 -translate-x-1/2 rounded-full bg-yellow-400/10 blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-md text-center">
-        {/* ── Boost success ── */}
+        {/* Boost */}
         {isBoostedCallback && !isFlwDirect && (
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
-            <div
-              className="w-20 h-20 bg-yellow-400 rounded-full flex items-center
-              justify-center mx-auto mb-5 shadow-lg shadow-yellow-400/30"
-            >
+          <div className="rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/30">
               <Zap size={36} className="text-black" />
             </div>
-            <h1 className="text-2xl font-black text-gray-900 mb-2">
-              Your ad is boosted! ⚡
+            <h1 className="mb-2 text-2xl font-black text-gray-900">
+              Your ad is boosted
             </h1>
-            <p className="text-gray-500 text-sm mb-8">
-              Your listing now appears at the top of search results and will
-              reach more buyers across Ghana and Nigeria.
+            <p className="mb-8 text-sm text-gray-500">
+              It now appears at the top of search results and will reach more
+              buyers across Ghana and Nigeria.
             </p>
             <div className="flex flex-col gap-3">
               <Link
                 href="/vendor/dashboard"
-                className="w-full py-3 bg-gray-900 text-white font-black
-                  rounded-2xl hover:bg-gray-800 transition text-sm
-                  flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 py-3 text-sm font-black text-white transition hover:bg-gray-800"
               >
                 <LayoutDashboard size={15} /> Go to dashboard
               </Link>
               <Link
                 href="/ads"
-                className="w-full py-3 bg-yellow-400 text-black font-black
-                  rounded-2xl hover:bg-yellow-300 transition text-sm"
+                className="w-full rounded-2xl bg-yellow-400 py-3 text-sm font-black text-black transition hover:bg-yellow-300"
               >
                 Browse marketplace
               </Link>
@@ -550,63 +541,50 @@ export default function PaymentSuccessPage() {
           </div>
         )}
 
-        {/* ── Subscription success (before modal opens) ── */}
+        {/* Subscription, before the modal */}
         {isEffectiveSub && !showModal && (
           <div className="text-center">
-            <div
-              className="w-24 h-24 bg-yellow-400 rounded-full flex items-center
-              justify-center mx-auto mb-6 shadow-2xl shadow-yellow-400/30"
-            >
+            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-yellow-400 shadow-2xl shadow-yellow-400/30">
               <CheckCircle2 size={44} className="text-black" />
             </div>
 
-            <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="mb-3 flex items-center justify-center gap-2">
               <Sparkles size={16} className="text-yellow-400" />
-              <span
-                className="text-yellow-400 text-sm font-bold uppercase
-                tracking-widest"
-              >
+              <span className="text-sm font-bold uppercase tracking-widest text-yellow-400">
                 Payment successful
               </span>
               <Sparkles size={16} className="text-yellow-400" />
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-black text-white mb-3">
+            <h1 className="mb-3 text-3xl font-black text-white sm:text-4xl">
               Welcome to SmileBaba,
               <br />
               {firstName}!
             </h1>
-            <p className="text-white/60 text-sm mb-8">
+            <p className="mb-8 text-sm text-white/60">
               Your subscription is active — setting up your dashboard…
             </p>
 
             {resuming && resumeLabel && (
-              <div
-                className="bg-white/10 border border-white/20 rounded-2xl
-                p-4 mb-5 flex items-center justify-center gap-3 text-white"
-              >
-                <div
-                  className="w-4 h-4 border-2 border-yellow-400/50
-                  border-t-yellow-400 rounded-full animate-spin"
-                />
+              <div className="mb-5 flex items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-4 text-white">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-yellow-400/50 border-t-yellow-400" />
                 <p className="text-sm font-medium">{resumeLabel}</p>
               </div>
             )}
 
-            {/* Skeleton loading state while restoring session */}
             <div className="flex items-center justify-center gap-1.5">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="w-2 h-2 bg-yellow-400 rounded-full"
+                  className="h-2 w-2 rounded-full bg-yellow-400"
                   style={{
-                    animation: `bounce 0.9s ease-in-out ${i * 0.15}s infinite alternate`,
+                    animation: `successBounce 0.9s ease-in-out ${i * 0.15}s infinite alternate`,
                   }}
                 />
               ))}
             </div>
             <style>{`
-              @keyframes bounce {
+              @keyframes successBounce {
                 from { transform: translateY(0);    opacity: 0.4; }
                 to   { transform: translateY(-6px); opacity: 1;   }
               }
@@ -615,7 +593,6 @@ export default function PaymentSuccessPage() {
         )}
       </div>
 
-      {/* ── Congratulations modal ── */}
       {showModal && (
         <CongratsModal
           firstName={firstName}

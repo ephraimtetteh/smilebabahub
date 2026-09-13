@@ -1,10 +1,45 @@
 "use client";
-// src/components/ads/ProductDetail/index.tsx
-// Orchestrator only — all heavy logic lives in the sub-components.
+
+// client/src/components/ads/ProductDetail/index.tsx
+//
+// ─── WHAT CHANGED, AND WHY ───────────────────────────────────────────
+//
+// 1 · The primary CTA was rendered twice — once in the left Actions
+//     section and once in the sidebar, both calling cta.open. Two
+//     identical primary buttons on one page.
+//
+//     There's one now. On mobile the sidebar renders first so the price
+//     and the action are above the fold; on desktop it sits on the right
+//     where it was.
+//
+// 2 · resolveMode decided the CTA, and it has no idea what "ecommerce"
+//     is. Anything unmapped fell through to a default, which is why
+//     "Book now" turned up on products.
+//
+//     The CTA now comes from listingPolicy — canBook means book,
+//     canAddToCart means buy, and neither means the listing is a
+//     classified with no price, where contact is the action.
+//
+// 3 · "Request a call back" showed a success toast and did nothing. It
+//     now posts to /ads/:id/callback, and only appears where contact is
+//     allowed at all. Asking a fridge vendor to ring you is fine; the
+//     policy just decides whether that category works that way.
+//
+// 4 · handleAddToCart omitted vendorId, vendorName and currency. The
+//     cart groups by vendorId, so every item from this page landed in
+//     one group labelled "Vendor" — and the currency defaulted to GHS,
+//     which made createOrder reject a Nigerian checkout as MIXED_CURRENCY.
+//
+// 5 · The seller contact block is now SellerContactPanel, which applies
+//     the same category rules as the app. A buyer who finds a phone
+//     number here and not in the app will simply use the website.
+//
+// resolveMode is still used for the modal choice, which is what it's
+// actually good at.
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import {
   Phone,
@@ -14,7 +49,6 @@ import {
   Clock,
   Eye,
   Heart,
-  Shield,
   ShoppingCart,
   Megaphone,
   Truck,
@@ -24,11 +58,14 @@ import {
   CreditCard,
   CalendarDays,
   UtensilsCrossed,
+  Loader2,
+  ShieldCheck,
 } from "lucide-react";
 
 import { useAds } from "@/src/hooks/useAds";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { addToCart, calculateTotals } from "@/src/lib/features/cart/cartSlice";
+import axiosInstance from "@/src/lib/api/axios";
 import { safetyTips } from "@/src/constants/safetyTips";
 import {
   CONDITION_LABELS,
@@ -38,29 +75,26 @@ import {
 } from "@/src/app/ads/(components)/ad.constants";
 import FeaturedProducts from "@/src/components/FeaturedProducts";
 
-// Sub-components
-
-// Lazy-imported originals (still used for chat / offer)
 import Offer from "@/src/components/Offer";
 import Socials from "@/src/components/Socials";
 import BuyModal from "../../product/(components)/BuyModal";
-import BookingModal from "../../product/(components)/BookingModal";
 import OrderModal from "../../product/(components)/OrderModal";
-import DeliveryRequestModal from "../(components)/DeliveryRequestModal";
 import AdGallery from "../(components)/AdGallery";
 import { DetailRow, Section } from "../(components)/AdUI";
-import ChatButton from "@/src/components/Chat/ChatButton";
+import SellerContactPanel from "../(components)/SellerContactPanel";
 import DeliveryTracker from "../(components)/DeliveryTracker";
 import { AdMode } from "@/src/types/ad.types";
 import { currencySym, resolveMode } from "../(components)/adHelpers";
-
-
-
-
+import {
+  getListingPolicy,
+  canAddToCart as policyCanAddToCart,
+  isStay,
+} from "@/src/lib/util/listingPolicy";
 
 const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
   const pathname = usePathname();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
 
@@ -72,37 +106,40 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
     logContactClick,
   } = useAds();
 
-  // Modal open states
   const [buyOpen, setBuyOpen] = useState(false);
-  const [bookOpen, setBookOpen] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
-  const [delivOpen, setDelivOpen] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
 
-  // Callback-request state
   const [callRequest, setCallRequest] = useState(false);
   const [callName, setCallName] = useState("");
   const [callPhone, setCallPhone] = useState("");
-  const [phoneReveal, setPhoneReveal] = useState(false);
+  const [callSending, setCallSending] = useState(false);
 
   useEffect(() => {
     if (id) loadAdById(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    setCallName(user?.username ?? "");
+    setCallPhone(user?.phone ?? "");
+  }, [user?._id]);
+
+  // ─── Loading ──────────────────────────────────────────────────────
   if (currentLoading || (!ad && !currentError)) {
     return (
-      <div className="pt-32 pb-20 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+      <div className="mx-auto max-w-7xl px-4 pb-20 pt-32 md:px-8 lg:px-16">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
           <div className="space-y-4">
-            <div className="aspect-[4/3] bg-gray-100 rounded-2xl animate-pulse" />
-            <div className="h-6 bg-gray-100 rounded w-3/4 animate-pulse" />
-            <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
+            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-gray-100" />
+            <div className="h-6 w-3/4 animate-pulse rounded bg-gray-100" />
+            <div className="h-4 w-1/2 animate-pulse rounded bg-gray-100" />
           </div>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-36 bg-gray-100 rounded-2xl animate-pulse"
+                className="h-36 animate-pulse rounded-2xl bg-gray-100"
               />
             ))}
           </div>
@@ -111,23 +148,20 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
     );
   }
 
+  // ─── Not found ────────────────────────────────────────────────────
   if (currentError || !ad) {
     return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center
-        text-center px-4 pt-32"
-      >
-        <Frown size={52} className="text-gray-200 mb-4" />
-        <h2 className="text-2xl font-black text-gray-800 mb-2">
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 pt-32 text-center">
+        <Frown size={52} className="mb-4 text-gray-200" />
+        <h2 className="mb-2 text-2xl font-black text-gray-800">
           Listing not found
         </h2>
-        <p className="text-gray-500 mb-6">
+        <p className="mb-6 text-gray-500">
           {currentError ?? "This listing may have been removed."}
         </p>
         <Link
           href="/ads"
-          className="px-6 py-3 bg-[#ffc105] text-black font-bold
-          rounded-2xl hover:bg-amber-400 transition"
+          className="rounded-2xl bg-[#ffc105] px-6 py-3 font-bold text-black transition hover:bg-amber-400"
         >
           Browse listings
         </Link>
@@ -135,127 +169,153 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
     );
   }
 
+  // ─── Derived ──────────────────────────────────────────────────────
   const mode: AdMode = resolveMode(ad.category?.main, pathname);
   const sym = currencySym(ad.price?.currency);
-  const isNigeria =
-    ad.location?.country?.toLowerCase().includes("nigeria") ||
-    ad.price?.currency === "NGN";
-  const isOwner = Boolean(
-    user &&
-    ad &&
-    String(
-      typeof ad.postedBy === "object"
-        ? (ad.postedBy as any)?._id
-        : (ad.postedBy ?? ""),
-    ) === String(user._id),
-  );
+
+  const vendorObj =
+    typeof ad.postedBy === "object" ? (ad.postedBy as any) : null;
+  const vendorId = String(vendorObj?._id ?? ad.postedBy ?? "");
+  const vendorName =
+    ad.contact?.name ?? vendorObj?.storeName ?? vendorObj?.username ?? "Seller";
+
+  const isOwner = Boolean(user && vendorId && vendorId === String(user._id));
+
   const boostBadge =
     ad.boost?.isBoosted && ad.boost?.boostTier
       ? BOOST_BADGE[ad.boost.boostTier as keyof typeof BOOST_BADGE]
       : null;
-  const waNumber = ad.contact?.whatsapp?.replace(/\D/g, "");
+
+  const policy = getListingPolicy(ad as any);
+  const stay = isStay(ad as any);
+  const cartable = policyCanAddToCart(ad as any);
+  const category = String(ad.category?.main ?? "").toLowerCase();
+
+  const waNumber = String(ad.contact?.whatsapp ?? "").replace(/\D/g, "");
   const waMsg = encodeURIComponent(
     `Hi, I saw your listing "${ad.title}" on SmileBaba Hub.`,
   );
 
+  /**
+   * The CTA comes from the policy, not from resolveMode.
+   *
+   * canBook is only ever true for stays. canAddToCart is true for
+   * anything priced and buyable. Neither means it's a classified with no
+   * price, where the action is to talk to someone.
+   */
+  const cta = (() => {
+    if (policy.canBook) {
+      return {
+        label: "Book now",
+        icon: <CalendarDays size={16} />,
+        open: () => router.push(`/ads/${id}/book`),
+      };
+    }
+
+    if (cartable) {
+      const isFood = category === "food";
+      return {
+        label: isFood ? "Order now" : "Buy now",
+        icon: isFood ? <UtensilsCrossed size={16} /> : <CreditCard size={16} />,
+        open: () => (isFood ? setOrderOpen(true) : setBuyOpen(true)),
+      };
+    }
+
+    // No price, or a service — contact is the transaction
+    return {
+      label: category === "services" ? "Request service" : "Contact seller",
+      icon: <MessageCircle size={16} />,
+      open: () => {
+        if (policy.showWhatsApp && waNumber) {
+          window.open(`https://wa.me/${waNumber}?text=${waMsg}`, "_blank");
+          logContactClick(id);
+          return;
+        }
+        if (policy.showPhone && ad.contact?.phone) {
+          window.open(`tel:${ad.contact.phone}`);
+          logContactClick(id);
+          return;
+        }
+
+        const target = `/chat?with=${vendorId}&name=${encodeURIComponent(vendorName)}`;
+        if (!user) {
+          localStorage.setItem("redirectAfterLogin", target);
+          router.push(`/auth/login?returnUrl=${encodeURIComponent(target)}`);
+          return;
+        }
+        router.push(target);
+      },
+    };
+  })();
+
+  // ─── Cart ─────────────────────────────────────────────────────────
   const handleAddToCart = () => {
     dispatch(
       addToCart({
         id: ad._id,
+        adId: ad._id,
         title: ad.title,
-        price: ad.price?.amount,
+        price: ad.price?.amount ?? 0,
         image: ad.images?.[0]?.url ?? "",
         category: ad.category?.main ?? "",
+        currency: ad.price?.currency ?? "GHS",
         amount: 1,
+
+        // The cart groups by these. Without them every seller merges
+        // into one group under a single delivery address.
+        vendorId,
+        vendorName,
+
+        deliveryAvailable: ad.delivery?.available ?? false,
+        deliveryFee: ad.delivery?.fee ?? 0,
       }),
     );
     dispatch(calculateTotals());
     toast.success("Added to cart");
   };
 
-  const handleCallbackSubmit = () => {
+  // ─── Call back ────────────────────────────────────────────────────
+  const handleCallbackSubmit = async () => {
     if (!callName.trim() || !callPhone.trim()) {
       toast.error("Please enter your name and phone number");
       return;
     }
-    toast.success("Call back requested! The seller will contact you shortly.");
-    setCallRequest(false);
-    setCallName("");
-    setCallPhone("");
+    if (callPhone.replace(/\D/g, "").length < 7) {
+      toast.error("That phone number doesn't look right");
+      return;
+    }
+
+    setCallSending(true);
+    try {
+      const { data } = await axiosInstance.post(`/ads/${id}/callback`, {
+        name: callName.trim(),
+        phone: callPhone.trim(),
+      });
+      toast.success(data.message ?? "The seller will call you back.");
+      setCallRequest(false);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ?? "Couldn't send that. Please try again.",
+      );
+    } finally {
+      setCallSending(false);
+    }
   };
 
-  // Primary CTA config per mode — covers all 7 AdMode values
-  const ctaMap: Record<
-    AdMode,
-    { label: string; icon: React.ReactNode; open: () => void }
-  > = {
-    marketplace: {
-      label: "Buy now",
-      icon: <CreditCard size={16} />,
-      open: () => setBuyOpen(true),
-    },
-    food: {
-      label: "Order now",
-      icon: <UtensilsCrossed size={16} />,
-      open: () => setOrderOpen(true),
-    },
-    apartments: {
-      label: "Book now",
-      icon: <CalendarDays size={16} />,
-      open: () => setBookOpen(true),
-    },
-    fashion: {
-      label: "Buy now",
-      icon: <CreditCard size={16} />,
-      open: () => setBuyOpen(true),
-    },
-    delivery: {
-      label: "Book this rider",
-      icon: <Truck size={16} />,
-      open: () => setDelivOpen(true),
-    },
-    pharmacy: {
-      label: "Buy now",
-      icon: <CreditCard size={16} />,
-      open: () => setBuyOpen(true),
-    },
-    services: {
-      label: "Request service",
-      icon: <Phone size={16} />,
-      open: () => {
-        // Services → direct WhatsApp/phone contact (no modal needed)
-        if (waNumber) {
-          window.open(`https://wa.me/${waNumber}?text=${waMsg}`, "_blank");
-        } else if (ad.contact?.phone) {
-          window.open(`tel:${ad.contact.phone}`);
-        }
-      },
-    },
-  };
-  const cta = ctaMap[mode];
+  const sellable = !isOwner && !ad.isSold;
 
   return (
-    <div className="pt-28 pb-20 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-28 md:px-8 lg:px-16">
       {/* Modals */}
       {buyOpen && (
         <BuyModal ad={ad} sym={sym} onClose={() => setBuyOpen(false)} />
       )}
-      {/* {bookOpen && (
-        <BookingModal ad={ad} sym={sym} onClose={() => setBookOpen(false)} />
-      )} */}
       {orderOpen && (
         <OrderModal ad={ad} sym={sym} onClose={() => setOrderOpen(false)} />
       )}
-      {/* {delivOpen && (
-        <DeliveryRequestModal
-          ad={ad}
-          sym={sym}
-          onClose={() => setDelivOpen(false)}
-        />
-      )} */}
 
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
+      <nav className="mb-6 flex items-center gap-1.5 text-xs text-gray-400">
         <Link href="/" className="hover:text-gray-600">
           Home
         </Link>
@@ -268,33 +328,34 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             <ChevronRight size={12} />
             <Link
               href={`/ads?category=${ad.category.main}`}
-              className="hover:text-gray-600 capitalize"
+              className="capitalize hover:text-gray-600"
             >
               {ad.category.main}
             </Link>
           </>
         )}
         <ChevronRight size={12} />
-        <span className="text-gray-600 truncate max-w-[160px]">{ad.title}</span>
+        <span className="max-w-[160px] truncate text-gray-600">{ad.title}</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
-        {/* ── LEFT ── */}
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
+        {/* ═══ LEFT ═══ */}
+        {/* order-2 on mobile so the price and CTA lead; normal on desktop */}
+        <div className="order-2 space-y-6 lg:order-1">
           <AdGallery
             images={ad.images ?? []}
             title={ad.title}
             boostBadge={boostBadge}
           />
 
-          {/* Title + description */}
+          {/* Title and description */}
           <Section>
             {ad.category?.main && (
-              <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
+              <nav className="mb-3 flex items-center gap-1.5 text-xs text-gray-400">
                 <Tag size={11} />
                 <Link
                   href={`/ads?category=${ad.category.main}`}
-                  className="hover:text-gray-600 capitalize"
+                  className="capitalize hover:text-gray-600"
                 >
                   {ad.category.main}
                 </Link>
@@ -306,10 +367,12 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                 )}
               </nav>
             )}
-            <h1 className="text-2xl font-black text-gray-900 mb-2">
+
+            <h1 className="mb-2 text-2xl font-black text-gray-900">
               {ad.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mb-4">
+
+            <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-gray-400">
               {ad.location?.city && (
                 <span className="flex items-center gap-1">
                   <MapPin size={12} />
@@ -327,73 +390,46 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                 {ad.views ?? 0} views
               </span>
             </div>
-            <p className="text-gray-600 text-sm leading-7 whitespace-pre-line">
+
+            <p className="whitespace-pre-line text-sm leading-7 text-gray-600">
               {ad.description}
             </p>
           </Section>
 
-          {/* Actions */}
-          <Section>
-            {!isOwner && !ad.isSold ? (
-              <div className="flex flex-col sm:flex-row gap-3">
+          {/* Secondary actions — the primary CTA lives in the sidebar */}
+          {sellable && (cartable || category === "marketplace") && (
+            <Section>
+              {cartable && (
                 <button
-                  onClick={cta.open}
-                  className="flex-1 flex items-center justify-center gap-2 py-3.5
-                    bg-[#ffc105] text-black font-black rounded-2xl text-sm
-                    hover:bg-amber-400 transition active:scale-[0.99]"
+                  onClick={handleAddToCart}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#ffc105] bg-white py-3.5 text-sm font-bold text-[#ffc105] transition hover:bg-yellow-50"
                 >
-                  {cta.icon}
-                  {cta.label}
+                  <ShoppingCart size={16} />
+                  Add to cart
                 </button>
-                {mode !== "apartments" && (
-                  <button
-                    onClick={handleAddToCart}
-                    className="flex-1 flex items-center justify-center gap-2 py-3.5
-                      bg-white border-2 border-[#ffc105] text-[#ffc105] font-bold
-                      rounded-2xl text-sm hover:bg-yellow-50 transition"
-                  >
-                    <ShoppingCart size={16} />
-                    Add to cart
-                  </button>
-                )}
-              </div>
-            ) : ad.isSold ? (
-              <div
-                className="flex items-center justify-center py-3 bg-gray-100
-                rounded-2xl text-sm text-gray-500 font-bold"
-              >
-                Sold
-              </div>
-            ) : (
-              <div
-                className="flex items-center justify-center py-3 bg-gray-50
-                border border-gray-200 rounded-2xl text-sm text-gray-500"
-              >
-                This is your listing
-              </div>
-            )}
+              )}
 
-            {mode === "marketplace" && !isOwner && (
-              <div className="mt-3">
-                {!offerOpen ? (
-                  <button
-                    onClick={() => setOfferOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 py-3
-                        border-2 border-gray-200 text-gray-700 font-bold rounded-2xl
-                        text-sm hover:border-[#ffc105] hover:text-[#ffc105] transition"
-                  >
-                    <Megaphone size={15} />
-                    Make an offer
-                  </button>
-                ) : (
-                  <Offer onClose={() => setOfferOpen(false)} />
-                )}
+              {category === "marketplace" && (
+                <div className={cartable ? "mt-3" : ""}>
+                  {!offerOpen ? (
+                    <button
+                      onClick={() => setOfferOpen(true)}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-gray-200 py-3 text-sm font-bold text-gray-700 transition hover:border-[#ffc105] hover:text-[#ffc105]"
+                    >
+                      <Megaphone size={15} />
+                      Make an offer
+                    </button>
+                  ) : (
+                    <Offer onClose={() => setOfferOpen(false)} />
+                  )}
+                </div>
+              )}
+
+              <div className="mt-4 border-t border-gray-100 pt-4">
+                <Socials />
               </div>
-            )}
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <Socials />
-            </div>
-          </Section>
+            </Section>
+          )}
 
           {/* Specs */}
           <Section title="Details">
@@ -440,9 +476,15 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
               <DetailRow
                 label="Expires"
                 value={
-                  <span className={ad.daysLeft! <= 3 ? "text-orange-500" : ""}>
+                  <span
+                    className={
+                      ad.daysLeft != null && ad.daysLeft <= 3
+                        ? "text-orange-500"
+                        : ""
+                    }
+                  >
                     {formatDate(ad.expiresAt)}
-                    {ad.daysLeft !== null && ` (${ad.daysLeft}d left)`}
+                    {ad.daysLeft != null && ` (${ad.daysLeft}d left)`}
                   </span>
                 }
               />
@@ -461,9 +503,9 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
                 label={attr.label ?? attr.key.replace(/_/g, " ")}
                 value={
                   attr.value === "yes"
-                    ? "✓ Yes"
+                    ? "Yes"
                     : attr.value === "no"
-                      ? "✗ No"
+                      ? "No"
                       : String(attr.value)
                 }
               />
@@ -471,39 +513,33 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
           </Section>
         </div>
 
-        {/* ── RIGHT SIDEBAR ── */}
-        <aside className="space-y-4">
-          {/* Price + CTA */}
+        {/* ═══ RIGHT ═══ */}
+        <aside className="order-1 space-y-4 lg:order-2">
+          {/* Price and the single primary CTA */}
           <Section>
-            <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="mb-3 flex items-start justify-between gap-2">
               <div>
                 <p className="text-3xl font-black text-gray-900">
                   {formatAdPrice(
                     ad.price?.amount,
                     ad.price?.currency,
-                    ad.price?.display,
+                    (ad.price as any)?.display,
                   )}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="mt-0.5 text-xs text-gray-400">
                   {ad.price?.currency}
-                  {mode === "apartments" ? " / night" : ""}
+                  {stay ? " / night" : ""}
                 </p>
               </div>
               {ad.negotiable === "yes" && (
-                <span
-                  className="text-xs bg-green-100 text-green-700 font-semibold
-                  px-2.5 py-1 rounded-full flex-shrink-0"
-                >
+                <span className="flex-shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
                   Negotiable
                 </span>
               )}
             </div>
 
             {ad.delivery?.available && (
-              <div
-                className="flex items-center gap-2 text-sm text-blue-600
-                bg-blue-50 rounded-xl px-3 py-2 mb-3"
-              >
+              <div className="mb-3 flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-sm text-blue-600">
                 <Truck size={14} />
                 Delivery
                 {ad.delivery.fee === 0
@@ -512,197 +548,121 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
             )}
 
-            {!isOwner && !ad.isSold && (
-              <button
-                onClick={cta.open}
-                className="w-full flex items-center justify-center gap-2 py-3.5
-                  bg-[#ffc105] text-black font-black rounded-2xl text-sm
-                  hover:bg-amber-400 transition mb-2"
-              >
-                {cta.icon}
-                {cta.label}
-              </button>
-            )}
-
-            {/* Callback */}
-            {!callRequest ? (
-              <button
-                onClick={() => setCallRequest(true)}
-                className="w-full py-3 border-2 border-gray-200 text-gray-700 font-bold
-                  rounded-2xl text-sm hover:border-[#ffc105] hover:text-[#ffc105] transition"
-              >
-                Request a call back
-              </button>
+            {ad.isSold ? (
+              <div className="flex items-center justify-center rounded-2xl bg-gray-100 py-3 text-sm font-bold text-gray-500">
+                Sold
+              </div>
+            ) : isOwner ? (
+              <div className="flex items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 py-3 text-sm text-gray-500">
+                This is your listing
+              </div>
             ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500 font-medium">
-                  Enter your details — the seller will call you back:
-                </p>
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  value={callName}
-                  onChange={(e) => setCallName(e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-xl text-sm
-                    focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                />
-                <input
-                  type="tel"
-                  placeholder="Your phone"
-                  value={callPhone}
-                  onChange={(e) => setCallPhone(e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-xl text-sm
-                    focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleCallbackSubmit}
-                    className="flex-1 py-2.5 bg-[#ffc105] text-black font-bold
-                      rounded-xl text-sm hover:bg-amber-400 transition"
-                  >
-                    Submit
-                  </button>
-                  <button
-                    onClick={() => setCallRequest(false)}
-                    className="flex-1 py-2.5 border border-gray-200 text-gray-600
-                      rounded-xl text-sm hover:bg-gray-50 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+              <>
+                <button
+                  onClick={cta.open}
+                  className="mb-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#ffc105] py-3.5 text-sm font-black text-black transition hover:bg-amber-400"
+                >
+                  {cta.icon}
+                  {cta.label}
+                </button>
+
+                {/* Escrow promise, where it applies */}
+                {policy.showEscrowNote && (
+                  <p className="mb-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-gray-400">
+                    <ShieldCheck
+                      size={12}
+                      className="mt-0.5 flex-shrink-0 text-emerald-500"
+                    />
+                    {stay
+                      ? "Your payment is held until you check in."
+                      : "Your payment is held until you confirm delivery."}
+                  </p>
+                )}
+
+                {/* Call back — only where the category allows contact at
+                    all. Offering it on a listing whose vendor you can't
+                    reach would be a second dead end. */}
+                {(policy.showPhone ||
+                  policy.showWhatsApp ||
+                  policy.showChat) && (
+                  <>
+                    {!callRequest ? (
+                      <button
+                        onClick={() => setCallRequest(true)}
+                        className="w-full rounded-2xl border-2 border-gray-200 py-3 text-sm font-bold text-gray-700 transition hover:border-[#ffc105] hover:text-[#ffc105]"
+                      >
+                        Request a call back
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-gray-500">
+                          Leave your details and the seller will call you:
+                        </p>
+                        <input
+                          type="text"
+                          placeholder="Your name"
+                          value={callName}
+                          onChange={(e) => setCallName(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Your phone"
+                          value={callPhone}
+                          onChange={(e) => setCallPhone(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleCallbackSubmit}
+                            disabled={callSending}
+                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#ffc105] py-2.5 text-sm font-bold text-black transition hover:bg-amber-400 disabled:opacity-60"
+                          >
+                            {callSending ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                Sending…
+                              </>
+                            ) : (
+                              "Submit"
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setCallRequest(false)}
+                            className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </Section>
 
-          {/* Seller */}
-          <Section title="Seller Details">
-            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-              <div
-                className="w-12 h-12 rounded-full bg-[#ffc105] flex items-center
-                justify-center text-black font-black text-lg flex-shrink-0"
-              >
-                {ad.contact?.name?.charAt(0)?.toUpperCase() ?? "?"}
-              </div>
-              <div className="min-w-0">
-                <p className="font-bold text-gray-900 truncate">
-                  {ad.contact?.name ??
-                    (typeof ad.postedBy === "object"
-                      ? (ad.postedBy as any)?.username
-                      : undefined) ??
-                    "Seller"}
-                </p>
-                <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-                  <MapPin size={11} className="flex-shrink-0" />
-                  {[ad.location?.city, ad.location?.region]
-                    .filter(Boolean)
-                    .join(", ") || "Location not set"}
-                </p>
-              </div>
-            </div>
+          {/* Seller — all contact rules live in here */}
+          <SellerContactPanel
+            ad={ad as any}
+            isOwner={isOwner}
+            onContactClick={() => logContactClick(id)}
+          />
 
-            <div className="space-y-2.5">
-              {/* Nigeria: WhatsApp first (primary channel), phone second */}
-              {/* Ghana: phone reveal first, WhatsApp second */}
-
-              {isNigeria && waNumber && (
-                <a
-                  href={`https://wa.me/${waNumber}?text=${waMsg}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => logContactClick(id)}
-                  className="w-full flex items-center justify-center gap-2 py-3
-                    bg-[#25D366] text-white font-bold rounded-2xl text-sm
-                    hover:opacity-90 transition"
-                >
-                  <MessageCircle size={15} />
-                  Chat on WhatsApp
-                </a>
-              )}
-
-              {ad.contact?.showPhone !== false && (
-                <button
-                  onClick={() => {
-                    setPhoneReveal(true);
-                    logContactClick(id);
-                  }}
-                  className={`w-full flex items-center justify-center gap-2 py-3
-                    font-bold rounded-2xl text-sm transition
-                    ${
-                      phoneReveal
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                    }`}
-                >
-                  <Phone size={15} />
-                  {phoneReveal ? ad.contact.phone : "Show Phone Number"}
-                </button>
-              )}
-
-              {!isNigeria && waNumber && (
-                <a
-                  href={`https://wa.me/${waNumber}?text=${waMsg}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => logContactClick(id)}
-                  className="w-full flex items-center justify-center gap-2 py-3
-                    bg-[#25D366] text-white font-bold rounded-2xl text-sm
-                    hover:opacity-90 transition"
-                >
-                  <MessageCircle size={15} />
-                  Chat on WhatsApp
-                </a>
-              )}
-
-              {!isOwner && (
-                <ChatButton
-                  sellerId={String(
-                    (typeof ad.postedBy === "object"
-                      ? (ad.postedBy as any)?._id
-                      : ad.postedBy) ??
-                      ad.postedBy ??
-                      "",
-                  )}
-                  sellerName={
-                    ad.contact?.name ??
-                    (typeof ad.postedBy === "object"
-                      ? (ad.postedBy as any)?.username
-                      : undefined) ??
-                    "Seller"
-                  }
-                />
-              )}
-            </div>
-
-            <div
-              className="flex items-center gap-1.5 text-[11px] text-gray-400
-              mt-4 justify-center"
-            >
-              <Shield size={12} className="text-gray-300" />
-              Meet in a public place. Never pay in advance.
-            </div>
-          </Section>
-
-          {/* DeliveryTracker — shown only for delivery category ads */}
+          {/* Delivery tracker, for delivery listings only */}
           {mode === "delivery" && (
             <DeliveryTracker
-              vendorName={
-                ad.contact?.name ??
-                (typeof ad.postedBy === "object"
-                  ? (ad.postedBy as any)?.username
-                  : undefined) ??
-                "Rider"
-              }
+              vendorName={vendorName}
               vendorPhone={ad.contact?.phone}
-              // whatsapp={ad.contact?.whatsapp}
               city={ad.location?.city}
               region={ad.location?.region}
               address={ad.location?.address}
               coordinates={
-                ad.location?.coordinates?.lat != null &&
-                ad.location?.coordinates?.lng != null
+                (ad.location as any)?.coordinates?.lat != null &&
+                (ad.location as any)?.coordinates?.lng != null
                   ? {
-                      lat: ad.location.coordinates.lat,
-                      lng: ad.location.coordinates.lng,
+                      lat: (ad.location as any).coordinates.lat,
+                      lng: (ad.location as any).coordinates.lng,
                     }
                   : null
               }
@@ -714,15 +674,19 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="grid grid-cols-3 gap-3 text-center">
               {[
                 { icon: <Eye size={16} />, label: "Views", value: ad.views },
-                { icon: <Heart size={16} />, label: "Saves", value: ad.saves },
+                {
+                  icon: <Heart size={16} />,
+                  label: "Saves",
+                  value: (ad as any).saves,
+                },
                 {
                   icon: <Phone size={16} />,
                   label: "Contacts",
-                  value: ad.contactClicks,
+                  value: (ad as any).contactClicks,
                 },
               ].map((s) => (
-                <div key={s.label} className="bg-gray-50 rounded-xl py-3">
-                  <div className="flex justify-center text-gray-400 mb-1">
+                <div key={s.label} className="rounded-xl bg-gray-50 py-3">
+                  <div className="mb-1 flex justify-center text-gray-400">
                     {s.icon}
                   </div>
                   <p className="text-lg font-black text-gray-900">
@@ -734,24 +698,20 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
           </Section>
 
-          {/* Owner actions */}
+          {/* Owner */}
           {isOwner && (
             <Section title="Manage your ad">
               <div className="space-y-2">
                 <Link
                   href={`/ads/${id}/edit`}
-                  className="w-full flex items-center justify-center gap-2 py-2.5
-                    bg-gray-100 text-gray-700 font-semibold rounded-xl text-sm
-                    hover:bg-gray-200 transition"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
                 >
                   <Pencil size={14} />
                   Edit ad
                 </Link>
                 <Link
                   href="/ads/my"
-                  className="w-full flex items-center justify-center py-2.5
-                    border border-gray-200 text-gray-600 font-medium rounded-xl
-                    text-sm hover:bg-gray-50 transition"
+                  className="flex w-full items-center justify-center rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
                 >
                   My ads dashboard
                 </Link>
@@ -759,22 +719,26 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
             </Section>
           )}
 
-          {/* Safety */}
-          <Section title="Safety Tips">
-            <ul className="space-y-2">
-              {safetyTips.map((tip: string, i: number) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2 text-sm text-gray-600"
-                >
-                  <span className="text-[#ffc105] font-bold mt-0.5 flex-shrink-0">
-                    ✓
-                  </span>
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </Section>
+          {/* Safety — only for classifieds, where meeting in person is
+              the norm. On an escrow-backed order it contradicts the
+              buyer-protection promise two blocks up. */}
+          {!policy.showEscrowNote && (
+            <Section title="Safety tips">
+              <ul className="space-y-2">
+                {safetyTips.map((tip: string, i: number) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-gray-600"
+                  >
+                    <span className="mt-0.5 flex-shrink-0 font-bold text-[#ffc105]">
+                      ✓
+                    </span>
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
         </aside>
       </div>
 
