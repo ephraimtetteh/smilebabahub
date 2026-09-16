@@ -412,21 +412,3 @@ export default function PaymentFailedPage() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// controllers/paymentController.js — ONE ADDITION
-//
-// Flutterwave reports a cancellation as status "cancelled", and
-// verifyPayment currently folds it into not_successful. So someone who
-// changed their mind is told their payment "didn't go through", which
-// sounds like a fault rather than a choice.
-//
-// ADD in verifyPayment, before the existing `if (payment.status !== "successful")`:
-// ═══════════════════════════════════════════════════════════════════════
-/*
-    
-*/
-//
-// And pass the reference through on the failure paths, so the page can
-// show it when support will need it:
-//
-//     ?reason=amount_mismatch&plan=…&tx_ref=${payment.tx_ref}

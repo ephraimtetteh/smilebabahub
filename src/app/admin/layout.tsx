@@ -35,10 +35,15 @@ const NAV = [
     icon: <Newspaper size={16} />,
     label: "News",
   },
+  // {
+  //   href: "/admin/promotions",
+  //   icon: <Newspaper size={16} />,
+  //   label: "Promos",
+  // },
   {
-    href: "/admin/promotions",
+    href: "/admin/announcements",
     icon: <Newspaper size={16} />,
-    label: "Promos",
+    label: "Push Notifications",
   },
   {
     href: "/admin/marketers",
