@@ -41,12 +41,15 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json(data, { status: 200 });
 
-    // Forward any Set-Cookie headers so the frontend domain gets them
-    // (e.g. if the backend rotates the refreshToken)
-    const setCookie = backendRes.headers.get("set-cookie");
-    if (setCookie) {
-      response.headers.set("set-cookie", setCookie);
-    }
+    // Forward EVERY Set-Cookie separately. The backend now rotates the
+    // refresh token on each refresh and sets two cookies; headers.get()
+    // joins them with ", " into one unparseable header, so the browser
+    // kept the old (now revoked) refresh token and the next refresh failed.
+    const cookies =
+      typeof backendRes.headers.getSetCookie === "function"
+        ? backendRes.headers.getSetCookie()
+        : ([backendRes.headers.get("set-cookie")].filter(Boolean) as string[]);
+    for (const c of cookies) response.headers.append("set-cookie", c);
 
     return response;
   } catch (err: unknown) {

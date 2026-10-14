@@ -6,7 +6,10 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
-import axiosInstance from "@/src/lib/api/axios";
+import axiosInstance, {
+  getAccessToken,
+  refreshSession,
+} from "@/src/lib/api/axios";
 
 export type ChatMessage = {
   _id: string;
@@ -50,6 +53,10 @@ export function useChat(myUserId: string | undefined) {
 
     const socket = io(SOCKET_URL, {
       withCredentials: true,
+      // The server rejects sockets without a token ("UNAUTHORISED"). The
+      // cookie never reaches the backend domain (auth goes through /api),
+      // so withCredentials alone left chat permanently offline.
+      auth: (cb: (d: object) => void) => cb({ token: getAccessToken() ?? "" }),
       transports: ["polling", "websocket"],
       upgrade: true,
       reconnection: true,
@@ -68,6 +75,20 @@ export function useChat(myUserId: string | undefined) {
     socket.on("disconnect", () => setConnected(false));
 
     socket.on("online_users", (users: string[]) => setOnlineUsers(users));
+    socket.on("user_online", ({ userId }: { userId: string }) =>
+      setOnlineUsers((p) => (p.includes(userId) ? p : [...p, userId])),
+    );
+    socket.on("user_offline", ({ userId }: { userId: string }) =>
+      setOnlineUsers((p) => p.filter((u) => u !== userId)),
+    );
+    let refreshed = false;
+    socket.on("connect_error", async (err) => {
+      setConnected(false);
+      if (err?.message === "UNAUTHORISED" && !refreshed) {
+        refreshed = true;
+        if (await refreshSession()) socket.connect();
+      }
+    });
 
     socket.on("receive_message", (msg: ChatMessage) => {
       setMessages((prev) => {

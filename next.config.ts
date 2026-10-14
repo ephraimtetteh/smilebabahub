@@ -44,8 +44,11 @@ const nextConfig: NextConfig = {
     deviceSizes: [360, 480, 640, 828, 1080, 1200, 1920],
     imageSizes: [56, 96, 128, 256, 384],
     dangerouslyAllowSVG: false,
-    // SafeImage handles Cloudinary 404s client-side via onError → fallback UI.
-    // No custom loader needed — the default Next.js loader is used.
+    // Cloudinary resizes on its CDN; other hosts load directly. Avoids the
+    // /_next/image proxy (quota limits + remotePatterns rejections were why
+    // some images never showed). SafeImage still handles 404s client-side.
+    loader: "custom",
+    loaderFile: "./src/utils/cloudinaryLoader.ts",
   },
 
   // Expose the derived socket URL so useChat.ts can pick it up

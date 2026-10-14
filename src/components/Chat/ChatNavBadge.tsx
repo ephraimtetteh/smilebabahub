@@ -12,7 +12,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { useAppSelector } from "@/src/app/redux";
-import axiosInstance from "@/src/lib/api/axios";
+import axiosInstance, { getAccessToken } from "@/src/lib/api/axios";
 import { io, Socket } from "socket.io-client";
 
 const SOCKET_URL =
@@ -39,6 +39,10 @@ export default function ChatNavBadge() {
     // ── 2. Connect socket and listen for live pushes ────────────────────────
     const socket = io(SOCKET_URL, {
       withCredentials: true,
+      // The server rejects sockets without a token ("UNAUTHORISED"). The
+      // cookie never reaches the backend domain (auth goes through /api),
+      // so withCredentials alone left chat permanently offline.
+      auth: (cb: (d: object) => void) => cb({ token: getAccessToken() ?? "" }),
       transports: ["websocket", "polling"],
     });
     socketRef.current = socket;

@@ -222,4 +222,23 @@ axiosInstance.interceptors.response.use(
   },
 );
 
+/** Current access token (for the Socket.IO handshake). */
+export function getAccessToken(): string | null {
+  return readToken();
+}
+
+/**
+ * Renew the access token via the /api proxy. Used by the chat socket when
+ * the server rejects an expired token. Returns the new token or null.
+ */
+export async function refreshSession(): Promise<string | null> {
+  try {
+    const res = await axios.post(REFRESH_URL, {}, { withCredentials: true });
+    const token = res?.data?.accessToken;
+    return writeToken(token) ? token : null;
+  } catch {
+    return null;
+  }
+}
+
 export default axiosInstance;

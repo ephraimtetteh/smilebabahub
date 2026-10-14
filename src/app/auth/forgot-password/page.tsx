@@ -112,7 +112,7 @@ export default function ForgotPasswordPage() {
               <p className="text-[12px] font-bold text-gray-700">Not there?</p>
               <ul className="mt-2 space-y-1.5 text-[12px] leading-relaxed text-gray-500">
                 <li>· Check your spam or promotions folder</li>
-                <li>· The link works for one hour</li>
+                <li>· The link works for 30 minutes</li>
                 <li>· Make sure the address is spelled correctly</li>
               </ul>
             </div>

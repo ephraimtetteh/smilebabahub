@@ -110,7 +110,7 @@ export default function ResetPasswordPage() {
             This link isn&apos;t valid
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
-            Reset links can only be used once, and they expire after an hour.
+            Reset links can only be used once, and they expire after 30 minutes.
           </p>
           <Link
             href="/auth/forgot-password"
