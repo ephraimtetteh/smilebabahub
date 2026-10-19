@@ -132,6 +132,7 @@ function drain(error: unknown, token: string | null) {
 /** Clear the session and send them to sign in — once. */
 function endSession(reason: string) {
   safeStorage.remove("accessToken");
+  safeStorage.remove("sb.session"); // see SESSION_HINT in authActions
 
   if (typeof window === "undefined") return;
 

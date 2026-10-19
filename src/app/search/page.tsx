@@ -1,162 +1,21 @@
-"use client";
+// src/app/search/page.tsx
+// This page used to render hard-coded demo products (utils/data/
+// generateProducts), so anyone searching from the header saw fake items.
+// Real search lives on /ads — forward there, keeping the query.
+import { redirect } from "next/navigation";
 
-import Button from "@/src/components/Button";
-import { ProductProps } from "@/src/types/types";
-import { products } from "@/src/utils/data/generateProducts";
-import Image from "next/image";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useAppDispatch } from "../redux";
-import { addToCart } from "@/src/lib/features/cart/cartSlice";
-import { Products } from "@/src/constants/data";
-
-
-export default function SearchPage() {
-  const params = useSearchParams();
-
-  const query = params.get("q");
-  const category = params.get("category");
-  const location = params.get("location");
-  const price = params.get("price");
- 
-
-  const [results, setResults] = useState<ProductProps[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const dispatch = useAppDispatch()
-
-  // useEffect(() => {
-  //   const fetchResults = async () => {
-  //     try {
-  //       const res = await fetch(
-  //         `products/search?q=${query}&category=${category}&location=${location}&price=${price}`,
-  //       );
-
-  //       const data = await res.json();
-  //       setResults(data.products);
-  //     } catch (error) {
-  //       console.error("Search error:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchResults();
-  // }, [query, category, location, price]);
-
-
-
-
-  useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        if (query || category || location || price) {
-          const filtered = Products.filter((product) => {
-            // const matchesQuery =
-            //   !query ||
-            //   product.title.toLowerCase().includes(query.toLowerCase());
-
-              const searchableText = `
-              ${product.title}
-              ${product.description}
-              ${product.location.city}
-              ${product.location.state}
-              ${product.location.country}
-            `.toLowerCase();
-
-              const matchesQuery =
-                !query || searchableText.includes(query.toLowerCase());
-
-            const matchesCategory = !category || product.category === category;
-
-            const locationString =
-              `${product.location.city} ${product.location.state} ${product.location.country}`.toLowerCase();
-
-            const matchesLocation =
-              !location || locationString.includes(location.toLowerCase());
-
-            const matchesPrice = !price || product.price <= Number(price);
-
-            return (
-              matchesQuery && matchesCategory && matchesLocation && matchesPrice
-            );
-          });
-
-          setResults(filtered);
-        }
-      } catch (error) {
-        console.error("Search error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResults();
-  }, [query, category, location, price]);
-
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-6">Search Results</h1>
-
-      {loading && <p>Loading results...</p>}
-
-      {!loading && results.length === 0 && (
-        <p className="text-gray-500">No results found.</p>
-      )}
-
-      <div className="grid md:grid-cols-3 gap-6">
-        {results.map((item) => (
-          <Link
-            key={item.id}
-            className="border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition"
-            href={`/product/${item.id}`}
-          >
-            <Image
-              src={item.images[0]}
-              width={800}
-              height={600}
-              alt={item.title}
-              className="w-full h-48 object-cover"
-            />
-
-            <div className="p-4">
-              <h2 className="font-semibold">{item.title}</h2>
-
-              <p className="text-gray-500 text-sm">{item.location.city}</p>
-              <p className="text-gray-500 text-sm">{item.location.state}</p>
-
-              <p className="text-green-600 font-bold mt-2">${item.price}</p>
-
-              <p className="text-xs text-gray-400 mt-1">
-                Category: {item.category}
-              </p>
-
-              {/* {Products.filter((product) => (
-                <div key={product.id}>
-                  <Button
-                    text="Buy"
-                    onClick={() => {
-                      if (!product) return;
-
-                      dispatch(
-                        addToCart({
-                          id: product.id,
-                          title: product.title,
-                          price: product.price,
-                          image: product.images[0],
-                          category: product.category,
-                          amount: 1,
-                        }),
-                      );
-                    }}
-                  />
-                </div>
-              ))} */}
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+export default async function SearchRedirect({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+  const q = first(sp.search) || first(sp.q) || first(sp.query);
+  const category = first(sp.category);
+  const params = new URLSearchParams();
+  if (q) params.set("search", q.slice(0, 80));
+  if (category) params.set("category", category.slice(0, 40));
+  const qs = params.toString();
+  redirect(qs ? `/ads?${qs}` : "/ads");
 }

@@ -95,6 +95,9 @@ function BookingComplete() {
             bookingId: bookingId ?? undefined,
             txRef: txRef ?? undefined,
             transactionId: transactionId ?? undefined,
+            // Same value under the name the pre-Phase-2 backend reads, so
+            // this page works before and after the backend upgrade
+            transaction_id: transactionId ?? undefined,
           });
           if (data?.booking) setBooking(data.booking);
           if (data?.status === "paid") return setState("paid");

@@ -95,6 +95,18 @@ function redirectFor(role?: string, returnUrl?: string | null) {
 export const TWO_FACTOR_KEY = "sb.2fa.challenge";
 
 /**
+ * "This browser has signed in before" — not a secret, just a hint so
+ * restoreSession doesn't POST /api/auth/refresh on every guest page view
+ * (each one was a guaranteed 401, twice per load in dev).
+ */
+export const SESSION_HINT = "sb.session";
+export const markSession = () => safeStorage.set(SESSION_HINT, "1");
+export const clearSession = () => {
+  safeStorage.remove(SESSION_HINT);
+  safeStorage.remove("accessToken");
+};
+
+/**
  * Password was right but the account has Google Authenticator on. Park the
  * short-lived challenge (5 min) in sessionStorage — never localStorage —
  * and send the user to /auth/two-factor.
@@ -112,6 +124,7 @@ function parkTwoFactorChallenge(challengeToken: string, returnUrl?: string | nul
 
 /** Store the session from any successful login-shaped response. */
 function completeLogin(dispatch: any, data: any) {
+  markSession();
   if (data?.accessToken) {
     safeStorage.set("accessToken", data.accessToken);
     dispatch(setAccessToken(data.accessToken));
@@ -248,6 +261,10 @@ export const restoreSession = createAsyncThunk<
   void,
   { rejectValue: string }
 >("auth/refresh", async (_, { dispatch, rejectWithValue }) => {
+  // Never signed in on this browser → nothing to restore, skip the network
+  if (!safeStorage.get(SESSION_HINT) && !safeStorage.get("accessToken")) {
+    return rejectWithValue("No session");
+  }
   try {
     // 1. Get a fresh access token using the httpOnly refreshToken cookie
     // 15s timeout: Render free tier cold-starts can take 10-30s.
@@ -271,10 +288,15 @@ export const restoreSession = createAsyncThunk<
 
     // 2. Fetch the full user (includes country + currency from last login)
     const response = await axiosInstance.get("/auth/me");
+    markSession();
     return response.data.user;
-  } catch (error) {
-    // Clear stale token on failure so interceptor doesn't keep sending it
+  } catch (error: any) {
+    // Clear stale token on failure so interceptor doesn't keep sending it.
+    // Only a definite "no" (401/403) forgets the session — a timeout on a
+    // cold Render start shouldn't make the next page skip restoring.
     safeStorage.remove("accessToken");
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) clearSession();
     dispatch(setAccessToken(null));
     return rejectWithValue(getErrorMessage(error));
   }
@@ -339,12 +361,17 @@ export const logout = createAsyncThunk(
   async (_, { dispatch }) => {
     try {
       dispatch(setIsAuthenticating(true));
-      await axiosInstance.post("/auth/logout");
-      safeStorage.remove("accessToken");
+      // Best effort: an expired token makes this 401, and that used to
+      // skip the cleanup below and leave the browser "signed in"
+      await axiosInstance.post("/auth/logout").catch(() => {});
+    } finally {
+      clearSession();
+      try {
+        sessionStorage.removeItem(TWO_FACTOR_KEY);
+      } catch {}
       dispatch(setUser(null));
       dispatch(setAccessToken(null));
       dispatch(setIsAuthenticated(false));
-    } finally {
       dispatch(setIsAuthenticating(false));
     }
   },

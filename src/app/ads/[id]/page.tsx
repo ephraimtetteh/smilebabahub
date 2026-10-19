@@ -79,6 +79,7 @@ import Offer from "@/src/components/Offer";
 import Socials from "@/src/components/Socials";
 import BuyModal from "../../product/(components)/BuyModal";
 import OrderModal from "../../product/(components)/OrderModal";
+import BookStayModal from "@/src/components/booking/BookStayModal";
 import AdGallery from "../(components)/AdGallery";
 import { DetailRow, Section } from "../(components)/AdUI";
 import SellerContactPanel from "../(components)/SellerContactPanel";
@@ -108,6 +109,13 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const [buyOpen, setBuyOpen] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [bookOpen, setBookOpen] = useState(false);
+  // /ads/:id?book=1 (old /ads/:id/book links redirect here) opens booking
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("book") === "1") {
+      setBookOpen(true);
+    }
+  }, []);
   const [offerOpen, setOfferOpen] = useState(false);
 
   const [callRequest, setCallRequest] = useState(false);
@@ -208,7 +216,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
       return {
         label: "Book now",
         icon: <CalendarDays size={16} />,
-        open: () => router.push(`/ads/${id}/book`),
+        open: () => setBookOpen(true), // was /ads/:id/book — a 404
       };
     }
 
@@ -312,6 +320,9 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
       )}
       {orderOpen && (
         <OrderModal ad={ad} sym={sym} onClose={() => setOrderOpen(false)} />
+      )}
+      {bookOpen && policy.canBook && (
+        <BookStayModal ad={ad} sym={sym} onClose={() => setBookOpen(false)} />
       )}
 
       {/* Breadcrumb */}

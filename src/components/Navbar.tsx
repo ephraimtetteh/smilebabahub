@@ -15,7 +15,8 @@ import { assets } from "../assets/assets";
 import UserMenu from "./UserMenu";
 import CountrySwitcher from "./CountrySwitcher";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
-import { useAppSelector } from "../app/redux";
+import { useAppDispatch, useAppSelector } from "../app/redux";
+import { logout } from "@/src/lib/features/auth/authActions";
 import { useRouter } from "next/navigation";
 import { useSubscriptionGuard } from "@/src/hooks/useSubscriptionGuard";
 import {
@@ -203,6 +204,16 @@ export default function Navbar() {
 
   // ── Auth state ──────────────────────────────────────────────────────────
   const { user, isAdmin } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+
+  const signOutMobile = async () => {
+    closeMobile();
+    try {
+      await dispatch(logout());
+    } finally {
+      router.replace("/");
+    }
+  };
 
   // ── Cart — derive total item count from cartItems array ─────────────────
   // state.cart.amount does NOT exist — count is sum of item.amount values
@@ -242,7 +253,8 @@ export default function Navbar() {
 
   const handleSearch = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && searchQuery.trim()) {
-      router.push(`/search?search=${encodeURIComponent(searchQuery.trim())}`);
+      // /search was a demo page with fake products — /ads is the real search
+      router.push(`/ads?search=${encodeURIComponent(searchQuery.trim().slice(0, 80))}`);
       setMenuOpen(false);
     }
   };
@@ -409,6 +421,51 @@ export default function Navbar() {
               className="bg-transparent outline-none text-white text-sm flex-1
                 placeholder:text-white/40"
             />
+          </div>
+
+          {/* ── Account (mobile) ── */}
+          <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-white/5 p-4">
+            {user ? (
+              <>
+                <p className="text-xs text-white/40 mb-3 font-medium uppercase tracking-wider">
+                  Signed in as {(user as any).username}
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {[
+                    { href: "/account", label: "My account" },
+                    { href: "/account/orders", label: "Orders" },
+                    { href: "/account/bookings", label: "Bookings" },
+                    { href: "/chat", label: "Messages" },
+                    { href: "/account/settings", label: "Settings" },
+                    { href: "/account/security", label: "Security" },
+                  ].map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      onClick={closeMobile}
+                      className="rounded-xl bg-white/5 px-3 py-2.5 text-white hover:bg-white/10 transition"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+                <button
+                  onClick={signOutMobile}
+                  className="mt-3 w-full rounded-xl border border-red-400/30 py-2.5 text-sm text-red-300 hover:bg-red-400/10 transition"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Link href="/auth/login" onClick={closeMobile} className="rounded-xl bg-yellow-400 py-2.5 text-center text-sm font-bold text-black">
+                  Sign in
+                </Link>
+                <Link href="/auth/register" onClick={closeMobile} className="rounded-xl border border-white/20 py-2.5 text-center text-sm text-white">
+                  Create account
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Dynamic nav categories */}
