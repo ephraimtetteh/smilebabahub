@@ -29,6 +29,9 @@ const AUTH_PATHS = [
   "/auth/resend-otp",
   "/auth/me",
   "/auth/guest-country",
+  // Two-factor: verify-login and enable SET the session cookies, so they
+  // must go through the same-origin /api proxy like login does
+  "/auth/2fa",
 ];
 
 const REFRESH_URL = "/api/auth/refresh";

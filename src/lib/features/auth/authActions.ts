@@ -71,6 +71,55 @@ export const resendOTP = createAsyncThunk(
   },
 );
 
+// ── Shared helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Only same-site paths. "//evil.com" starts with "/" too, and the browser
+ * treats it as another site — the old startsWith("/") check let it through.
+ */
+export function safeReturnPath(p?: string | null): string | null {
+  if (!p || typeof p !== "string") return null;
+  if (!p.startsWith("/") || p.startsWith("//") || p.startsWith("/\\")) return null;
+  return p;
+}
+
+/** Where a signed-in user goes: explicit returnUrl → role default → "/". */
+function redirectFor(role?: string, returnUrl?: string | null) {
+  const safe = safeReturnPath(returnUrl);
+  if (safe) return safe;
+  if (role === "vendor") return "/vendor/dashboard";
+  if (role === "admin") return "/admin";
+  return "/";
+}
+
+export const TWO_FACTOR_KEY = "sb.2fa.challenge";
+
+/**
+ * Password was right but the account has Google Authenticator on. Park the
+ * short-lived challenge (5 min) in sessionStorage — never localStorage —
+ * and send the user to /auth/two-factor.
+ */
+function parkTwoFactorChallenge(challengeToken: string, returnUrl?: string | null) {
+  try {
+    sessionStorage.setItem(
+      TWO_FACTOR_KEY,
+      JSON.stringify({ challengeToken, returnUrl: safeReturnPath(returnUrl), at: Date.now() }),
+    );
+  } catch {
+    /* private mode — the two-factor page will ask them to sign in again */
+  }
+}
+
+/** Store the session from any successful login-shaped response. */
+function completeLogin(dispatch: any, data: any) {
+  if (data?.accessToken) {
+    safeStorage.set("accessToken", data.accessToken);
+    dispatch(setAccessToken(data.accessToken));
+  }
+  dispatch(setUser(data.user));
+  dispatch(setIsAuthenticated(true));
+}
+
 // ── LOGIN ──────────────────────────────────────────────────────────────────
 export const login = createAsyncThunk<
   LoginResponseProp & { redirectTo?: string },
@@ -79,41 +128,25 @@ export const login = createAsyncThunk<
   try {
     dispatch(setIsAuthenticating(true));
 
-    const response = await axiosInstance.post<LoginResponseProp>(
+    const response = await axiosInstance.post<any>(
       "/auth/login",
       { email: userData.email, password: userData.password },
     );
 
-    // ✅ Save token so request interceptor picks it up immediately
-    if (response.data.accessToken) {
-      safeStorage.set("accessToken", response.data.accessToken);
-      dispatch(setAccessToken(response.data.accessToken));
-    }
-
-    dispatch(setUser(response.data.user));
-    dispatch(setIsAuthenticated(true));
-
-    // ── Role-based redirect ───────────────────────────────────────────────
-    // Priority: explicit returnUrl → role-based default → "/"
-    const role = response.data.user?.role;
     const returnUrl =
       userData.returnUrl ||
       (typeof window !== "undefined"
         ? (new URLSearchParams(window.location.search).get("returnUrl") ?? "")
         : "");
 
-    let redirectTo: string;
-    if (returnUrl && returnUrl.startsWith("/")) {
-      redirectTo = returnUrl; // honour explicit returnUrl
-    } else if (role === "vendor") {
-      redirectTo = "/vendor/dashboard"; // vendors → their dashboard
-    } else if (role === "admin") {
-      redirectTo = "/admin"; // admins → admin panel
-    } else {
-      redirectTo = "/"; // guests → homepage
+    // Google Authenticator is on for this account → second step
+    if (response.data?.requires2FA) {
+      parkTwoFactorChallenge(response.data.challengeToken, returnUrl);
+      return { ...response.data, requires2FA: true, redirectTo: "/auth/two-factor" };
     }
 
-    return { ...response.data, redirectTo };
+    completeLogin(dispatch, response.data);
+    return { ...response.data, redirectTo: redirectFor(response.data.user?.role, returnUrl) };
   } catch (error) {
     dispatch(setIsAuthenticated(false));
     dispatch(setAccessToken(null));
@@ -136,22 +169,12 @@ export const googleLogin = createAsyncThunk<
       "/auth/oauth/google",
       { idToken },
     );
-    if (response.data.accessToken) {
-      safeStorage.set("accessToken", response.data.accessToken);
-      dispatch(setAccessToken(response.data.accessToken));
+    if ((response.data as any)?.requires2FA) {
+      parkTwoFactorChallenge((response.data as any).challengeToken, null);
+      return { ...(response.data as any), requires2FA: true, redirectTo: "/auth/two-factor" };
     }
-    dispatch(setUser(response.data.user));
-    dispatch(setIsAuthenticated(true));
-
-    const role = response.data.user?.role;
-    const redirectTo =
-      role === "vendor"
-        ? "/vendor/dashboard"
-        : role === "admin"
-          ? "/admin"
-          : "/";
-
-    return { ...response.data, redirectTo };
+    completeLogin(dispatch, response.data);
+    return { ...response.data, redirectTo: redirectFor(response.data.user?.role, null) };
   } catch (error) {
     dispatch(setIsAuthenticated(false));
     dispatch(setAccessToken(null));
@@ -176,22 +199,12 @@ export const facebookLogin = createAsyncThunk<
       "/auth/oauth/facebook",
       { accessToken },
     );
-    if (response.data.accessToken) {
-      safeStorage.set("accessToken", response.data.accessToken);
-      dispatch(setAccessToken(response.data.accessToken));
+    if ((response.data as any)?.requires2FA) {
+      parkTwoFactorChallenge((response.data as any).challengeToken, null);
+      return { ...(response.data as any), requires2FA: true, redirectTo: "/auth/two-factor" };
     }
-    dispatch(setUser(response.data.user));
-    dispatch(setIsAuthenticated(true));
-
-    const role = response.data.user?.role;
-    const redirectTo =
-      role === "vendor"
-        ? "/vendor/dashboard"
-        : role === "admin"
-          ? "/admin"
-          : "/";
-
-    return { ...response.data, redirectTo };
+    completeLogin(dispatch, response.data);
+    return { ...response.data, redirectTo: redirectFor(response.data.user?.role, null) };
   } catch (error) {
     dispatch(setIsAuthenticated(false));
     dispatch(setAccessToken(null));
@@ -202,6 +215,31 @@ export const facebookLogin = createAsyncThunk<
     dispatch(setIsAuthenticating(false));
   }
 });
+// ── TWO-FACTOR: second step of login ──────────────────────────────────────
+export const verifyTwoFactorLogin = createAsyncThunk<
+  any,
+  { code: string }
+>("auth/verifyTwoFactorLogin", async ({ code }, { dispatch }) => {
+  let parked: { challengeToken?: string; returnUrl?: string | null } = {};
+  try {
+    parked = JSON.parse(sessionStorage.getItem(TWO_FACTOR_KEY) ?? "{}");
+  } catch {}
+  if (!parked.challengeToken) {
+    const err: any = new Error("Your sign-in timed out. Please sign in again.");
+    err.code = "CHALLENGE_EXPIRED";
+    throw err;
+  }
+  const response = await axiosInstance.post<any>("/auth/2fa/verify-login", {
+    challengeToken: parked.challengeToken,
+    code,
+  });
+  try {
+    sessionStorage.removeItem(TWO_FACTOR_KEY);
+  } catch {}
+  completeLogin(dispatch, response.data);
+  return { ...response.data, redirectTo: redirectFor(response.data.user?.role, parked.returnUrl) };
+});
+
 // ── RESTORE SESSION (browser refresh) ─────────────────────────────────────
 // Called on app mount — refreshes the access token then fetches the user.
 // This is what keeps the user logged in after a browser refresh.

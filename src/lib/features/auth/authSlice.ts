@@ -140,6 +140,11 @@ export const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isAuthenticating = false;
+        // Password OK but Google Authenticator still needed — not signed in yet
+        if ((action.payload as any)?.requires2FA) {
+          state.hasCheckedAuth = true;
+          return;
+        }
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.isAdmin = action.payload.user?.isAdmin ?? false;

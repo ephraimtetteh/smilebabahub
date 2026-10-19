@@ -4,6 +4,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import axiosInstance from "@/src/lib/api/axios";
+import { toast } from "react-toastify";
 import { useViewCountry } from "@/src/hooks/useViewCountry";
 import {
   ShoppingBag,
@@ -27,6 +28,8 @@ type OrderStatus =
   | "cancelled";
 type BookingStatus =
   | "pending"
+  | "paid"
+  | "refunded"
   | "confirmed"
   | "checked_in"
   | "checked_out"
@@ -86,7 +89,9 @@ const ORDER_STATUS: Record<OrderStatus, { label: string; color: string }> = {
 
 const BOOKING_STATUS: Record<BookingStatus, { label: string; color: string }> =
   {
-    pending: { label: "Pending", color: "bg-yellow-100 text-yellow-700" },
+    pending: { label: "Awaiting payment", color: "bg-yellow-100 text-yellow-700" },
+    paid: { label: "Paid — confirm it", color: "bg-emerald-100 text-emerald-700" },
+    refunded: { label: "Refunded", color: "bg-gray-100 text-gray-600" },
     confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-700" },
     checked_in: { label: "Checked in", color: "bg-purple-100 text-purple-700" },
     checked_out: { label: "Checked out", color: "bg-green-100 text-green-700" },
@@ -121,9 +126,10 @@ function OrderCard({
 
   // Delivery orders have an extra "dispatched" step: pending→confirmed→dispatched→delivered
   const isDelivery = order.deliveryAddress?.startsWith("Pickup:");
+  // Unpaid orders can only be cancelled — the server refuses anything else
   const nextStatuses: OrderStatus[] =
     order.status === "pending"
-      ? ["confirmed", "cancelled"]
+      ? ["cancelled"]
       : order.status === "confirmed"
         ? isDelivery
           ? ["dispatched", "cancelled"]
@@ -212,8 +218,10 @@ function BookingCard({
       86400000,
   );
 
+  // Matches the server's rules: hosts confirm once the guest has PAID.
+  // (Before, "paid" bookings showed no buttons, so hosts couldn't confirm.)
   const nextStatuses: BookingStatus[] =
-    booking.status === "pending"
+    booking.status === "paid"
       ? ["confirmed", "cancelled"]
       : booking.status === "confirmed"
         ? ["checked_in", "cancelled"]
@@ -289,7 +297,13 @@ function BookingCard({
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function VendorOrdersPage() {
   const { sym } = useViewCountry();
+  // /vendor/orders?tab=bookings (booking notifications link here)
   const [tab, setTab] = useState<Tab>("orders");
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "bookings") {
+      setTab("bookings");
+    }
+  }, []);
   const [orders, setOrders] = useState<Order[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -315,16 +329,27 @@ export default function VendorOrdersPage() {
     load();
   }, [load]);
 
+  // Errors used to be unhandled — the button just did nothing
   const updateOrderStatus = async (id: string, status: OrderStatus) => {
-    await axiosInstance.patch(`/orders/${id}/status`, { status });
-    setOrders((prev) => prev.map((o) => (o._id === id ? { ...o, status } : o)));
+    if (status === "cancelled" && !window.confirm("Cancel this order? A paid order is refunded to the buyer.")) return;
+    try {
+      await axiosInstance.patch(`/orders/${id}/status`, { status });
+      setOrders((prev) => prev.map((o) => (o._id === id ? { ...o, status } : o)));
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Couldn't update the order.");
+    }
   };
 
   const updateBookingStatus = async (id: string, status: BookingStatus) => {
-    await axiosInstance.patch(`/bookings/${id}/status`, { status });
-    setBookings((prev) =>
-      prev.map((b) => (b._id === id ? { ...b, status } : b)),
-    );
+    if (status === "cancelled" && !window.confirm("Cancel this booking? The guest is refunded in full.")) return;
+    try {
+      await axiosInstance.patch(`/bookings/${id}/status`, { status });
+      setBookings((prev) =>
+        prev.map((b) => (b._id === id ? { ...b, status } : b)),
+      );
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Couldn't update the booking.");
+    }
   };
 
   const filteredOrders =

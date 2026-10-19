@@ -34,6 +34,7 @@ import {
   ShoppingBag,
   Star,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 
 import { useResumeAction } from "@/src/hooks/useResumeAction";
@@ -397,7 +398,12 @@ export default function PaymentSuccessPage() {
   const isFlwDirect =
     params.get("status") === "successful" && !!params.get("transaction_id");
   const isLegitimate = isSubscribedCallback || isBoostedCallback || isFlwDirect;
-  const isEffectiveSub = isSubscribedCallback || isFlwDirect;
+  // Boost payments come back here straight from Flutterwave (type=boost).
+  // They used to get the SUBSCRIPTION celebration and were never verified —
+  // the boost only switched on if the webhook happened to fire.
+  const isBoostReturn = params.get("type") === "boost" && isFlwDirect;
+  const isEffectiveSub = isSubscribedCallback || (isFlwDirect && !isBoostReturn);
+  const [boostState, setBoostState] = useState<"verifying" | "ok" | "failed">("verifying");
 
   const plan = params.get("plan") ?? user?.subscription?.plan ?? null;
 
@@ -466,6 +472,36 @@ export default function PaymentSuccessPage() {
     if (redirectTo) router.push(redirectTo);
   }, [redirectTo, router]);
 
+  // Verify the boost server-side (JSON mode of the boost verify endpoint)
+  useEffect(() => {
+    if (!isBoostReturn) return;
+    const cc = (params.get("countryCode") ?? "GH").toLowerCase();
+    const country = ["gh", "ng", "intl"].includes(cc) ? cc : "gh";
+    const txId = params.get("transaction_id");
+    let cancelled = false;
+    (async () => {
+      for (let i = 0; i < 4 && !cancelled; i++) {
+        try {
+          const { data } = await axiosInstance.get(
+            `/payments/boost/${country}/verify`,
+            { params: { transaction_id: txId, format: "json" } },
+          );
+          if (data?.status === "boosted") {
+            if (!cancelled) setBoostState("ok");
+            return;
+          }
+        } catch (err: any) {
+          if (err?.response?.status === 400 || err?.response?.status === 403) break;
+        }
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      if (!cancelled) setBoostState("failed");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isBoostReturn, params]);
+
   useResumeAction({
     onResume: (action) => {
       setResuming(true);
@@ -512,7 +548,24 @@ export default function PaymentSuccessPage() {
 
       <div className="relative z-10 w-full max-w-md text-center">
         {/* Boost */}
-        {isBoostedCallback && !isFlwDirect && (
+        {isBoostReturn && boostState === "verifying" && (
+          <div className="text-center text-white">
+            <Loader2 size={40} className="mx-auto animate-spin text-yellow-400" />
+            <p className="mt-4 text-lg font-black">Applying your boost…</p>
+          </div>
+        )}
+        {isBoostReturn && boostState === "failed" && (
+          <div className="rounded-3xl bg-white p-8 shadow-2xl">
+            <h1 className="mb-2 text-xl font-black text-gray-900">We couldn&apos;t confirm your boost yet</h1>
+            <p className="mb-6 text-sm text-gray-500">
+              If you were charged, the boost switches on automatically within a few minutes. Don&apos;t pay again — contact support@smilebabahub.com if it doesn&apos;t appear.
+            </p>
+            <Link href="/vendor/dashboard" className="block w-full rounded-2xl bg-gray-900 py-3 text-sm font-black text-white">
+              Go to dashboard
+            </Link>
+          </div>
+        )}
+        {((isBoostedCallback && !isFlwDirect) || (isBoostReturn && boostState === "ok")) && (
           <div className="rounded-3xl bg-white p-8 shadow-2xl">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/30">
               <Zap size={36} className="text-black" />

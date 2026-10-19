@@ -39,7 +39,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
-import { login } from "@/src/lib/features/auth/authActions";
+import { login, safeReturnPath } from "@/src/lib/features/auth/authActions";
 import { clearPendingRedirect } from "@/src/lib/features/auth/authSlice";
 
 const YELLOW = "#FFC105";
@@ -62,12 +62,14 @@ export default function LoginPage() {
   const reason = params.get("reason");
 
   /** Query param first, then whatever a gate stored on the way here. */
-  const returnUrl =
+  // Same-site paths only — "?returnUrl=https://evil.com" (or "//evil.com")
+  // used to send a freshly signed-in user straight to another site.
+  const returnUrl = safeReturnPath(
     params.get("returnUrl") ??
-    (typeof window !== "undefined"
-      ? localStorage.getItem("redirectAfterLogin")
-      : null) ??
-    null;
+      (typeof window !== "undefined"
+        ? localStorage.getItem("redirectAfterLogin")
+        : null),
+  );
 
   /**
    * Bounce an already-signed-in visitor — but only once the auth check
@@ -113,6 +115,12 @@ export default function LoginPage() {
       ).unwrap();
 
       localStorage.removeItem("redirectAfterLogin");
+
+      // Google Authenticator is on → second step
+      if ((result as any)?.requires2FA) {
+        router.push("/auth/two-factor");
+        return;
+      }
 
       // The thunk already worked out redirectTo from returnUrl and role.
       // Clearing pendingRedirect stops AuthRedirect navigating as well —

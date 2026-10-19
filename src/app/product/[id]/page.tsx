@@ -169,22 +169,33 @@ function BookingModal({
 
     setLoading(true);
     try {
-      await axiosInstance.post("/bookings", {
+      // 1. Create — the server prices the stay and holds the dates for
+      //    30 minutes. (Price/currency from the browser are ignored.)
+      const { data: created } = await axiosInstance.post("/bookings", {
         adId: ad._id,
-        propertyName: ad.title,
         propertyType: ad.category?.sub ?? "apartment",
         checkIn,
         checkOut,
         guests,
-        totalPrice,
-        currency: ad.price?.currency ?? "GHS",
       });
-      setDone(true);
+      const bookingId = created?.booking?._id;
+      if (!bookingId) throw new Error("Booking wasn't created");
+
+      // 2. Payment. This step was missing: the site showed "Booking
+      //    confirmed!" on an unpaid booking that the host could never act on.
+      const { data: pay } = await axiosInstance.post(`/bookings/${bookingId}/pay`);
+      const link = pay?.checkoutUrl ?? pay?.paymentLink ?? pay?.link;
+      if (!link) throw new Error("No payment link was returned");
+
+      // 3. Flutterwave → back to /bookings/complete, which verifies it
+      window.location.href = link;
     } catch (err: any) {
+      const res = err?.response?.data;
       toast.error(
-        err?.response?.data?.message ?? "Booking failed. Please try again.",
+        res?.code === "DATES_UNAVAILABLE"
+          ? "Those dates were just taken. Please pick other dates."
+          : (res?.message ?? err?.message ?? "Booking failed. Please try again."),
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -216,7 +227,7 @@ function BookingModal({
           <div className="p-8 text-center">
             <CheckCircle2 size={52} className="text-green-500 mx-auto mb-4" />
             <h4 className="text-xl font-black text-gray-900 mb-2">
-              Booking confirmed!
+              Booking requested
             </h4>
             <p className="text-sm text-gray-500 mb-6">
               The host will confirm your booking. Check your history for
@@ -367,17 +378,18 @@ function BookingModal({
                     className="w-4 h-4 border-2 border-black/30 border-t-black
                     rounded-full animate-spin"
                   />
-                  Booking…
+                  Opening secure checkout…
                 </span>
               ) : nights > 0 ? (
-                `Book for ${sym}${totalPrice.toLocaleString()}`
+                `Pay ${sym}${totalPrice.toLocaleString()} & book`
               ) : (
                 "Select dates to book"
               )}
             </button>
 
             <p className="text-xs text-gray-400 text-center">
-              Free cancellation · Host confirms within 24h
+              Paid securely via Flutterwave · Held until you check in · Free
+              cancellation until the host confirms
             </p>
           </div>
         )}

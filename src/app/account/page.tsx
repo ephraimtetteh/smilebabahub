@@ -286,6 +286,12 @@ export default function AccountPage() {
             sub="Profile, password, notifications"
           />
           <Row
+            href="/account/security"
+            icon={ShieldCheck}
+            label="Security"
+            sub="Two-step verification with Google Authenticator"
+          />
+          <Row
             href="/help"
             icon={HelpCircle}
             label="Help and support"
