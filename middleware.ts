@@ -33,7 +33,7 @@ export function middleware(req: NextRequest) {
   // Old route — page was moved to /account/orders.
   if (pathname === "/vendor/history") {
     const url = req.nextUrl.clone();
-    url.pathname = "/vendor/history";
+    url.pathname = "/account/orders"; // was "/vendor/history" — a redirect to itself (infinite loop)
     return NextResponse.redirect(url, 308);
   }
 

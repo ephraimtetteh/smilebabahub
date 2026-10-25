@@ -33,6 +33,7 @@ import {
 
 import { useProducts } from "@/src/hooks/useProducts";
 import PicksRow from "@/src/components/home/PicksRow";
+import GlobalShopSection from "@/src/components/global/GlobalShopSection";
 
 const ACCENT = "#059669";
 const CATEGORIES = ["ecommerce", "phones", "fashion", "home-office"] as const;
@@ -190,6 +191,16 @@ export default function EcommercePage() {
             </div>
           </div>
         </section>
+
+        {/* ─── SmileBaba Global (AliExpress affiliate) — the main catalogue.
+            Renders nothing until the backend has AliExpress keys. ─── */}
+        <GlobalShopSection country={userCountry || undefined} />
+
+        {/* ─── From SmileBaba sellers ─── */}
+        <h2 className="mt-10 text-lg font-extrabold tracking-tight text-gray-900">
+          From SmileBaba sellers
+          <span className="ml-2 text-xs font-normal text-gray-400">local delivery · payment held until it arrives</span>
+        </h2>
 
         {/* ─── Tiles ─── */}
         <section className="mt-8">

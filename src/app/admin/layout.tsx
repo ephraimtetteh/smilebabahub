@@ -21,6 +21,7 @@ import {
   Newspaper,
   HeartPlus,
   Mail,
+  Globe,
 } from "lucide-react";
 
 const NAV = [
@@ -45,6 +46,11 @@ const NAV = [
     href: "/admin/announcements",
     icon: <Newspaper size={16} />,
     label: "Push Notifications",
+  },
+  {
+    href: "/admin/aliexpress",
+    icon: <Globe size={16} />,
+    label: "SmileBaba Global",
   },
   {
     href: "/admin/campaigns",
