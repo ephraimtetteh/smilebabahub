@@ -20,7 +20,8 @@ const HERO_CATEGORIES = [
     href: "/ads?category=marketplace",
   },
   { id: "food", label: "Food", icon: "🍔", href: "/food" },
-  { id: "apartments", label: "Property", icon: "🏢", href: "/restate" },
+  { id: "apartments", label: "SmileStays", icon: "🛏️", href: "/ads?category=apartments" },
+  { id: "real-estate", label: "Real Estate", icon: "🏠", href: "/restate" },
   {
     id: "fashion",
     label: "Fashion",

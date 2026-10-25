@@ -199,6 +199,7 @@ export default function StoreTab() {
                 "fashion",
                 "vehicles",
                 "apartments",
+                "real-estate",
                 "services",
               ].map((c) => (
                 <option key={c} value={c} className="capitalize">

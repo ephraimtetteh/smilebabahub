@@ -21,6 +21,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   marketplace: <ShoppingBag size={13} />,
   food: <UtensilsCrossed size={13} />,
   apartments: <Home size={13} />,
+  "real-estate": <Home size={13} />,
   fashion: <Shirt size={13} />,
   pharmacy: <Pill size={13} />,
   delivery: <Truck size={13} />,

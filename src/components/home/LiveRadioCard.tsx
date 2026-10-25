@@ -14,7 +14,7 @@ import {
 import { useRadio } from "@/src/components/RadioContext";
 
 export default function LiveRadioCard() {
-  const { playing, listeners, togglePlay, loading } = useRadio();
+  const { playing, togglePlay, loading } = useRadio();
 
   return (
     <div>
@@ -117,12 +117,10 @@ export default function LiveRadioCard() {
               <div className="bg-white/5 border border-white/10 rounded-xl py-2">
                 <div className="flex items-center justify-center gap-1">
                   <Users size={11} className="text-gray-400" />
-                  <p className="text-lg font-black text-white">
-                    {listeners.toLocaleString()}
-                  </p>
+                  <p className="text-lg font-black text-white">Millions</p>
                 </div>
                 <p className="text-[10px] text-gray-500 font-medium">
-                  Listeners
+                  Of listeners
                 </p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl py-2">

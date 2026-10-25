@@ -131,7 +131,7 @@ export default function LoginPage() {
       const status = err?.response?.status;
       setError(
         status === 400 || status === 401
-          ? "That email and password don't match. Try again."
+          ? "That email and password don't match. If you signed up with Google, use “Continue with Google” — or reset your password."
           : (err?.response?.data?.message ??
               err?.message ??
               "We couldn't sign you in. Please try again."),

@@ -370,7 +370,7 @@ export function CategoryQuickLinks({
 // 8. CATEGORY LANDING LAYOUT
 // ─────────────────────────────────────────────────────────────────────────────
 export interface CategoryPageConfig {
-  category: "marketplace" | "food" | "apartments";
+  category: "marketplace" | "food" | "apartments" | "real-estate";
   countryLabel: string;
   featuredTitle: string;
   featuredHref: string;
@@ -609,78 +609,83 @@ export const FOOD_LINKS: CategoryLink[] = [
   },
 ];
 
+// Real estate lives in the Marketplace (category "real-estate").
+// SmileStays — short stays and hotels — has its own links below.
 export const REALESTATE_LINKS: CategoryLink[] = [
   {
-    label: "Self-contained",
-    icon: <Home size={20} className="text-teal-600" />,
-    color: "bg-teal-50",
-    href: "/ads?category=apartments&sub=self-contained",
-  },
-  {
-    label: "Chamber & Hall",
-    icon: <BedDouble size={20} className="text-blue-600" />,
-    color: "bg-blue-50",
-    href: "/ads?category=apartments&sub=chamber-hall",
-  },
-  {
-    label: "Studio",
+    label: "Apartments for rent",
     icon: <Building2 size={20} className="text-indigo-600" />,
     color: "bg-indigo-50",
-    href: "/ads?category=apartments&sub=studio",
+    href: "/ads?category=real-estate&sub=apartment-rent",
   },
   {
-    label: "2-Bedroom",
-    icon: <BedSingle size={20} className="text-green-600" />,
-    color: "bg-green-50",
-    href: "/ads?category=apartments&sub=2-bedroom",
+    label: "Houses for rent",
+    icon: <Home size={20} className="text-teal-600" />,
+    color: "bg-teal-50",
+    href: "/ads?category=real-estate&sub=house-rent",
   },
   {
-    label: "3-Bedroom+",
-    icon: <BedDouble size={20} className="text-purple-600" />,
-    color: "bg-purple-50",
-    href: "/ads?category=apartments&sub=3-bedroom-plus",
-  },
-  {
-    label: "Duplex",
-    icon: <Layers size={20} className="text-rose-600" />,
-    color: "bg-rose-50",
-    href: "/ads?category=apartments&sub=duplex",
-  },
-  {
-    label: "Villa",
-    icon: <Castle size={20} className="text-amber-600" />,
-    color: "bg-amber-50",
-    href: "/ads?category=apartments&sub=villa",
-  },
-  {
-    label: "Condo",
-    icon: <Building size={20} className="text-cyan-600" />,
-    color: "bg-cyan-50",
-    href: "/ads?category=apartments&sub=condo",
+    label: "Houses for sale",
+    icon: <KeyRound size={20} className="text-yellow-600" />,
+    color: "bg-yellow-50",
+    href: "/ads?category=real-estate&sub=house-sale",
   },
   {
     label: "Land / Plot",
     icon: <TreePine size={20} className="text-green-700" />,
     color: "bg-green-50",
-    href: "/ads?category=apartments&sub=land",
+    href: "/ads?category=real-estate&sub=land",
   },
   {
-    label: "Commercial",
+    label: "Commercial / Office",
     icon: <Store size={20} className="text-orange-600" />,
     color: "bg-orange-50",
-    href: "/ads?category=apartments&sub=commercial",
+    href: "/ads?category=real-estate&sub=commercial",
   },
   {
-    label: "Short Stay",
+    label: "All real estate",
+    icon: <Layers size={20} className="text-rose-600" />,
+    color: "bg-rose-50",
+    href: "/ads?category=real-estate",
+  },
+];
+
+export const STAYS_LINKS: CategoryLink[] = [
+  {
+    label: "Hotel rooms",
+    icon: <Building size={20} className="text-cyan-600" />,
+    color: "bg-cyan-50",
+    href: "/ads?category=apartments&sub=hotel",
+  },
+  {
+    label: "Short-stay apartments",
     icon: <CalendarDays size={20} className="text-pink-600" />,
     color: "bg-pink-50",
     href: "/ads?category=apartments&sub=short-stay",
   },
   {
-    label: "For Sale",
-    icon: <KeyRound size={20} className="text-yellow-600" />,
-    color: "bg-yellow-50",
-    href: "/ads?category=apartments&negotiable=no",
+    label: "Studios",
+    icon: <BedSingle size={20} className="text-green-600" />,
+    color: "bg-green-50",
+    href: "/ads?category=apartments&sub=studio",
+  },
+  {
+    label: "Guest houses",
+    icon: <BedDouble size={20} className="text-blue-600" />,
+    color: "bg-blue-50",
+    href: "/ads?category=apartments&sub=guest-house",
+  },
+  {
+    label: "Villas",
+    icon: <Castle size={20} className="text-amber-600" />,
+    color: "bg-amber-50",
+    href: "/ads?category=apartments&sub=villa",
+  },
+  {
+    label: "All stays",
+    icon: <Home size={20} className="text-teal-600" />,
+    color: "bg-teal-50",
+    href: "/ads?category=apartments",
   },
 ];
 

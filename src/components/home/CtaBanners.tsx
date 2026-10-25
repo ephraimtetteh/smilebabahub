@@ -23,10 +23,10 @@ const BANNERS = [
   },
   {
     title: "LIST YOUR PROPERTY",
-    desc: "Get quality tenants faster.",
+    desc: "Rent or sell — reach serious buyers.",
     color: "from-slate-700 to-slate-900",
     emoji: "🏠",
-    href: "/sell?category=apartments",
+    href: "/sell?category=real-estate",
   },
   {
     title: "GROW YOUR BRAND",

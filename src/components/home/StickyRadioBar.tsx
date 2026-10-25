@@ -122,10 +122,10 @@ export default function StickyRadioBar() {
           )}
         </button>
 
-        {/* Listeners */}
+        {/* On air (no listener number — see Radio.tsx) */}
         <div className="hidden text-center lg:block">
-          <p className="text-sm font-bold text-amber-400">2,486</p>
-          <p className="-mt-0.5 text-[9px] text-white/50">Listeners</p>
+          <p className="text-sm font-bold text-amber-400">24/7</p>
+          <p className="-mt-0.5 text-[9px] text-white/50">On air</p>
         </div>
 
         <button

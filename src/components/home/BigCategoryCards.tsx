@@ -75,7 +75,7 @@ const VERTICALS: Vertical[] = [
     id: "stays",
     tag: "SMILESTAYS",
     title: "Find & Book\nComfortable Stays",
-    subtitle: "Apartments, studios, villas and more for any stay.",
+    subtitle: "Short-stay apartments, hotels and guest houses — book by the night.",
     cta: "Explore Stays",
     href: "/ads?category=apartments",
     icon: BedDouble,

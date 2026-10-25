@@ -30,8 +30,8 @@ export const CATEGORIES_SIDEBAR: CategoryDef[] = [
   },
   {
     id: "apartments",
-    label: "Apartments & Properties",
-    sub: "Rent or buy properties",
+    label: "SmileStays",
+    sub: "Short stays & hotels",
     emoji: "🏢",
     color: "bg-purple-50",
     tagBg: "bg-purple-400",

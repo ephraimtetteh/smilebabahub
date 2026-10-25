@@ -20,7 +20,10 @@ export const CATEGORIES = [
   { id: "ecommerce", label: "Shop", icon: "🛍️" },
   { id: "marketplace", label: "Shop", icon: "🛍️" },
   { id: "food", label: "Food", icon: "🍔" },
-  { id: "apartments", label: "Property", icon: "🏢" },
+  // SmileStays = short stays & hotels only (booked by date).
+  // Real estate (rent by month/year, sale, land) is a Marketplace category.
+  { id: "apartments", label: "SmileStays", icon: "🛏️" },
+  { id: "real-estate", label: "Real Estate", icon: "🏠" },
   { id: "automobile", label: "Automobile", icon: "🚗" },
   { id: "fashion", label: "Fashion", icon: "👗" },
   { id: "pharmacy", label: "Pharmacy", icon: "💊" },
@@ -56,21 +59,25 @@ export const SUBCATEGORIES: Record<
     { id: "beverages", label: "Beverages", icon: "☕" },
     { id: "other", label: "Other", icon: "🍽️" },
   ],
+  // SmileStays — places booked by the night
   apartments: [
-    { id: "self-contained", label: "Self-contained", icon: "🏠" },
-    { id: "chamber-hall", label: "Chamber & Hall", icon: "🛏️" },
-    { id: "studio", label: "Studio", icon: "🏢" },
-    { id: "2-bedroom", label: "2-Bedroom", icon: "🛏️" },
-    { id: "3-bedroom-plus", label: "3-Bedroom+", icon: "🏡" },
-    { id: "duplex", label: "Duplex", icon: "🏘️" },
-    { id: "condo", label: "Condo", icon: "🏙️" },
-    { id: "villa", label: "Villa", icon: "🏰" },
-    { id: "townhouse", label: "Townhouse", icon: "🏚️" },
-    { id: "mansion", label: "Mansion", icon: "🏯" },
-    { id: "commercial", label: "Commercial", icon: "🏬" },
+    { id: "hotel", label: "Hotel room", icon: "🏨" },
+    { id: "short-stay", label: "Short-stay apartment", icon: "🗓️" },
+    { id: "studio", label: "Studio (short stay)", icon: "🏢" },
+    { id: "serviced", label: "Serviced apartment", icon: "🛎️" },
+    { id: "guest-house", label: "Guest house", icon: "🏡" },
+    { id: "villa", label: "Villa / holiday home", icon: "🏰" },
+    { id: "lodge", label: "Lodge / resort", icon: "🌴" },
+    { id: "hostel", label: "Hostel", icon: "🛏️" },
+  ],
+  // Real estate — Marketplace (contact the seller; not booked by date)
+  "real-estate": [
+    { id: "apartment-rent", label: "Apartment for rent", icon: "🏢" },
+    { id: "house-rent", label: "House for rent", icon: "🏠" },
+    { id: "house-sale", label: "House for sale", icon: "🔑" },
     { id: "land", label: "Land / Plot", icon: "🌿" },
-    { id: "short-stay", label: "Short Stay", icon: "🗓️" },
-    { id: "buy", label: "For Sale", icon: "🔑" },
+    { id: "commercial", label: "Commercial / Office", icon: "🏬" },
+    { id: "other", label: "Other property", icon: "🏘️" },
   ],
   automobile: [
     { id: "cars", label: "Cars", icon: "🚗" },
@@ -221,8 +228,19 @@ export const CATEGORY_FIELDS: Record<
     showBedrooms: true,
     showMapPin: true,
     conditionLabel: "",
-    pricePlaceholder: "Monthly rent or sale price",
-    descHint: "Describe the property — furnishing, amenities, nearby landmarks",
+    pricePlaceholder: "Price per night",
+    descHint:
+      "Short stays and hotels only — check-in/out times, amenities, house rules, nearby landmarks. Selling or renting by the month? Choose Real Estate instead.",
+  },
+  "real-estate": {
+    showCondition: false,
+    showDelivery: false,
+    showBedrooms: true,
+    showMapPin: true,
+    conditionLabel: "",
+    pricePlaceholder: "Monthly/yearly rent or sale price",
+    descHint:
+      "Size, rooms, advance required (rent) or documents available (sale), and nearby landmarks.",
   },
   automobile: {
     showCondition: true,

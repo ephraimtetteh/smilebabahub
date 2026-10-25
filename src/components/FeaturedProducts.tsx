@@ -21,6 +21,7 @@ interface FeaturedProps {
     | "marketplace"
     | "food"
     | "apartments"
+    | "real-estate"
     | "fashion"
     | "pharmacy"
     | "delivery"
@@ -34,7 +35,8 @@ interface FeaturedProps {
 const CATEGORY_DEFAULTS: Record<string, { title: string; href: string }> = {
   food: { title: "Food & Restaurants", href: "/food" },
   marketplace: { title: "Browse our marketplace", href: "/marketPlace" },
-  apartments: { title: "Apartments & Short Stays", href: "/restate" },
+  apartments: { title: "SmileStays — short stays & hotels", href: "/ads?category=apartments" },
+  "real-estate": { title: "Real Estate", href: "/restate" },
   fashion: { title: "Fashion & Accessories", href: "/ads?category=fashion" },
   pharmacy: { title: "Health & Pharmacy", href: "/ads?category=pharmacy" },
   delivery: {

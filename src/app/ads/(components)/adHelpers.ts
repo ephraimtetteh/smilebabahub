@@ -21,10 +21,13 @@ export function resolveMode(
 ): AdMode {
   const path = pathname.toLowerCase();
 
+  // Only SmileStays listings get the booking layout. Real estate (the
+  // /restate page) is a Marketplace listing — contact the seller.
+  if (category === "real-estate") return "marketplace";
   if (
-    path.includes("restate") ||
-    path.includes("apartment") ||
-    category === "apartments"
+    category === "apartments" ||
+    category === "properties" ||
+    (!category && path.includes("apartment"))
   ) {
     return "apartments";
   }

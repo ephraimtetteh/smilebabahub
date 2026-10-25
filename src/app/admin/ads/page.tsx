@@ -14,6 +14,7 @@ const CATEGORIES = [
   "marketplace",
   "food",
   "apartments",
+  "real-estate",
   "vehicles",
   "services",
 ];

@@ -111,10 +111,12 @@ function Section({
 type AdMode = "marketplace" | "food" | "apartments";
 
 function resolveMode(category: string | undefined, pathname: string): AdMode {
+  // Booking layout for SmileStays only — real estate is contact-the-seller
+  if (category === "real-estate") return "marketplace";
   if (
-    pathname.includes("restate") ||
-    pathname.includes("apartment") ||
-    category === "apartments"
+    category === "apartments" ||
+    category === "properties" ||
+    (!category && pathname.includes("apartment"))
   ) {
     return "apartments";
   }

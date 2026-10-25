@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Newspaper,
   HeartPlus,
+  Mail,
 } from "lucide-react";
 
 const NAV = [
@@ -44,6 +45,11 @@ const NAV = [
     href: "/admin/announcements",
     icon: <Newspaper size={16} />,
     label: "Push Notifications",
+  },
+  {
+    href: "/admin/campaigns",
+    icon: <Mail size={16} />,
+    label: "Email Campaigns",
   },
   {
     href: "/admin/marketers",

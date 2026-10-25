@@ -7,10 +7,12 @@ import {
 } from "@/src/components/Category/CategoryShared";
 
 const config: CategoryPageConfig = {
-  category: "apartments",
+  // Real estate is a Marketplace category. Short stays & hotels are
+  // SmileStays (/ads?category=apartments).
+  category: "real-estate",
   countryLabel: "Real Estate",
   featuredTitle: "Featured Properties",
-  featuredHref: "/ads?category=apartments",
+  featuredHref: "/ads?category=real-estate",
   bestSellingTitle: "Most Viewed Properties",
   recentTitle: "Recently Listed",
   quickLinks: REALESTATE_LINKS,

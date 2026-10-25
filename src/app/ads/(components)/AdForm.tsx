@@ -166,9 +166,15 @@ const MAIN_CATEGORIES = [
   },
   {
     id: "apartments",
-    label: "Property",
-    hint: "Apartments, short lets",
+    label: "SmileStays",
+    hint: "Short stays & hotels — booked by the night",
     icon: <Home size={18} className="text-teal-600" />,
+  },
+  {
+    id: "real-estate",
+    label: "Real Estate",
+    hint: "Houses & flats for rent or sale, land",
+    icon: <Home size={18} className="text-blue-600" />,
   },
   {
     id: "marketplace",

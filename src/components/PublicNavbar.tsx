@@ -47,7 +47,13 @@ const NAV_CATEGORIES = [
   },
   {
     id: "apartments",
-    label: "Property",
+    label: "SmileStays",
+    icon: <Home size={14} />,
+    href: "/ads?category=apartments",
+  },
+  {
+    id: "real-estate",
+    label: "Real Estate",
     icon: <Home size={14} />,
     href: "/restate",
   },

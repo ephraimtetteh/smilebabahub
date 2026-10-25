@@ -34,10 +34,10 @@ const SHORTCUTS: Shortcut[] = [
     href: "/ads?category=marketplace&q=car",
   },
   {
-    label: "Property",
+    label: "Real Estate",
     icon: Home,
     color: "text-emerald-500",
-    href: "/ads?category=apartments",
+    href: "/ads?category=real-estate",
   },
   {
     label: "Electronics",

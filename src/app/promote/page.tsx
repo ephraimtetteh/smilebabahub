@@ -169,8 +169,8 @@ export default function PromoteLanding() {
                     emoji: "👀",
                   },
                   {
-                    value: stats ? formatNum(stats.activeListeners) : "180K+",
-                    label: "Active listeners",
+                    value: "Millions",
+                    label: "Radio listeners",
                     emoji: "🎧",
                   },
                   {

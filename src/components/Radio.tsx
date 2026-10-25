@@ -41,7 +41,6 @@ export default function Radio() {
     volume,
     loading,
     error,
-    listeners,
     togglePlay,
     toggleMute,
     setVolume,
@@ -89,9 +88,11 @@ export default function Radio() {
 
           {/* Stats row */}
           <div className="flex items-center gap-3 mt-1">
+            {/* No listener number — a live in-app count undersells the
+                station's real on-air reach. */}
             <span className="flex items-center gap-1 text-[11px] text-[#A0A0A0]">
               <Users size={10} />
-              {listeners.toLocaleString()} listening
+              Live 24/7
             </span>
             <span className="text-[#333]">·</span>
             <span className="flex items-center gap-1 text-[11px] text-[#A0A0A0]">

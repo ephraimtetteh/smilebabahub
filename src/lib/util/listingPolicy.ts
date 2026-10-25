@@ -86,6 +86,7 @@ const TRANSACTIONAL = new Set([
 
 const CLASSIFIED = new Set([
   "marketplace",
+  "real-estate", // rent/sale/land — arranged with the seller, never booked
   "jobs",
   "events",
   "delivery",

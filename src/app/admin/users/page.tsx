@@ -4,6 +4,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAdmin } from "@/src/hooks/useAdmin";
+import ModerationActions from "./ModerationActions";
 import axiosInstance from "@/src/lib/api/axios";
 import { toast } from "react-toastify";
 import {
@@ -37,6 +38,8 @@ type User = {
   city?: string;
   createdAt: string;
   subscription?: { plan: string; expiresAt: string };
+  isSuspended?: boolean;
+  isDeleted?: boolean;
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -170,10 +173,12 @@ function UserDetailPanel({
   userId,
   onClose,
   onEmail,
+  onChanged,
 }: {
   userId: string;
   onClose: () => void;
   onEmail: (u: { _id: string; name: string; email: string }) => void;
+  onChanged?: () => void;
 }) {
   const { data, loading, fetch } = useAdmin<any>(`users/${userId}`);
 
@@ -217,7 +222,12 @@ function UserDetailPanel({
                 {u.username?.[0]?.toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-black text-gray-900">{u.username}</p>
+                <p className="font-black text-gray-900">
+                  {u.username}
+                  {u.isSuspended && !u.isDeleted && (
+                    <span className="ml-1.5 text-[10px] font-bold text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full">Suspended</span>
+                  )}
+                </p>
                 <p className="text-xs text-gray-500 mt-0.5">{u.email}</p>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <RoleBadge role={u.role} />
@@ -366,6 +376,15 @@ function UserDetailPanel({
                 </div>
               </div>
             )}
+
+            {/* Suspend / remove (fraud reports) */}
+            <ModerationActions
+              user={u}
+              onChanged={() => {
+                fetch();
+                onChanged?.();
+              }}
+            />
           </div>
         )}
       </div>
@@ -401,18 +420,21 @@ function BulkEmailModal({
     }
     setSending(true);
     try {
-      await axiosInstance.post("/admin/email/bulk", {
+      const { data } = await axiosInstance.post("/admin/email/bulk", {
         audience,
         country: country || undefined,
         subject: subject.trim(),
         message: message.trim(),
       });
+      // e.g. "Sending to 1,240 people. Track progress in Admin → Campaigns."
       toast.success(
-        `Bulk email queued for ${audienceLabel}${country ? ` in ${country}` : ""}`,
+        data?.message ??
+          `Bulk email queued for ${audienceLabel}${country ? ` in ${country}` : ""}`,
+        { autoClose: 7000 },
       );
       onClose();
-    } catch {
-      toast.error("Failed to start bulk email");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to start bulk email");
     } finally {
       setSending(false);
     }
@@ -682,7 +704,14 @@ export default function AdminUsersPage() {
                       onClick={() => setSelectedUser(u._id)}
                     >
                       <td className="px-4 py-3">
-                        <p className="font-bold text-gray-900">{u.username}</p>
+                        <p className="font-bold text-gray-900">
+                          {u.username}
+                          {u.isDeleted ? (
+                            <span className="ml-1.5 text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">Removed</span>
+                          ) : u.isSuspended ? (
+                            <span className="ml-1.5 text-[10px] font-bold text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full">Suspended</span>
+                          ) : null}
+                        </p>
                         <RoleBadge role={u.role} />
                       </td>
                       <td className="px-4 py-3 text-gray-500 max-w-[160px]">
@@ -818,6 +847,7 @@ export default function AdminUsersPage() {
             setSelectedUser(null);
             setEmailTarget(u);
           }}
+          onChanged={() => load()}
         />
       )}
 

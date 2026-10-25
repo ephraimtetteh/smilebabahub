@@ -154,15 +154,15 @@ function BulkEmailModal({ onClose }: { onClose: () => void }) {
       return toast.error("Subject and message required");
     setSending(true);
     try {
-      await axiosInstance.post("/admin/email/bulk", {
+      const { data } = await axiosInstance.post("/admin/email/bulk", {
         audience: "marketers",
         subject: subject.trim(),
         message: message.trim(),
       });
-      toast.success("Bulk email queued for all marketers");
+      toast.success(data?.message ?? "Bulk email queued for all marketers", { autoClose: 7000 });
       onClose();
-    } catch {
-      toast.error("Failed to start bulk email");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to start bulk email");
     } finally {
       setSending(false);
     }

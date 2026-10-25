@@ -25,7 +25,8 @@ const CATEGORIES = [
   { value: "", label: "All categories" },
   { value: "marketplace", label: "Marketplace" },
   { value: "food", label: "Food" },
-  { value: "apartments", label: "Apartments" },
+  { value: "apartments", label: "SmileStays (short stays & hotels)" },
+  { value: "real-estate", label: "Real Estate" },
 ];
 
 type Suggestion = { label: string; category?: string; slug?: string };
