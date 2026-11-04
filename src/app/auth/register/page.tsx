@@ -28,6 +28,8 @@
 // again at checkout, at Send Money, and at onboarding step 2 — and
 // getAds falls back to Ghana, so a Nigerian's first visit shows cedis.
 
+import { readPendingReferral } from "@/src/lib/referral/ReferralCapture";
+import { normalizePhone } from "@/src/lib/phone";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -111,7 +113,8 @@ export default function RegisterPage() {
   ]);
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const phoneOk = phone.replace(/\D/g, "").length >= 9;
+  // Any format works — spaces, dashes, +233 / +234 or a leading 0
+  const phoneOk = normalizePhone(phone) !== null;
   const pwOk = password.length >= 8;
   const nameOk = username.trim().length >= 2;
 
@@ -134,7 +137,9 @@ export default function RegisterPage() {
       await dispatch(
         register({
           username: username.trim(),
-          phone: phone.trim(),
+          phone: normalizePhone(phone) ?? phone.trim(),
+          // Referral link opened earlier (from /r/<code> or ?ref=)
+          ref: readPendingReferral() ?? undefined,
           ...creds,
         }) as any,
       ).unwrap();

@@ -73,8 +73,8 @@ const DUTIES = [
   },
   {
     step: "03",
-    title: "Share your code",
-    desc: "Give vendors your unique referral code (e.g. SMB-KWAME-4X9Z) to enter during subscription checkout.",
+    title: "Share your link",
+    desc: "Send vendors your personal link (smilebabahub.com/r/…) on WhatsApp, or print its QR code. Sign-ups through it are credited to you automatically.",
   },
   {
     step: "04",
@@ -302,7 +302,7 @@ export default function MarketerLandingPage() {
                 n: "2",
                 icon: "📣",
                 title: "Refer vendors",
-                desc: `Share your code with business owners. They enter it at checkout and get 15% off their first paid plan.`,
+                desc: `Share your personal link (or its QR code) with business owners. When they sign up through it they get 15% off their first paid plan — nothing to type.`,
               },
               {
                 n: "3",

@@ -168,6 +168,8 @@ export default function MarketerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Referral LINK (replaces sharing the bare code) + QR for posters/flyers
+  const [ref, setRef] = useState<{ code: string; link: string; qr: string; shareText: string } | null>(null);
   const [activeTab, setActiveTab] = useState<
     "overview" | "commissions" | "payout"
   >("overview");
@@ -210,6 +212,7 @@ export default function MarketerDashboard() {
   // ── SSE: live stats updates ───────────────────────────────────────────────
   useEffect(() => {
     fetchDashboard();
+    marketerFetch("/marketers/me/referral").then(setRef).catch(() => {});
 
     const token = safeStorage.get("marketerAccessToken");
     if (!token) return;
@@ -255,11 +258,28 @@ export default function MarketerDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const copyCode = async () => {
+  const copyLink = async () => {
     if (!data) return;
-    await navigator.clipboard.writeText(data.marketer.referralCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const link = ref?.link ?? (data as any).referral?.link ?? data.marketer.referralCode;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("Copy your referral link:", link);
+    }
+  };
+  const shareWhatsApp = () => {
+    if (!ref) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(ref.shareText)}`, "_blank", "noopener,noreferrer");
+  };
+  const shareNative = async () => {
+    if (!ref) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "SmileBaba Hub", text: ref.shareText, url: ref.link });
+      } catch {}
+    } else copyLink();
   };
 
   const handleLogout = () => {
@@ -389,50 +409,51 @@ export default function MarketerDashboard() {
           </p>
         </div>
 
-        {/* ── Referral code card ── */}
-        <div
-          className="bg-gradient-to-br from-[#ffc105]/15 to-[#ffc105]/5
-          border border-[#ffc105]/25 rounded-2xl p-5 sm:p-6 mb-6 flex flex-col sm:flex-row
-          items-center sm:justify-between gap-4"
-        >
-          <div>
-            <p className="text-xs text-[#ffc105]/70 uppercase tracking-widest font-semibold mb-1">
-              Your referral code
+        {/* ── Referral link card ── */}
+        <div className="bg-gradient-to-br from-[#ffc105]/15 to-[#ffc105]/5 border border-[#ffc105]/25 rounded-2xl p-5 sm:p-6 mb-6 flex flex-col md:flex-row gap-5 items-center">
+          <div className="flex-1 min-w-0 w-full">
+            <p className="text-xs text-[#ffc105]/70 uppercase tracking-widest font-semibold mb-2">
+              Your referral link
             </p>
-            <p
-              className="text-3xl sm:text-4xl font-black tracking-widest text-[#ffc105]"
-              style={{ fontFamily: "'Syne', sans-serif" }}
-            >
-              {marketer.referralCode}
+            <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-xl px-3 py-2.5">
+              <span className="truncate text-sm font-semibold text-[#ffc105]">
+                {ref?.link ?? (data as any).referral?.link ?? `…/r/${marketer.referralCode}`}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+              Share this link. Vendors who sign up through it get 15% off their first paid plan, and you
+              earn 15% of every subscription payment they make. Code for printed materials:{" "}
+              <span className="font-mono text-gray-300">{marketer.referralCode}</span>
             </p>
-            <p className="text-xs text-gray-500 mt-1.5">
-              Share this code with vendors. They get 15% off their first paid
-              plan, you earn 15% commission.
-            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button onClick={copyLink} className="px-4 py-2.5 bg-[#ffc105] text-black font-bold rounded-xl hover:bg-amber-300 transition text-sm active:scale-95">
+                {copied ? "✓ Link copied" : "Copy link"}
+              </button>
+              <button onClick={shareWhatsApp} disabled={!ref} className="px-4 py-2.5 bg-[#25D366] text-white font-bold rounded-xl hover:bg-[#1ebe5a] transition text-sm disabled:opacity-40">
+                Share on WhatsApp
+              </button>
+              <button onClick={shareNative} disabled={!ref} className="px-4 py-2.5 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition text-sm disabled:opacity-40">
+                Share…
+              </button>
+            </div>
           </div>
-          <button
-            onClick={copyCode}
-            className="flex-shrink-0 px-6 py-3 bg-[#ffc105] text-black font-bold
-              rounded-xl hover:bg-amber-300 transition text-sm active:scale-95 whitespace-nowrap"
-          >
-            {copied ? "✓ Copied!" : "Copy code"}
-          </button>
+          {ref?.qr && (
+            <div className="flex flex-col items-center gap-2 flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={ref.qr} alt="QR code for your referral link" className="w-36 h-36 rounded-xl bg-white p-2" />
+              <a href={ref.qr} download={`smilebaba-referral-${ref.code}.png`} className="text-xs font-semibold text-[#ffc105] hover:underline">
+                Download QR for flyers
+              </a>
+            </div>
+          )}
         </div>
 
         {/* ── Stats grid ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {[
-            {
-              label: "Total referrals",
-              value: stats.totalReferrals,
-              icon: "🤝",
-            },
-            {
-              label: "Active vendors",
-              value: stats.activeReferrals,
-              icon: "✅",
-            },
-            { label: "This month", value: stats.monthReferrals, icon: "📅" },
+            { label: "Link opens (30 days)", value: Number((rawStats as any)?.linkVisits30d ?? 0), icon: "👀" },
+            { label: "Sign-ups", value: Number((rawStats as any)?.signups ?? 0), icon: "🤝" },
+            { label: "Paying vendors", value: stats.totalReferrals, icon: "✅" },
             {
               label: "Pending payout",
               value: `₵${fmt(stats.pendingPayoutGHS)}`,

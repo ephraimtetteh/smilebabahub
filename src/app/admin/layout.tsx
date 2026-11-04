@@ -22,11 +22,13 @@ import {
   HeartPlus,
   Mail,
   Globe,
+  BedDouble,
 } from "lucide-react";
 
 const NAV = [
   { href: "/admin", icon: <LayoutDashboard size={16} />, label: "Overview" },
   { href: "/admin/users", icon: <Users size={16} />, label: "Users" },
+  { href: "/admin/hosts", icon: <BedDouble size={16} />, label: "SmileStays hosts" },
   {
     href: "/admin/subscriptions",
     icon: <CreditCard size={16} />,

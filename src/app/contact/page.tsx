@@ -12,6 +12,7 @@
 
 "use client";
 
+import { SUPPORT_PHONE_DISPLAY, supportWhatsAppUrl } from "@/src/constants/support";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -178,8 +179,8 @@ export default function ContactPage() {
         <QuickCard
           emoji="💬"
           title="WhatsApp"
-          detail="Fastest for anything urgent"
-          href="https://wa.me/233000000000"
+          detail={`${SUPPORT_PHONE_DISPLAY} · fastest for anything urgent`}
+          href={supportWhatsAppUrl()}
         />
         <QuickCard
           emoji="✉️"

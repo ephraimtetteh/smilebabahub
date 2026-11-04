@@ -3,12 +3,12 @@
 // on the marketer registration / landing page.
 //
 // COMMISSION MECHANIC (from paymentController.js):
-//   - Vendor pays 80% of the plan's full price (20% discount as incentive)
-//   - Marketer earns 20% of the plan's ORIGINAL (undiscounted) full price
+//   - Vendor pays 85% of the plan's full price on their FIRST paid plan (15% discount)
+//   - Marketer earns 15% of the plan's ORIGINAL (undiscounted) full price, every payment
 //   - Example (HappySmile monthly, Ghana):
 //       Full price:       ₵249.99
-//       Vendor pays:      ₵199.99  (×0.80)
-//       Marketer earns:   ₵50.00   (×0.20 of full price)
+//       Vendor pays:      ₵199.99  (×0.85)
+//       Marketer earns:   ₵50.00   (×0.15 of full price)
 
 "use client";
 
@@ -25,7 +25,9 @@ const PLANS = {
   },
 } as const;
 
-const COMMISSION_RATE = 0.2; // 20% of the full undiscounted price
+// Must match the backend (lib/referral.js REFERRAL_DISCOUNT = 0.15).
+// This page used 20%, so the earnings examples promised more than is paid.
+const COMMISSION_RATE = 0.15; // 15% of the full undiscounted price
 const REFERRAL_COUNTS = [5, 10, 20] as const;
 
 // ── Formatters ──────────────────────────────────────────────────────────────
@@ -48,7 +50,7 @@ export default function EarningsSection() {
   const fullMonthly = plan.monthly[currency as "GHS" | "NGN"];
   const fullYearly = plan.yearly[currency as "GHS" | "NGN"];
 
-  // Per-referral commission = 20% of the full undiscounted plan price
+  // Per-referral commission = 15% of the full undiscounted plan price
   const commissionPerReferralMonthly = +(fullMonthly * COMMISSION_RATE).toFixed(
     2,
   );
@@ -147,7 +149,7 @@ export default function EarningsSection() {
             is calculated on the plan`s{" "}
             <span className="text-white">full price</span> — not the discounted
             amount your referred vendor pays. So everyone wins: the vendor saves
-            20%, and you earn 15%.
+            15% on their first plan, and you earn 15% every time they pay.
           </p>
         </div>
 

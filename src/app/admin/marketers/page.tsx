@@ -435,10 +435,16 @@ export default function AdminMarketersPage() {
   };
 
   const handlePayout = async (id: string, currency: "GHS" | "NGN") => {
+    // The MoMo / bank reference goes on the payout record (paper trail)
+    const reference = window.prompt(
+      `Mark all unpaid ${currency} commission as paid.\n\nMoMo or bank transfer reference (optional):`,
+      "",
+    );
+    if (reference === null) return; // cancelled
     setPaying(`${id}-${currency}`);
     try {
-      await patch(id, "payout", { currency });
-      toast.success(`${currency} payout marked as settled`);
+      const { data } = await axiosInstance.patch(`/admin/marketers/${id}/payout`, { currency, reference });
+      toast.success(data?.message ?? `${currency} payout recorded`);
       load();
       if (selected?._id === id) {
         // refresh panel
@@ -446,8 +452,8 @@ export default function AdminMarketersPage() {
           prev ? { ...prev, [`pendingPayout${currency}`]: 0 } : prev,
         );
       }
-    } catch {
-      toast.error("Failed to mark payout");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to mark payout");
     } finally {
       setPaying(null);
     }

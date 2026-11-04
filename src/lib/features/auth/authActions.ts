@@ -24,7 +24,7 @@ const REFRESH_URL = "/api/auth/refresh";
 // ── REGISTER ───────────────────────────────────────────────────────────────
 export const register = createAsyncThunk<
   RegisterResponseProp,
-  { username: string; email: string; password: string; phone: string },
+  { username: string; email: string; password: string; phone: string; ref?: string },
   { rejectValue: string }
 >(
   "/smilebaba/auth/register",

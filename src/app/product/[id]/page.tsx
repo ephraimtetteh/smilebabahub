@@ -2,6 +2,7 @@
 
 // src/app/product/[id]/page.tsx
 
+import { whatsappDigits } from "@/src/lib/phone";
 import React, { useEffect, useState, useCallback } from "react";
 import SafeImage from "@/src/components/SafeImage";
 import BookStayModal from "@/src/components/booking/BookStayModal";
@@ -623,7 +624,8 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
     ) === String(user._id),
   );
   const sym = ad?.price?.currency === "NGN" ? "₦" : "₵";
-  const waNumber = ad?.contact?.whatsapp?.replace(/\D/g, "");
+  // wa.me needs the country code — "024…" opened a broken chat
+  const waNumber = whatsappDigits(ad?.contact?.whatsapp) ?? ad?.contact?.whatsapp?.replace(/\D/g, "");
   const waMsg = encodeURIComponent(
     `Hi, I saw your listing "${ad?.title}" on SmileBaba Hub.`,
   );

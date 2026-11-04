@@ -33,6 +33,7 @@
 // the mobile app still opens that one in a browser session because it
 // needs the deep-link return.
 
+import { normalizePhone, PHONE_HINT } from "@/src/lib/phone";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
@@ -426,8 +427,10 @@ export default function SendMoneyPage() {
       setDetailsError("Use the name on your ID or bank account.");
       return;
     }
-    if (phone.replace(/\D/g, "").length < 7) {
-      setDetailsError("We need a number we can reach you on.");
+    // Spaces, dashes, +233 / +234 or a leading 0 are all fine
+    const cleanPhone = normalizePhone(phone, country === "Nigeria" ? "Nigeria" : "Ghana");
+    if (!cleanPhone) {
+      setDetailsError(`That number doesn't look right (${PHONE_HINT}).`);
       return;
     }
 
@@ -438,7 +441,7 @@ export default function SendMoneyPage() {
       // The profile endpoint that already exists — no new backend
       const { data } = await axiosInstance.patch("/auth/profile", {
         username: fullName.trim(),
-        phone: phone.trim(),
+        phone: cleanPhone,
       });
 
       // Keep redux in step, otherwise detailsComplete stays false and

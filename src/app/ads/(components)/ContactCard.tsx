@@ -1,6 +1,7 @@
 "use client";
 
 // src/components/ads/ContactCard.tsx
+import { whatsappDigits } from "@/src/lib/phone";
 import { memo, useState } from "react";
 import { Phone, MessageCircle, Shield } from "lucide-react";
 import { Ad } from "@/src/types/ad.types";
@@ -23,7 +24,7 @@ const ContactCard = memo(function ContactCard({
     onReveal();
   };
 
-  const waNumber = ad.contact?.whatsapp?.replace(/\D/g, "");
+  const waNumber = whatsappDigits(ad.contact?.whatsapp) ?? ad.contact?.whatsapp?.replace(/\D/g, "");
   const waMsg = encodeURIComponent(
     `Hi, I saw your ad for "${ad.title}" on SmileBaba`,
   );

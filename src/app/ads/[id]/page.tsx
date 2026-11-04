@@ -37,6 +37,7 @@
 // resolveMode is still used for the modal choice, which is what it's
 // actually good at.
 
+import { whatsappDigits } from "@/src/lib/phone";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -199,7 +200,7 @@ const ProductDetails = ({ params }: { params: Promise<{ id: string }> }) => {
   const cartable = policyCanAddToCart(ad as any);
   const category = String(ad.category?.main ?? "").toLowerCase();
 
-  const waNumber = String(ad.contact?.whatsapp ?? "").replace(/\D/g, "");
+  const waNumber = whatsappDigits(ad.contact?.whatsapp) ?? String(ad.contact?.whatsapp ?? "").replace(/\D/g, "");
   const waMsg = encodeURIComponent(
     `Hi, I saw your listing "${ad.title}" on SmileBaba Hub.`,
   );

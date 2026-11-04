@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
@@ -148,28 +148,31 @@ const Subscription = ({
   const [showSummary, setShowSummary] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [referralCode, setReferralCode] = useState("");
-  const [referralInfo, setReferralInfo] = useState<{
-    name: string;
-    discount: number;
+  // ── Referral ───────────────────────────────────────────────────────────
+  // Referrals come from a marketer's LINK and are locked to the account
+  // (server rules in lib/referral.js). This shows who referred you and
+  // whether the first-plan discount still applies; someone not yet
+  // referred can paste a link or code once.
+  const [referral, setReferral] = useState<{
+    referred: boolean;
+    marketerName?: string | null;
+    discountAvailable?: boolean;
+    discount?: number;
   } | null>(null);
+  const [referralInput, setReferralInput] = useState("");
   const [referralError, setReferralError] = useState<string | null>(null);
   const [checkingCode, setCheckingCode] = useState(false);
-  // savedReferral: marketer who referred this user on the free plan.
-  // Shown on upgrade so the vendor knows they'll get credit automatically.
-  const savedReferralId = user?.subscription?.referredBy ?? null;
-  const [savedReferralName, setSavedReferralName] = useState<string | null>(
-    null,
-  );
 
-  // Look up the saved marketer name once on mount
-  useEffect(() => {
-    if (!savedReferralId) return;
+  const loadReferral = useCallback(() => {
     axiosInstance
-      .get(`/marketers/referral/by-id/${savedReferralId}`)
-      .then((r) => setSavedReferralName(r.data.name ?? null))
-      .catch(() => {});
-  }, [savedReferralId]);
+      .get("/marketers/referral/mine")
+      .then((r) => setReferral(r.data))
+      .catch(() => setReferral(null));
+  }, []);
+  useEffect(() => {
+    if (user?._id) loadReferral();
+  }, [user?._id, loadReferral]);
+
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const defaultPkg =
@@ -224,25 +227,17 @@ const Subscription = ({
     return `${userSymbol}${amount.toLocaleString()}`;
   };
 
-  const validateReferral = async (code: string) => {
-    if (!code.trim()) {
-      setReferralInfo(null);
-      setReferralError(null);
-      return;
-    }
+  const applyReferral = async () => {
+    const value = referralInput.trim();
+    if (!value) return;
     setCheckingCode(true);
     setReferralError(null);
     try {
-      const res = await axiosInstance.get(
-        `/marketers/referral/${code.trim()}/validate`,
-      );
-      setReferralInfo({
-        name: res.data.marketerName,
-        discount: res.data.discount,
-      });
-    } catch {
-      setReferralInfo(null);
-      setReferralError("Invalid referral code");
+      await axiosInstance.post("/marketers/referral/claim", { ref: value, source: "code" });
+      setReferralInput("");
+      loadReferral();
+    } catch (err: any) {
+      setReferralError(err?.response?.data?.message ?? "That referral link or code isn't valid.");
     } finally {
       setCheckingCode(false);
     }
@@ -266,7 +261,6 @@ const Subscription = ({
         planId: activePlanId,
         billingCycle: plan,
         currency: userCurrency,
-        referralCode: referralCode.trim() || undefined,
         returnUrl: returnUrl ?? "/vendor/dashboard",
       });
 
@@ -527,73 +521,49 @@ const Subscription = ({
                 })()}
             </div>
 
-            {/* Referral code */}
+            {/* Referral */}
             <div className="mt-3 mb-5">
-              {/* Show saved referral notice on upgrade */}
-              {savedReferralId && !referralInfo && (
-                <div
-                  className="mb-3 flex items-start gap-2 bg-amber-900/20 border
-                  border-amber-400/20 rounded-xl px-3 py-2.5"
-                >
-                  <span className="text-amber-400 text-sm flex-shrink-0">
-                    🤝
-                  </span>
+              {referral?.referred ? (
+                <div className="flex items-start gap-2 bg-amber-900/20 border border-amber-400/20 rounded-xl px-3 py-2.5">
+                  <span className="text-amber-400 text-sm flex-shrink-0">🤝</span>
                   <p className="text-xs text-amber-300 leading-relaxed">
-                    {activePrice === 0 ? (
-                      <>
-                        Referral code saved — your marketer
-                        {savedReferralName ? ` (${savedReferralName})` : ""}{" "}
-                        will earn commission when you upgrade to a paid plan.
-                      </>
-                    ) : (
-                      <>
-                        Referred by {savedReferralName ?? "a marketer"} — your{" "}
-                        {REFERRAL_DISCOUNT_PCT}% discount and their commission
-                        will be applied automatically.
-                      </>
-                    )}
+                    Referred by {referral.marketerName ?? "a SmileBaba partner"}.{" "}
+                    {referral.discountAvailable && activePrice > 0
+                      ? `Your ${referral.discount ?? REFERRAL_DISCOUNT_PCT}% first-plan discount is applied at checkout.`
+                      : referral.discountAvailable
+                        ? `You'll get ${referral.discount ?? REFERRAL_DISCOUNT_PCT}% off when you choose a paid plan.`
+                        : "Thanks for supporting them."}
                   </p>
                 </div>
-              )}
-
-              <label className="block text-xs text-gray-400 mb-1.5">
-                {savedReferralId && !referralInfo
-                  ? "Override referral code (optional)"
-                  : "Referral code (optional)"}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  value={referralCode}
-                  onChange={(e) => {
-                    setReferralCode(e.target.value.toUpperCase());
-                    if (!e.target.value) {
-                      setReferralInfo(null);
-                      setReferralError(null);
-                    }
-                  }}
-                  placeholder="e.g. SMB-KWAME-4X9Z"
-                  className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-xl
-                    px-3 py-2 text-white text-xs placeholder:text-gray-600
-                    focus:outline-none focus:ring-2 focus:ring-amber-400"
-                />
-                <button
-                  type="button"
-                  onClick={() => validateReferral(referralCode)}
-                  disabled={checkingCode || !referralCode.trim()}
-                  className="px-3 py-2 bg-white/10 text-white text-xs rounded-xl
-                    hover:bg-white/20 transition disabled:opacity-40"
-                >
-                  {checkingCode ? "…" : "Apply"}
-                </button>
-              </div>
-              {referralInfo && (
-                <p className="text-xs text-green-400 mt-1.5">
-                  ✓ Code by {referralInfo.name} · {referralInfo.discount}%
-                  discount applied
-                </p>
-              )}
-              {referralError && (
-                <p className="text-xs text-red-400 mt-1.5">{referralError}</p>
+              ) : (
+                <>
+                  <label className="block text-xs text-gray-400 mb-1.5">
+                    Have a referral link or code? (optional)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      value={referralInput}
+                      onChange={(e) => {
+                        setReferralInput(e.target.value);
+                        setReferralError(null);
+                      }}
+                      placeholder="Paste the link, or e.g. SMB-KWAME-4X9Z"
+                      className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-xl
+                        px-3 py-2 text-white text-xs placeholder:text-gray-600
+                        focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyReferral}
+                      disabled={checkingCode || !referralInput.trim()}
+                      className="px-3 py-2 bg-white/10 text-white text-xs rounded-xl
+                        hover:bg-white/20 transition disabled:opacity-40"
+                    >
+                      {checkingCode ? "…" : "Apply"}
+                    </button>
+                  </div>
+                  {referralError && <p className="text-xs text-red-400 mt-1.5">{referralError}</p>}
+                </>
               )}
             </div>
 

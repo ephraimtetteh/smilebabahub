@@ -26,6 +26,7 @@
 // reads as a reason — and it's true: the order page shows vendor chat
 // and phone once money has moved.
 
+import { whatsappDigits } from "@/src/lib/phone";
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -77,7 +78,7 @@ export default function SellerContactPanel({
 
   const phone = ad.contact?.phone ?? vendorObj?.storePhone ?? vendorObj?.phone;
   const whatsapp = ad.contact?.whatsapp ?? vendorObj?.whatsapp;
-  const waNumber = String(whatsapp ?? "").replace(/\D/g, "");
+  const waNumber = whatsappDigits(whatsapp) ?? String(whatsapp ?? "").replace(/\D/g, "");
   const waMsg = encodeURIComponent(
     `Hi, I saw your listing "${ad.title}" on SmileBaba Hub.`,
   );

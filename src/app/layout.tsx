@@ -1,4 +1,6 @@
 import "./globals.css";
+import ReferralCapture from "@/src/lib/referral/ReferralCapture";
+import SupportWhatsAppButton from "@/src/components/support/SupportWhatsAppButton";
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import { ToastContainer } from "react-toastify";
@@ -111,6 +113,9 @@ export default function RootLayout({
           <LayoutWrapper>
             {children}
             <WelcomeDirective />
+            {/* WhatsApp support button (bottom-right) + referral-link capture */}
+            <SupportWhatsAppButton />
+            <ReferralCapture />
           </LayoutWrapper>
         </RadioProvider>
 

@@ -67,7 +67,7 @@ export default function MarketerRegisterPage() {
 
   const copyCode = async () => {
     if (!marketer) return;
-    await navigator.clipboard.writeText(marketer.referralCode);
+    await navigator.clipboard.writeText((marketer as any).referralLink ?? marketer.referralCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -87,31 +87,32 @@ export default function MarketerRegisterPage() {
             Welcome, {marketer.name.split(" ")[0]}!
           </h2>
           <p className="text-gray-400 text-sm mb-7">
-            Your marketer account is ready. Share your referral code with
+            Your marketer account is ready. Share your referral link with
             vendors to earn 15% commission on every subscription.
           </p>
 
           {/* Referral code display */}
           <div className="bg-[#1a1a1a] border border-amber-400/30 rounded-2xl p-5 mb-6">
             <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest">
-              Your referral code
+              Your referral link
             </p>
-            <p className="text-3xl font-black text-amber-400 tracking-widest mb-4">
-              {marketer.referralCode}
+            <p className="text-sm font-bold text-amber-400 break-all mb-1">
+              {(marketer as any).referralLink ?? marketer.referralCode}
             </p>
+            <p className="text-[11px] text-gray-500 mb-4">Code: {marketer.referralCode}</p>
             <button
               onClick={copyCode}
               className="w-full py-2.5 bg-amber-400 text-black font-bold rounded-xl
                 hover:bg-amber-300 transition text-sm active:scale-95"
             >
-              {copied ? "✓ Copied!" : "Copy code"}
+              {copied ? "✓ Copied!" : "Copy link"}
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-3 mb-7 text-center">
             {[
               { label: "Your cut", value: "15%", sub: "per referral" },
-              { label: "Vendor gets", value: "20%", sub: "discount" },
+              { label: "Vendor gets", value: "15%", sub: "off first plan" },
               { label: "Payout", value: "Weekly", sub: "to MoMo/Bank" },
             ].map((s) => (
               <div key={s.label} className="bg-[#1a1a1a] rounded-xl p-3">
@@ -148,7 +149,7 @@ export default function MarketerRegisterPage() {
           </h1>
           <p className="text-gray-400 text-sm">
             Refer vendors and earn{" "}
-            <span className="text-amber-400 font-bold">20%</span> commission on
+            <span className="text-amber-400 font-bold">15%</span> commission on
             every subscription they pay.
           </p>
         </div>
@@ -156,9 +157,9 @@ export default function MarketerRegisterPage() {
         {/* How it works strip */}
         <div className="flex gap-2 mb-8">
           {[
-            { step: "1", text: "Register & get your unique code" },
-            { step: "2", text: "Share code with vendors" },
-            { step: "3", text: "Earn 20% on each subscription" },
+            { step: "1", text: "Register & get your personal link" },
+            { step: "2", text: "Share the link with vendors" },
+            { step: "3", text: "Earn 15% on each subscription" },
           ].map((s) => (
             <div
               key={s.step}

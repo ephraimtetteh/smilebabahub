@@ -15,6 +15,7 @@
 // the website and not in the app will use the website, and the
 // commission goes with them.
 
+import { whatsappDigits } from "@/src/lib/phone";
 import { useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -137,7 +138,7 @@ export default function VendorContactBlock({ ad }: { ad: Ad }) {
 
           {showWhatsApp && (
             <a
-              href={`https://wa.me/${String(whatsapp).replace(/\D/g, "")}`}
+              href={`https://wa.me/${whatsappDigits(String(whatsapp)) ?? String(whatsapp).replace(/\D/g, "")}`}
               target="_blank"
               rel="noreferrer"
               onClick={recordClick}

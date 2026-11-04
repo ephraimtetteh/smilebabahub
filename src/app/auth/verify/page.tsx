@@ -59,8 +59,9 @@ const VerifyPage = () => {
     );
 
     if (verifyOTP.fulfilled.match(result)) {
-      toast.success("Account verified successfully");
-      router.push("/auth/login");
+      // Verification is for your own signed-in phone now, so stay signed in
+      toast.success("Phone verified");
+      router.push("/account");
     } else {
       toast.error("Invalid OTP");
     }
