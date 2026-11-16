@@ -44,13 +44,9 @@ const nextConfig: NextConfig = {
     deviceSizes: [360, 480, 640, 828, 1080, 1200, 1920],
     imageSizes: [56, 96, 128, 256, 384],
     dangerouslyAllowSVG: false,
-    // Cloudinary photos go straight from Cloudinary's CDN (resized + f_auto
-    // there), not through Vercel's /_next/image. The default proxy is why
-    // SmileStays photos stopped loading: it has a monthly quota, times out
-    // on big originals, and can't read iPhone HEIC files. SafeImage still
-    // shows a placeholder if a file is missing.
-    loader: "custom",
-    loaderFile: "./src/utils/cloudinaryLoader.ts",
+    // Default loader for the site as a whole. Listing photos go through
+    // SafeImage, which loads Cloudinary images straight from Cloudinary's
+    // CDN and falls back to the original file if that fails.
   },
 
   // Expose the derived socket URL so useChat.ts can pick it up

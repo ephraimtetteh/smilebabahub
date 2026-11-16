@@ -1,7 +1,7 @@
 "use client";
 // src/components/ads/ProductDetail/AdGallery.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import SafeImage from "@/src/components/SafeImage";
 import { ImageOff } from "lucide-react";
 
@@ -11,16 +11,24 @@ interface AdImage {
 }
 
 interface AdGalleryProps {
-  images: AdImage[];
+  /** Objects {url} — or plain URL strings, which some listings have */
+  images: (AdImage | string)[];
   title: string;
   boostBadge?: { label: string; cls: string } | null;
 }
 
 export default function AdGallery({
-  images,
+  images: raw,
   title,
   boostBadge,
 }: AdGalleryProps) {
+  const images: AdImage[] = useMemo(
+    () =>
+      (raw ?? [])
+        .map((i) => (typeof i === "string" ? { url: i } : i))
+        .filter((i): i is AdImage => !!i?.url),
+    [raw],
+  );
   const [mainImage, setMainImage] = useState<string | null>(null);
   const [activeThumb, setActiveThumb] = useState(0);
 

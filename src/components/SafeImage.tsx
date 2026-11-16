@@ -16,6 +16,9 @@
 import Image, { type ImageProps } from "next/image";
 import { useState, useEffect, JSX } from "react";
 import { ImageOff } from "lucide-react";
+import cloudinaryLoader from "@/src/utils/cloudinaryLoader";
+
+const isCloudinary = (u?: string | null) => !!u && u.includes("res.cloudinary.com") && u.includes("/image/upload/");
 
 // A tiny transparent 1x1 as final fallback so Image never explodes
 const TRANSPARENT_PX =
@@ -41,11 +44,16 @@ export default function SafeImage({
   // Track which src we're trying
   const [current, setCurrent] = useState<string | null>(src ?? null);
   const [broken,  setBroken]  = useState(false);
+  // Cloudinary photos: 0 = resized copy from Cloudinary's CDN (f_auto also
+  // converts iPhone HEIC), 1 = the original file as uploaded. Neither goes
+  // through /_next/image, which times out on big photos and has a quota.
+  const [stage, setStage] = useState(0);
 
   // Reset when the incoming src changes (parent re-render with new promo, etc.)
   useEffect(() => {
     setCurrent(src ?? null);
     setBroken(false);
+    setStage(0);
   }, [src]);
 
   // No src at all, or completely broken — render placeholder
@@ -61,6 +69,33 @@ export default function SafeImage({
           <span className="text-3xl opacity-50">{fallbackEmoji}</span>
         )}
       </div>
+    );
+  }
+
+  if (isCloudinary(current)) {
+    const w = typeof rest.width === "number" ? Math.min(1600, rest.width * 2) : 1200;
+    const url = stage === 0 ? cloudinaryLoader({ src: current, width: w }) : current;
+    return (
+      <Image
+        {...rest}
+        key={url}
+        src={url}
+        alt={alt}
+        className={className}
+        unoptimized
+        onError={() => {
+          if (stage === 0 && url !== current) {
+            console.warn(`[SafeImage] resized copy failed, trying original: ${current}`);
+            setStage(1);
+          } else if (fallbackSrc && current !== fallbackSrc) {
+            setCurrent(fallbackSrc);
+            setStage(0);
+          } else {
+            console.warn(`[SafeImage] ${current} failed, showing placeholder`);
+            setBroken(true);
+          }
+        }}
+      />
     );
   }
 
