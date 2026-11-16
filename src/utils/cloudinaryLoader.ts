@@ -1,13 +1,19 @@
 // src/utils/cloudinaryLoader.ts
-// Custom Next.js image loader (wired in next.config.ts → images.loaderFile).
+// Custom Next.js image loader for Cloudinary.
 //
-// Why: with the default loader every <Image> is proxied through /_next/image.
-// That (a) burns the host's image-optimisation quota — on Vercel, once it is
-// used up images return 402 and simply don't show — and (b) rejects any host
-// not listed in remotePatterns (Google / Facebook avatars, old /uploads files).
+// With the default Next.js loader, every <Image src="https://res.cloudinary.com/...">
+// is proxied through /_next/image on your server. When the Cloudinary file
+// doesn't exist (404), Next.js logs "upstream image response failed" on every
+// page render — once per image per request.
 //
-// Now: Cloudinary URLs get Cloudinary's own CDN resizing (f_auto,q_auto,w_N);
-// everything else is loaded directly by the browser, untouched.
+// This loader bypasses the proxy for Cloudinary URLs: the browser fetches
+// the image directly from Cloudinary's CDN. A 404 is then caught client-side
+// by SafeImage's onError handler → shows placeholder, no server log spam.
+//
+// For non-Cloudinary URLs, it falls back to the standard behaviour.
+//
+// next.config.ts:
+//   images: { loader: "custom", loaderFile: "./src/lib/cloudinaryLoader.ts" }
 
 interface LoaderParams {
   src: string;
@@ -15,39 +21,39 @@ interface LoaderParams {
   quality?: number;
 }
 
-const API_ORIGIN = (() => {
-  try {
-    const u = process.env.NEXT_PUBLIC_API_BASE_URL;
-    return u?.startsWith("http") ? new URL(u).origin : "";
-  } catch {
-    return "";
+export default function cloudinaryLoader({
+  src,
+  width,
+  quality = 75,
+}: LoaderParams): string {
+  // Only transform actual Cloudinary URLs
+  if (!src.includes("res.cloudinary.com")) {
+    // Non-Cloudinary: as-is (static assets, Google avatars, external images)
+    return src;
   }
-})();
+  // Videos and raw files are left alone
+  if (!src.includes("/image/upload/")) return src;
 
-export default function cloudinaryLoader({ src, width, quality }: LoaderParams): string {
-  if (!src) return src;
+  // Already has Cloudinary transformations in the URL — return directly
+  // (e.g. URLs already containing /c_fill/ or /w_800/)
+  if (/\/upload\/[^/]*\b(c|w|f|q|t)_/.test(src)) {
+    return src;
+  }
 
-  // Old local-disk uploads stored as "/uploads/..." live on the API server
-  if (src.startsWith("/uploads/") && API_ORIGIN) src = `${API_ORIGIN}${src}`;
+  // Inject responsive width + format + quality transformations.
+  // Cloudinary transformation syntax: /upload/t_params/v.../public_id
+  // We insert after /upload/
+  const uploadIndex = src.indexOf("/upload/");
+  if (uploadIndex === -1) return src;
 
-  // Local static assets (/_next/static, /public) — leave alone
-  if (src.startsWith("/") || src.startsWith("data:") || src.startsWith("blob:")) return src;
+  const before = src.slice(0, uploadIndex + "/upload/".length);
+  const after = src.slice(uploadIndex + "/upload/".length);
 
-  src = src.replace(/^http:\/\//i, "https://");
+  // f_auto  → serve WebP/AVIF to browsers that support it
+  // q_auto  → Cloudinary picks optimal quality (ignores our q param for simplicity)
+  // w_{n}   → resize to requested width
+  // c_limit never upscales; f_auto also turns iPhone HEIC into JPEG/WebP
+  const transform = `f_auto,q_auto:${quality >= 80 ? "good" : "eco"},c_limit,w_${width}`;
 
-  if (!src.includes("res.cloudinary.com") || !src.includes("/upload/")) return src;
-
-  // iPhone HEIC originals: only Safari can show them. Changing the
-  // extension makes Cloudinary convert.
-  src = src.replace(/\.(heic|heif)(\?.*)?$/i, ".jpg$2");
-
-  const i = src.indexOf("/upload/") + "/upload/".length;
-  const before = src.slice(0, i);
-  const after = src.slice(i);
-
-  // Already transformed (e.g. "c_fill,w_800/v123/...") — respect it
-  if (/^[a-z]{1,3}_[^/]+\//i.test(after)) return src;
-
-  const q = quality ? `q_${quality}` : "q_auto";
-  return `${before}f_auto,${q},c_limit,w_${width}/${after}`;
+  return `${before}${transform}/${after}`;
 }

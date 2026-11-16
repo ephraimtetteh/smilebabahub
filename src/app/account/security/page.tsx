@@ -25,6 +25,7 @@ import { safeStorage } from "@/src/utils/safeStorage";
 import { useAppDispatch, useAppSelector } from "@/src/app/redux";
 import { setAccessToken, setUser } from "@/src/lib/features/auth/authSlice";
 import { PageShell } from "@/src/app/account/components";
+import { logout } from "@/src/lib/features/auth/authActions";
 
 type Status = { enabled: boolean; backupCodesLeft: number; configured: boolean };
 type Setup = { secret: string; secretGrouped: string; otpauthUrl: string; qrDataUrl: string };
@@ -38,6 +39,27 @@ export default function SecurityPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user, hasCheckedAuth } = useAppSelector((s) => s.auth);
+  const [devices, setDevices] = useState<{ label: string; place?: string; lastSeenAt?: string }[]>([]);
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    axiosInstance.get("/auth/security").then((r) => setDevices(r.data?.devices ?? [])).catch(() => {});
+  }, []);
+
+  const signOutEverywhere = async () => {
+    if (!window.confirm("Sign out of every phone and browser — including this one? Do this if you think someone else has your password, then change it.")) return;
+    setSigningOut(true);
+    try {
+      await axiosInstance.post("/auth/logout-all");
+    } catch (e: any) {
+      setSigningOut(false);
+      toast.error(e?.response?.data?.message ?? "Couldn't sign out everywhere. Please try again.");
+      return;
+    }
+    await dispatch(logout()).catch(() => {});
+    toast.success("Signed out on every device.");
+    router.replace("/auth/login");
+  };
 
   const [status, setStatus] = useState<Status | null>(null);
   const [setup, setSetup] = useState<Setup | null>(null);
@@ -319,6 +341,32 @@ export default function SecurityPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ─── Where you've signed in ─── */}
+      <div className="mt-4 rounded-3xl border border-gray-100 bg-white p-5">
+        <p className="text-[15px] font-bold text-gray-900">Where you&apos;ve signed in</p>
+        <p className="mt-1 text-[13px] leading-relaxed text-gray-500">
+          We email you when your account is used on a new device. Don&apos;t recognise one? Sign out everywhere, then change your password.
+        </p>
+        {devices.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {devices.slice(0, 8).map((d, i) => (
+              <li key={`${d.label}-${i}`} className="flex items-center gap-3">
+                <Smartphone size={15} className="text-gray-400" />
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-900">{d.label}</p>
+                  <p className="text-[11.5px] text-gray-400">
+                    {[d.place, d.lastSeenAt ? new Date(d.lastSeenAt).toLocaleDateString() : null].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <button onClick={signOutEverywhere} disabled={signingOut} className={`${btn} mt-4 bg-red-600 text-white`}>
+          {signingOut ? <Loader2 size={17} className="animate-spin" /> : "Sign out of all devices"}
+        </button>
       </div>
     </PageShell>
   );

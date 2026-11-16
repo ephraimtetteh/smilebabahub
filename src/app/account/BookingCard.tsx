@@ -2,6 +2,10 @@
 
 // account/BookingCard.tsx
 
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "react-toastify";
+import axiosInstance from "@/src/lib/api/axios";
 import {
   Booking,
   BOOKING_STATUS_STYLE,
@@ -16,6 +20,25 @@ export default function BookingCard({ booking }: { booking: Booking }) {
   const sym = currencySymbol(booking.currency);
   const n = nights(booking.checkIn, booking.checkOut);
   const icon = PROPERTY_ICON[booking.propertyType] ?? PROPERTY_ICON.default;
+  const [paying, setPaying] = useState(false);
+  const canPay = booking.canPay ?? ["pending", "expired"].includes(booking.status);
+
+  // Unpaid bookings hold the dates for 15 minutes; this picks up where the
+  // guest left off (or re-books the dates if the hold ran out and they're
+  // still free).
+  const finishPaying = async () => {
+    setPaying(true);
+    try {
+      const { data } = await axiosInstance.post(`/bookings/${booking._id}/pay`, {}, { timeout: 25_000 });
+      const link = data.checkoutUrl ?? data.paymentLink ?? data.link;
+      if (!link) throw new Error("No payment link was returned");
+      window.location.href = link;
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message ?? "Couldn't start payment. Please try again.");
+      setPaying(false);
+    }
+  };
+
   const pricePerNight =
     n > 0 ? Math.round(booking.totalPrice / n) : booking.totalPrice;
 
@@ -97,6 +120,25 @@ export default function BookingCard({ booking }: { booking: Booking }) {
           </span>
         </div>
       </div>
+
+      {canPay && (
+        <div className="mt-3 flex flex-col gap-2 border-t border-gray-50 pt-3 sm:flex-row sm:items-center">
+          <p className="flex-1 text-[11.5px] leading-relaxed text-gray-500">
+            {booking.status === "expired"
+              ? "Your 15-minute hold ran out and the dates were released. Pay now to book them again if they're still free."
+              : booking.holdUntil
+                ? `Dates held until ${new Date(booking.holdUntil).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.`
+                : "Pay to secure your dates."}
+          </p>
+          <button
+            onClick={finishPaying}
+            disabled={paying}
+            className="flex h-10 items-center justify-center rounded-xl bg-[#ffc105] px-5 text-xs font-bold text-black disabled:opacity-60"
+          >
+            {paying ? <Loader2 size={15} className="animate-spin" /> : "Finish paying"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

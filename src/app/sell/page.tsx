@@ -77,7 +77,9 @@ export default function SellPage() {
       .then(({ data }) => {
         if (cancelled) return;
 
-        if (data?.needsOnboarding) {
+        // SmileStays hosts don't need a store or subscription — they pay
+        // only the booking commission.
+        if (data?.needsOnboarding && presetCategory !== "apartments") {
           localStorage.setItem("redirectAfterOnboarding", here);
           router.replace("/onboarding");
           return;
@@ -113,7 +115,7 @@ export default function SellPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, presetCategory]);
 
   // ─── Submit ───────────────────────────────────────────────────────
   const handleCreate = useCallback(
@@ -130,12 +132,16 @@ export default function SellPage() {
             .join(" > "),
         },
         images,
-        price: { amount: Number(data.price), currency: data.currency },
+        // The server sets the currency from the listing's country anyway
+        price: {
+          amount: Number(data.price),
+          currency: (user?.country ?? viewCountry) === "Nigeria" ? "NGN" : "GHS",
+        },
         negotiable: (data.negotiable || "not_sure") as Negotiable,
         condition: (data.condition || "not_applicable") as AdCondition,
         location: {
           country: (user?.country ?? viewCountry ?? "Ghana") as any,
-          countryCode: ((user?.currency ?? viewCurrency) === "NGN"
+          countryCode: ((user?.country ?? viewCountry) === "Nigeria"
             ? "NG"
             : "GH") as any,
           region: data.region,
@@ -160,6 +166,10 @@ export default function SellPage() {
           .map((t) => t.trim())
           .filter(Boolean),
         videoUrl: data.videoUrl || null,
+        // SmileStays: most guests allowed at once (required by the server)
+        ...(data.category === "apartments"
+          ? { maxGuests: Number(data.maxGuests) }
+          : {}),
 
         // Category-specific fields folded into attributes (EAV) so they're
         // searchable and displayable

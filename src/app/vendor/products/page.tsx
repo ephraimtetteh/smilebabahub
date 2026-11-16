@@ -93,7 +93,10 @@ function ProductpageInner() {
       tags:       data.tags.split(",").map((t) => t.trim()).filter(Boolean),
       attributes: data.attributes,
       videoUrl:   data.videoUrl || null,
-    });
+      ...(data.category === "apartments" && data.maxGuests
+        ? { maxGuests: Number(data.maxGuests) }
+        : {}),
+    } as any);
 
     const ad = (result as any)?.payload;
     return { adId: ad?._id ?? "pending" };

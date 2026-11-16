@@ -45,14 +45,14 @@ export interface SellVertical {
 export const SELL_VERTICALS: SellVertical[] = [
   {
     id: "ecommerce",
-    label: "Product",
+    label: "E-Commerce shop",
     hint: "Phones, fashion, home",
     href: "/sell?category=ecommerce",
   },
   {
     id: "stays",
-    label: "Place to stay",
-    hint: "Apartments, short lets",
+    label: "SmileStays",
+    hint: "Short-stay apartments & hotels — no subscription",
     href: "/sell?category=apartments",
   },
   {
@@ -81,7 +81,8 @@ export function useSellFlow(onDone?: () => void) {
       try {
         const { data } = await axiosInstance.get("/onboarding/me");
 
-        if (data?.needsOnboarding) {
+        // SmileStays hosts need no store or subscription
+        if (data?.needsOnboarding && vertical.id !== "stays") {
           // So they land back on the form they were heading for
           localStorage.setItem("redirectAfterOnboarding", vertical.href);
           onDone?.();

@@ -44,9 +44,11 @@ const nextConfig: NextConfig = {
     deviceSizes: [360, 480, 640, 828, 1080, 1200, 1920],
     imageSizes: [56, 96, 128, 256, 384],
     dangerouslyAllowSVG: false,
-    // Cloudinary resizes on its CDN; other hosts load directly. Avoids the
-    // /_next/image proxy (quota limits + remotePatterns rejections were why
-    // some images never showed). SafeImage still handles 404s client-side.
+    // Cloudinary photos go straight from Cloudinary's CDN (resized + f_auto
+    // there), not through Vercel's /_next/image. The default proxy is why
+    // SmileStays photos stopped loading: it has a monthly quota, times out
+    // on big originals, and can't read iPhone HEIC files. SafeImage still
+    // shows a placeholder if a file is missing.
     loader: "custom",
     loaderFile: "./src/utils/cloudinaryLoader.ts",
   },

@@ -8,6 +8,9 @@ export type OrderStatus =
   | "cancelled";
 export type BookingStatus =
   | "pending"
+  | "expired"
+  | "paid"
+  | "refunded"
   | "confirmed"
   | "checked_in"
   | "checked_out"
@@ -42,6 +45,8 @@ export type Booking = {
   status: BookingStatus;
   vendor: string;
   createdAt: string;
+  canPay?: boolean;
+  holdUntil?: string | null;
 };
 
 export const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
@@ -54,6 +59,9 @@ export const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
 
 export const BOOKING_STATUS_STYLE: Record<BookingStatus, string> = {
   pending: "bg-yellow-100 text-yellow-700",
+  expired: "bg-gray-100 text-gray-500",
+  paid: "bg-emerald-100 text-emerald-700",
+  refunded: "bg-gray-100 text-gray-500",
   confirmed: "bg-blue-100 text-blue-700",
   checked_in: "bg-green-100 text-green-600",
   checked_out: "bg-gray-100 text-gray-500",
@@ -62,6 +70,9 @@ export const BOOKING_STATUS_STYLE: Record<BookingStatus, string> = {
 
 export const STATUS_LABEL: Record<string, string> = {
   pending: "Pending",
+  expired: "Not paid in time",
+  paid: "Paid — waiting for host",
+  refunded: "Refunded",
   confirmed: "Confirmed",
   dispatched: "On the way 🛵",
   delivered: "Delivered",
@@ -92,6 +103,7 @@ export const ORDER_STATUSES = [
 export const BOOKING_STATUSES = [
   "all",
   "pending",
+  "paid",
   "confirmed",
   "checked_in",
   "checked_out",

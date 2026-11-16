@@ -47,6 +47,8 @@ export default function BookStayModal({
       : 0;
 
   const totalPrice = nights * (ad.price?.amount ?? 0);
+  // Set by the host. Guests can't book for more people than this.
+  const maxGuests = Number(ad?.maxGuests) > 0 ? Number(ad.maxGuests) : 20;
 
   const handleBook = async () => {
     if (!user) {
@@ -68,7 +70,7 @@ export default function BookStayModal({
     setLoading(true);
     try {
       // 1. Create — the server prices the stay and holds the dates for
-      //    30 minutes. (Price/currency from the browser are ignored.)
+      //    15 minutes. Booking the same dates again resumes that hold.
       const { data: created } = await axiosInstance.post("/bookings", {
         adId: ad._id,
         propertyType: ad.category?.sub ?? "apartment",
@@ -81,7 +83,18 @@ export default function BookStayModal({
 
       // 2. Payment. This step was missing: the site showed "Booking
       //    confirmed!" on an unpaid booking that the host could never act on.
-      const { data: pay } = await axiosInstance.post(`/bookings/${bookingId}/pay`);
+      let pay: any;
+      try {
+        ({ data: pay } = await axiosInstance.post(`/bookings/${bookingId}/pay`, {}, { timeout: 25_000 }));
+      } catch (e: any) {
+        // The booking exists — let them finish from My bookings
+        toast.error(
+          (e?.response?.data?.message ?? "The payment page didn't open.") +
+            " Finish paying from My bookings within 15 minutes.",
+        );
+        router.push("/account/bookings");
+        return;
+      }
       const link = pay?.checkoutUrl ?? pay?.paymentLink ?? pay?.link;
       if (!link) throw new Error("No payment link was returned");
 
@@ -226,8 +239,12 @@ export default function BookStayModal({
                 <span className="text-lg font-bold text-gray-900 w-8 text-center">
                   {guests}
                 </span>
+                {Number(ad?.maxGuests) > 0 && (
+                  <span className="text-xs text-gray-400">Sleeps up to {maxGuests}</span>
+                )}
                 <button
-                  onClick={() => setGuests((g) => Math.min(20, g + 1))}
+                  onClick={() => setGuests((g) => Math.min(maxGuests, g + 1))}
+                  disabled={guests >= maxGuests}
                   className="w-9 h-9 bg-gray-100 rounded-full flex items-center
                     justify-center hover:bg-gray-200 transition"
                 >

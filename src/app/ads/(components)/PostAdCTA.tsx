@@ -34,8 +34,8 @@ const STYLES: Record<
 
 /** Longer labels, since there's room here that the navbar doesn't have. */
 const LABELS: Record<string, string> = {
-  ecommerce: "Sell a product",
-  stays: "List a place",
+  ecommerce: "E-Commerce shop",
+  stays: "SmileStays",
   food: "List food",
   marketplace: "Post anything else",
 };

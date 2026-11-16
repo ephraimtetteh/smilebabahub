@@ -26,6 +26,7 @@ function adToFormData(ad: any): Partial<AdFormData> {
     category: ad.category?.main ?? "",
     subcategory: ad.category?.sub ?? "",
     type: ad.category?.leaf ?? "",
+    maxGuests: ad.maxGuests ? String(ad.maxGuests) : "",
     condition: (ad.condition !== "not_applicable" ? ad.condition : "") as
       | AdCondition
       | "",
@@ -179,7 +180,10 @@ export default function EditAdPage() {
         .filter(Boolean),
       attributes: data.attributes,
       videoUrl: data.videoUrl || null,
-    });
+      ...(data.category === "apartments" && data.maxGuests
+        ? { maxGuests: Number(data.maxGuests) }
+        : {}),
+    } as any);
 
     // Check if update succeeded
     const updatedAd = (result as any)?.payload;

@@ -33,6 +33,7 @@ type BookingStatus =
   | "confirmed"
   | "checked_in"
   | "checked_out"
+  | "expired"
   | "cancelled";
 
 type Order = {
@@ -58,6 +59,10 @@ type Booking = {
   status: BookingStatus;
   guest: string;
   createdAt: string;
+  /** From the server: what the host may do now */
+  actions?: BookingStatus[];
+  awaitingPayment?: boolean;
+  holdUntil?: string | null;
 };
 
 type Tab = "orders" | "bookings";
@@ -95,8 +100,16 @@ const BOOKING_STATUS: Record<BookingStatus, { label: string; color: string }> =
     confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-700" },
     checked_in: { label: "Checked in", color: "bg-purple-100 text-purple-700" },
     checked_out: { label: "Checked out", color: "bg-green-100 text-green-700" },
+    expired: { label: "Not paid in time", color: "bg-gray-100 text-gray-500" },
     cancelled: { label: "Cancelled", color: "bg-red-100 text-red-600" },
   };
+
+const ACTION_LABEL: Partial<Record<BookingStatus, string>> = {
+  confirmed: "Confirm booking",
+  checked_in: "Check guest in",
+  checked_out: "Check guest out",
+  cancelled: "Decline & refund",
+};
 
 // ── Status updater ─────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -220,14 +233,15 @@ function BookingCard({
 
   // Matches the server's rules: hosts confirm once the guest has PAID.
   // (Before, "paid" bookings showed no buttons, so hosts couldn't confirm.)
-  const nextStatuses: BookingStatus[] =
+  // The server says what's allowed (pending → nothing; the guest hasn't paid)
+  const nextStatuses: BookingStatus[] = (booking.actions ?? (
     booking.status === "paid"
       ? ["confirmed", "cancelled"]
       : booking.status === "confirmed"
         ? ["checked_in", "cancelled"]
         : booking.status === "checked_in"
           ? ["checked_out"]
-          : [];
+          : [])).filter((s) => !(booking.status === "pending" && s === "cancelled"));
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
@@ -272,6 +286,17 @@ function BookingCard({
         </span>
       </div>
 
+      {booking.status === "pending" && (
+        <p className="px-4 pb-4 text-[11.5px] leading-relaxed text-gray-500">
+          Waiting for the guest to pay. The dates are held only
+          {booking.holdUntil
+            ? ` until ${new Date(booking.holdUntil).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+            : " for 15 minutes"}{" "}
+          — if they don&apos;t pay, the dates free up automatically. We text and
+          email you the moment it&apos;s paid.
+        </p>
+      )}
+
       {nextStatuses.length > 0 && (
         <div className="px-4 pb-4 flex gap-2">
           {nextStatuses.map((s) => (
@@ -285,7 +310,7 @@ function BookingCard({
                     : "bg-[#ffc105] text-black hover:bg-yellow-300"
                 }`}
             >
-              {BOOKING_STATUS[s].label}
+              {ACTION_LABEL[s] ?? BOOKING_STATUS[s].label}
             </button>
           ))}
         </div>
@@ -312,12 +337,14 @@ export default function VendorOrdersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [oRes, bRes] = await Promise.all([
+      // Independent: a SmileStays host without a shop gets 403 on orders,
+      // which used to wipe the bookings list too.
+      const [oRes, bRes] = await Promise.allSettled([
         axiosInstance.get("/orders/vendor"),
         axiosInstance.get("/bookings/vendor"),
       ]);
-      setOrders(oRes.data.orders ?? []);
-      setBookings(bRes.data.bookings ?? []);
+      if (oRes.status === "fulfilled") setOrders(oRes.value.data.orders ?? []);
+      if (bRes.status === "fulfilled") setBookings(bRes.value.data.bookings ?? []);
     } catch {
       // silently fail — show empty state
     } finally {
@@ -344,9 +371,8 @@ export default function VendorOrdersPage() {
     if (status === "cancelled" && !window.confirm("Cancel this booking? The guest is refunded in full.")) return;
     try {
       await axiosInstance.patch(`/bookings/${id}/status`, { status });
-      setBookings((prev) =>
-        prev.map((b) => (b._id === id ? { ...b, status } : b)),
-      );
+      // Reload so the allowed next steps come from the server
+      load();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Couldn't update the booking.");
     }
@@ -358,7 +384,8 @@ export default function VendorOrdersPage() {
     filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
 
   const pendingOrders = orders.filter((o) => o.status === "pending").length;
-  const pendingBookings = bookings.filter((b) => b.status === "pending").length;
+  // Bookings that need the host: paid and waiting for confirmation
+  const pendingBookings = bookings.filter((b) => b.status === "paid").length;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">

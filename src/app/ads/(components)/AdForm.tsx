@@ -154,7 +154,7 @@ import PharmacyOnboarding from "./PharmacyOnboarding";
 const MAIN_CATEGORIES = [
   {
     id: "ecommerce",
-    label: "Sell a product - ecommerce",
+    label: "E-Commerce shop",
     hint: "Phones, fashion, home, anything",
     icon: <ShoppingBag size={18} className="text-emerald-600" />,
   },
@@ -646,6 +646,11 @@ export default function AdForm({
         e.description = "Description must be at least 20 characters";
       if (form.category === "ecommerce" && !form.subcategory)
         e.subcategory = "Pick what kind of product this is";
+      if (form.category === "apartments") {
+        const g = Number(form.maxGuests);
+        if (!Number.isInteger(g) || g < 1 || g > 500)
+          e.maxGuests = "How many guests can stay at once? (1–500)";
+      }
     }
     if (s === 2) {
       if (!form.images.some(Boolean) && existingImages.length === 0)
@@ -1034,6 +1039,25 @@ export default function AdForm({
                     </Field>
                   );
                 })()}
+
+              {/* Max guests — SmileStays only. Guests can't book for more. */}
+              {form.category === "apartments" && (
+                <Field label="Maximum guests" error={errors.maxGuests}>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={500}
+                    value={form.maxGuests ?? ""}
+                    placeholder="e.g. 4"
+                    className={errors.maxGuests ? inputError : inputNormal}
+                    onChange={(e) => set("maxGuests", e.target.value.replace(/\D/g, "").slice(0, 3))}
+                  />
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    The most people allowed to stay at one time. Guests can&apos;t book for more.
+                  </p>
+                </Field>
+              )}
 
               {/* Bedrooms — only for property category */}
               {CATEGORY_FIELDS[form.category]?.showBedrooms && (

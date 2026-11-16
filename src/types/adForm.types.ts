@@ -17,6 +17,7 @@ export type AdFormData = {
   category: string; // main category e.g. "marketplace"
   subcategory: string; // sub e.g. "vehicles"
   type: string; // leaf e.g. "cars"
+  maxGuests: string; // SmileStays only — most guests allowed at once
   condition: AdCondition | "";
   negotiable: Negotiable | "";
   tags: string; // comma-separated, split before submit
@@ -76,6 +77,7 @@ export const EMPTY_AD_FORM: AdFormData = {
   category: "",
   subcategory: "",
   type: "",
+  maxGuests: "",
   condition: "",
   negotiable: "",
   tags: "",
